@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  PROFESSIONAL
+  ADMIN
+}
+
+enum VerificationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  MORE_INFO_REQUIRED
+}
+
+enum JobStatus {
+  REQUESTED
+  QUOTED
+  ACCEPTED
+  PAYMENT_PENDING
+  PAID
+  IN_PROGRESS
+  COMPLETED
+  CUSTOMER_CONFIRMED
+  SETTLED
+  CANCELLED
+  DISPUTED
+  REFUNDED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  phone String? @unique
+  passwordHash String
+  role Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  customer Customer?
+  professional Professional?
+  notifications Notification[]
+  auditLogs AuditLog[]
+}
+
+model Customer {
+  id String @id @default(cuid())
+  userId String @unique
+  fullName String
+  location String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobs Job[]
+  reviews Review[]
+}
+
+model Professional {
+  id String @id @default(cuid())
+  userId String @unique
+  fullName String
+  profession String?
+  bio String?
+  location String?
+  yearsExperience Int?
+  verificationStatus VerificationStatus @default(DRAFT)
+  rating Float @default(0)
+  completedJobs Int @default(0)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  services ProfessionalService[]
+  jobs Job[]
+  reviews Review[]
+  verificationRequests VerificationRequest[]
+  wallet Wallet?
+}
+
+model ServiceCategory {
+  id String @id @default(cuid())
+  name String @unique
+  slug String @unique
+  description String?
+  active Boolean @default(true)
+  professionals ProfessionalService[]
+  jobs Job[]
+}
+
+model ProfessionalService {
+  id String @id @default(cuid())
+  professionalId String
+  categoryId String
+  startingPrice Int?
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+  @@unique([professionalId, categoryId])
+}
+
+model VerificationRequest {
+  id String @id @default(cuid())
+  professionalId String
+  status VerificationStatus @default(SUBMITTED)
+  notes String?
+  createdAt DateTime @default(now())
+  reviewedAt DateTime?
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  documents VerificationDocument[]
+}
+
+model VerificationDocument {
+  id String @id @default(cuid())
+  requestId String
+  privateKey String
+  mimeType String
+  size Int
+  request VerificationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+}
+
+model Job {
+  id String @id @default(cuid())
+  customerId String
+  professionalId String?
+  categoryId String
+  description String
+  location String
+  preferredAt DateTime?
+  budget Int?
+  status JobStatus @default(REQUESTED)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  customer Customer @relation(fields: [customerId], references: [id])
+  professional Professional? @relation(fields: [professionalId], references: [id])
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+  quotes Quote[]
+  payment Payment?
+  review Review?
+  dispute Dispute?
+  @@index([status, createdAt])
+}
+
+model Quote {
+  id String @id @default(cuid())
+  jobId String
+  amount Int
+  status String @default("PENDING")
+  createdAt DateTime @default(now())
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id String @id @default(cuid())
+  jobId String @unique
+  reference String @unique
+  amount Int
+  commission Int
+  status PaymentStatus @default(PENDING)
+  providerEventId String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Wallet {
+  id String @id @default(cuid())
+  professionalId String @unique
+  availableBalance Int @default(0)
+  pendingBalance Int @default(0)
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+}
+
+model Review {
+  id String @id @default(cuid())
+  jobId String @unique
+  customerId String
+  professionalId String
+  rating Int
+  review String?
+  createdAt DateTime @default(now())
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customer Customer @relation(fields: [customerId], references: [id])
+  professional Professional @relation(fields: [professionalId], references: [id])
+}
+
+model Dispute {
+  id String @id @default(cuid())
+  jobId String @unique
+  openedById String
+  reason String
+  description String
+  status DisputeStatus @default(OPEN)
+  resolution String?
+  createdAt DateTime @default(now())
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id String @id @default(cuid())
+  userId String
+  type String
+  title String
+  body String
+  readAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id String @id @default(cuid())
+  userId String?
+  action String
+  entity String
+  entityId String?
+  data Json?
+  createdAt DateTime @default(now())
+  user User? @relation(fields: [userId], references: [id])
+}
