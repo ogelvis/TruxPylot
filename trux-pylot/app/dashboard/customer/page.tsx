@@ -1,0 +1,3 @@
+import { requireRole } from '@/lib/guard';
+import { prisma } from '@/lib/prisma';
+export default async function CustomerDashboard(){const session=await requireRole('CUSTOMER');const customer=await prisma.customer.findUnique({where:{userId:session.userId},include:{jobs:{include:{category:true,professional:true},take:8,orderBy:{createdAt:'desc'}}}});return <main><p>CUSTOMER DASHBOARD</p><h1>Hello, {customer?.fullName}</h1><a href="/marketplace">Request a professional →</a><h2>Your jobs</h2>{customer?.jobs.length?customer.jobs.map(j=><article key={j.id}><b>{j.category.name}</b><p>{j.description}</p><span>{j.status}</span></article>):<p>No jobs yet. Tell us what you need, and we’ll help you find the right professional.</p>}</main>}
