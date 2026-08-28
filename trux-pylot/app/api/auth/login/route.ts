@@ -1,7 +1,0 @@
-import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
-import { createSession, dashboardPath } from '@/lib/auth';
-const input=z.object({email:z.string().email(),password:z.string().min(1)});
-export async function POST(request:Request) { const parsed=input.safeParse(await request.json()); if(!parsed.success)return NextResponse.json({error:'Enter your email and password.'},{status:400}); const user=await prisma.user.findUnique({where:{email:parsed.data.email}}); if(!user || !(await bcrypt.compare(parsed.data.password,user.passwordHash))) return NextResponse.json({error:'Incorrect email or password.'},{status:401}); const token=await createSession({userId:user.id,role:user.role,email:user.email}); const response=NextResponse.json({redirect:dashboardPath(user.role)}); response.cookies.set('tp_session',token,{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/',maxAge:604800}); return response; }
