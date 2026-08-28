@@ -52,12 +52,21 @@ enum DisputeStatus {
   REJECTED
 }
 
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  BLOCKED
+}
+
 model User {
   id String @id @default(cuid())
   email String @unique
   phone String? @unique
   passwordHash String
   role Role
+  status UserStatus @default(ACTIVE)
+  suspendedUntil DateTime?
+  suspensionReason String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   customer Customer?
