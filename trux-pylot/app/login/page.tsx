@@ -1,2 +1,2 @@
 import { AuthForm } from '@/components/auth-form';
-export default function Login(){return <main><AuthForm mode="login"/></main>}
+export default function Login(){return <main className="auth-page"><section className="auth-aside"><img src="/trux-pylot-logo.png" alt="Trux Pylot"/><h1>Good work<br/>starts with trust.</h1><p>One reliable place for jobs, verified professionals and secure payments.</p></section><section className="auth-main"><AuthForm mode="login"/></section></main>}
