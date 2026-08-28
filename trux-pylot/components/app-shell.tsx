@@ -11,7 +11,12 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Manage profile',href:'/dashboard/professional/profile',icon:'◎'},
     {label:'Settings',href:'/dashboard/professional/settings',icon:'⚙'},
   ],
-  ADMIN:[{label:'Overview',href:'/dashboard/admin',icon:'⌂'},{label:'Verifications',href:'/dashboard/admin/verifications',icon:'▣'},{label:'Jobs',href:'/dashboard/admin#jobs',icon:'◎'}]
+  ADMIN:[
+    {label:'Overview',href:'/dashboard/admin',icon:'⌂'},
+    {label:'Verifications',href:'/dashboard/admin/verifications',icon:'✓'},
+    {label:'Users',href:'/dashboard/admin/users',icon:'◎'},
+    {label:'Audit log',href:'/dashboard/admin/audit-log',icon:'▣'},
+  ]
 };
 export function AppShell({role,name,children,active}:{role:Role;name:string;children:React.ReactNode;active?:string}){
   const items = nav[role];
