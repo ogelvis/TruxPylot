@@ -108,16 +108,23 @@ export function RegisterWizard() {
       avatarUrl: avatarUrl || undefined,
       password,
     };
-    const r = await fetch('/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    const d = await r.json().catch(() => ({ error: 'The service is temporarily unavailable. Please try again.' }));
-    setSubmitting(false);
-    if (!r.ok) return setError(d.error || 'Something went wrong.');
-    router.push('/login');
-    router.refresh();
+    try {
+      const r = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json().catch(() => ({ error: 'The service is temporarily unavailable. Please try again.' }));
+      if (!r.ok) {
+        setSubmitting(false);
+        return setError(d.error || 'Something went wrong.');
+      }
+      router.push(d.redirect || '/login');
+      router.refresh();
+    } catch {
+      setSubmitting(false);
+      setError('Could not reach the server. Check your connection and try again.');
+    }
   }
 
   return (

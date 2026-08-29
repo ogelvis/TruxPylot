@@ -26,7 +26,18 @@ export function ScrollReveal() {
     );
 
     items.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+
+    // Safety net: never let content stay invisible. If for any reason an
+    // element isn't revealed within a few seconds (unusual viewport,
+    // observer edge case, etc.), force it visible.
+    const fallback = window.setTimeout(() => {
+      document.querySelectorAll<HTMLElement>('.reveal:not(.in)').forEach((el) => el.classList.add('in'));
+    }, 2000);
+
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(fallback);
+    };
   }, []);
 
   return null;
