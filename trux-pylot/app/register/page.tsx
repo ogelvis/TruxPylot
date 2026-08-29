@@ -1,2 +1,2 @@
-import { AuthForm } from '@/components/auth-form';
-export default function Register(){return <main className="auth-page"><section className="auth-aside"><img src="/trux-pylot-logo.png" alt="Trux Pylot"/><h1>Join a network<br/>built on trust.</h1><p>Book dependable experts or grow your professional reputation, all in one place.</p></section><section className="auth-main"><AuthForm mode="register"/></section></main>}
+import { RegisterWizard } from '@/components/register-wizard';
+export default function Register(){return <main className="auth-page"><section className="auth-aside"><img src="/trux-pylot-logo.png" alt="Trux Pylot"/><h1>Join a network<br/>built on trust.</h1><p>Book dependable experts or grow your professional reputation, all in one place.</p></section><section className="auth-main"><RegisterWizard/></section></main>}
