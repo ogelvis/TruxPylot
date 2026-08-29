@@ -79,6 +79,12 @@ model Customer {
   id String @id @default(cuid())
   userId String @unique
   fullName String
+  avatarUrl String? @db.Text
+  country String?
+  state String?
+  city String?
+  area String?
+  street String?
   location String?
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   jobs Job[]
@@ -89,8 +95,14 @@ model Professional {
   id String @id @default(cuid())
   userId String @unique
   fullName String
+  avatarUrl String? @db.Text
   profession String?
   bio String?
+  country String?
+  state String?
+  city String?
+  area String?
+  street String?
   location String?
   yearsExperience Int?
   verificationStatus VerificationStatus @default(DRAFT)
