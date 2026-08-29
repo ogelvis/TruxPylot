@@ -43,7 +43,11 @@ export default async function Home() {
         <Link href="/"><img src="/trux-pylot-logo.png" alt="Trux Pylot" /></Link>
         <nav>
           <a href="/marketplace">Find a professional</a>
-          <a className="nav-cta" href="/register">Join as a professional</a>
+          <a href="#services">Services</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="/register">Become a Professional</a>
+          <a href="/login">Log In</a>
+          <a className="nav-cta" href="/register">Sign Up</a>
         </nav>
       </header>
 
@@ -71,7 +75,7 @@ export default async function Home() {
         </div>
 
         {/* SERVICES */}
-        <h2 className="section-title reveal">Explore services</h2>
+        <h2 className="section-title reveal" id="services">Explore services</h2>
         <div className="service-grid">
           {categories.map((c, i) => (
             <a key={c.id} href={`/marketplace?category=${c.slug}`} className="reveal" style={{ transitionDelay: `${i * 40}ms` }}>
@@ -100,7 +104,7 @@ export default async function Home() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section className="landing">
+      <section className="landing" id="how-it-works">
         <p className="eyebrow reveal">HOW IT WORKS</p>
         <h2 className="section-title reveal">Four steps to a job well done.</h2>
         <div className="steps-grid">
@@ -203,6 +207,37 @@ export default async function Home() {
           <a className="secondary" href="/register">Join as a professional</a>
         </div>
       </section>
+
+      <footer className="site-footer">
+        <div className="footer-top">
+          <img src="/trux-pylot-logo.png" alt="Trux Pylot" />
+          <div className="footer-cols">
+            <div>
+              <b>Company</b>
+              <a href="/#how-it-works">How It Works</a>
+              <a href="/register">Become a Professional</a>
+              <a href="/marketplace">For Businesses</a>
+              <a href="/marketplace">For Estates</a>
+            </div>
+            <div>
+              <b>Platform</b>
+              <a href="/marketplace">Find a Professional</a>
+              <a href="/#services">Services</a>
+              <a href="/login">Log In</a>
+              <a href="/register">Sign Up</a>
+            </div>
+            <div>
+              <b>Support</b>
+              <a href="mailto:support@truxpylot.co">Help Center</a>
+              <a href="mailto:support@truxpylot.co">Contact</a>
+            </div>
+            <div className="footer-admin">
+              <a href="/login">Admin Login</a>
+            </div>
+          </div>
+        </div>
+        <p className="footer-copy">© {new Date().getFullYear()} Trux Pylot. All rights reserved.</p>
+      </footer>
     </main>
   );
 }
