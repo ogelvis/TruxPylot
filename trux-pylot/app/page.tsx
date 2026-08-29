@@ -37,6 +37,7 @@ export default async function Home() {
   return (
     <main>
       <ScrollReveal />
+      <noscript><style>{`.reveal{opacity:1!important;transform:none!important}`}</style></noscript>
 
       <header className="site-nav">
         <Link href="/"><img src="/trux-pylot-logo.png" alt="Trux Pylot" /></Link>
