@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { createSession, dashboardPath } from '@/lib/auth';
 
 const input = z.object({
   email: z.string().email(),
@@ -66,5 +67,14 @@ export async function POST(request: Request) {
     select: { id: true, email: true, role: true },
   });
 
-  return NextResponse.json({ user }, { status: 201 });
+  const token = await createSession({ userId: user.id, role: user.role, email: user.email });
+  const response = NextResponse.json({ redirect: dashboardPath(user.role) }, { status: 201 });
+  response.cookies.set('tp_session', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 604800,
+  });
+  return response;
 }
