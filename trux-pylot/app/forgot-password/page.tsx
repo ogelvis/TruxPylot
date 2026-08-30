@@ -1,2 +1,0 @@
-import { ForgotPasswordForm } from '@/components/forgot-password-form';
-export default function ForgotPassword(){return <main className="auth-page"><section className="auth-aside"><img src="/trux-pylot-logo.png" alt="Trux Pylot"/><h1>We&apos;ve got<br/>you covered.</h1><p>Reset your password and get right back to business.</p></section><section className="auth-main"><ForgotPasswordForm/></section></main>}
