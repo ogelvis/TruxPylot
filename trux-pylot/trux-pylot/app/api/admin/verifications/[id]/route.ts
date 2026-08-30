@@ -1,6 +1,0 @@
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { getSession } from '@/lib/auth';
-import { prisma } from '@/lib/prisma';
-const input=z.object({action:z.enum(['APPROVE','REJECT','REQUEST_MORE_INFORMATION']),notes:z.string().max(2000).optional()});
-export async function PATCH(request:Request,{params}:{params:Promise<{id:string}>}){const session=await getSession();if(!session||session.role!=='ADMIN')return NextResponse.json({error:'Admin permission required'},{status:403});const data=input.safeParse(await request.json());if(!data.success)return NextResponse.json({error:'Invalid verification action'},{status:400});const {id}=await params;const requestItem=await prisma.verificationRequest.findUnique({where:{id}});if(!requestItem)return NextResponse.json({error:'Verification not found'},{status:404});const status=data.data.action==='APPROVE'?'APPROVED':data.data.action==='REJECT'?'REJECTED':'MORE_INFO_REQUIRED';await prisma.$transaction([prisma.verificationRequest.update({where:{id},data:{status,notes:data.data.notes,reviewedAt:new Date()}}),prisma.professional.update({where:{id:requestItem.professionalId},data:{verificationStatus:status}}),prisma.auditLog.create({data:{userId:session.userId,action:data.data.action,entity:'VerificationRequest',entityId:id}})]);return NextResponse.json({ok:true,status});}
