@@ -30,22 +30,22 @@ const HOW_IT_WORKS = [
 
 const TRUST_POINTS = [
   {
-    icon: '✓',
+    icon: 'shield',
     title: 'Verified professionals',
     text: 'Every professional passes an identity review before they can accept a job.',
   },
   {
-    icon: '◈',
+    icon: 'lock',
     title: 'Secure payments',
     text: 'Funds are held safely and only released once a job is confirmed complete.',
   },
   {
-    icon: '★',
+    icon: 'star',
     title: 'Real customer reviews',
     text: 'Ratings come only from customers with a completed job on the platform.',
   },
   {
-    icon: '◎',
+    icon: 'track',
     title: 'Service accountability',
     text: 'Every job is tracked from request to completion, with support if something goes wrong.',
   },
@@ -58,20 +58,77 @@ const TESTIMONIALS = [
       'I needed a plumber the same day and had someone verified at my door within hours.',
     name: 'Amaka O.',
     role: 'Homeowner, Lagos',
+    initials: 'AO',
   },
   {
     quote:
       'Managing maintenance requests for our estate used to take days. Now it takes minutes.',
     name: 'Tunde F.',
     role: 'Estate manager, Abuja',
+    initials: 'TF',
   },
   {
     quote:
       'Getting verified opened up a steady stream of jobs I would not have found on my own.',
     name: 'Chiamaka N.',
     role: 'Electrician, Port Harcourt',
+    initials: 'CN',
   },
 ];
+
+// Photo slots for real professionals. Drop licensed photography into
+// /public/images/professionals/*.jpg — cards fall back to a clean
+// icon treatment if no image is present, so nothing ever looks broken.
+const FEATURED_PROS = [
+  { name: 'Blessing A.', trade: 'Electrician', years: '6 yrs on Trux Pylot', img: '/images/professionals/electrician.jpg', icon: 'bolt' },
+  { name: 'Ifeanyi O.', trade: 'Plumber', years: '4 yrs on Trux Pylot', img: '/images/professionals/plumber.jpg', icon: 'wrench' },
+  { name: 'Ngozi E.', trade: 'Cleaning specialist', years: '3 yrs on Trux Pylot', img: '/images/professionals/cleaner.jpg', icon: 'sparkle' },
+  { name: 'David K.', trade: 'Security personnel', years: '5 yrs on Trux Pylot', img: '/images/professionals/security.jpg', icon: 'shield' },
+];
+
+const PROBLEM_POINTS = [
+  { title: "Don't know who to trust", text: 'Anyone can claim to be a professional — there is no way to check.' },
+  { title: 'Poor service, no accountability', text: 'A bad job with no one to hold responsible, and no record it happened.' },
+  { title: 'Wasted time and money', text: 'Hours on the phone, unreliable quotes, and jobs that never get finished.' },
+];
+
+const SOLUTION_POINTS = [
+  { title: 'Find verified professionals', text: 'Every profile is identity-checked before it ever reaches you.' },
+  { title: 'Trust real reviews', text: 'Ratings come only from people who actually booked and paid for the job.' },
+  { title: 'Connect and get it done', text: 'Book, pay and track the job in one place, from request to completion.' },
+];
+
+function Icon({ name }: { name: string }) {
+  const common = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  switch (name) {
+    case 'shield':
+      return (<svg {...common}><path d="M12 3l7 3v5c0 4.5-3 7.7-7 9-4-1.3-7-4.5-7-9V6l7-3z" /><path d="M9 12l2 2 4-4" /></svg>);
+    case 'lock':
+      return (<svg {...common}><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V7a4 4 0 018 0v4" /></svg>);
+    case 'star':
+      return (<svg {...common}><path d="M12 3l2.6 5.8 6.2.6-4.7 4.2 1.4 6.2L12 16.8 6.5 19.8l1.4-6.2L3.2 9.4l6.2-.6L12 3z" /></svg>);
+    case 'track':
+      return (<svg {...common}><circle cx="12" cy="12" r="8.5" /><path d="M12 8v4l3 2" /></svg>);
+    case 'bolt':
+      return (<svg {...common}><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" /></svg>);
+    case 'wrench':
+      return (<svg {...common}><path d="M14.7 6.3a4 4 0 00-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 005.4-5.4l-2.3 2.3-2-2 2.3-2.3z" /></svg>);
+    case 'sparkle':
+      return (<svg {...common}><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M18 6l-2.5 2.5M8.5 15.5L6 18" /></svg>);
+    case 'question':
+      return (<svg {...common}><circle cx="12" cy="12" r="9" /><path d="M9.5 9.2a2.5 2.5 0 014.9.8c0 1.7-2.4 2-2.4 3.6" /><path d="M12 17.2h.01" /></svg>);
+    case 'thumbsdown':
+      return (<svg {...common}><path d="M7 14V4M17 14l-1.5 6.5a1.5 1.5 0 01-2.9-.4L12 15H5.5A1.5 1.5 0 014 13.2l1.4-7A2 2 0 017.4 4H17v10z" /></svg>);
+    case 'clock':
+      return (<svg {...common}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></svg>);
+    case 'search':
+      return (<svg {...common}><circle cx="10.5" cy="10.5" r="6.5" /><path d="M20 20l-4.3-4.3" /></svg>);
+    case 'handshake':
+      return (<svg {...common}><path d="M3 12l4-4 4 3 3-3 3 3 4-4" /><path d="M7 11l3 6 3-2 2 2 4-4" /></svg>);
+    default:
+      return null;
+  }
+}
 
 export default async function Home() {
   const [
@@ -111,13 +168,14 @@ export default async function Home() {
         .tp-page {
           --tp-ink: #101828;
           --tp-muted: #667085;
-          --tp-light: #f7f9fc;
+          --tp-light: #f9faf9;
           --tp-border: #e4e7ec;
           --tp-blue: #155eef;
           --tp-blue-dark: #0b4bc4;
           --tp-navy: #0b1220;
           --tp-white: #ffffff;
           --tp-green: #12b76a;
+          --tp-amber: #f79009;
           background: #fff;
           color: var(--tp-ink);
           overflow: hidden;
@@ -131,6 +189,20 @@ export default async function Home() {
 
         .tp-page a {
           text-decoration: none;
+        }
+
+        .tp-page a:focus-visible,
+        .tp-page button:focus-visible {
+          outline: 2px solid var(--tp-blue);
+          outline-offset: 3px;
+          border-radius: 4px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .tp-page * {
+            animation-duration: 0.001ms !important;
+            transition-duration: 0.001ms !important;
+          }
         }
 
         .tp-container {
@@ -175,20 +247,46 @@ export default async function Home() {
           display: flex;
           align-items: center;
           justify-content: flex-end;
-          gap: 26px;
+          gap: 8px;
           flex: 1;
         }
 
-        .tp-nav-links a {
+        .tp-nav-link {
+          position: relative;
+          padding: 8px 4px;
           color: #475467;
           font-size: 14px;
           font-weight: 600;
-          transition: .2s ease;
           white-space: nowrap;
         }
 
-        .tp-nav-links a:hover {
-          color: var(--tp-blue);
+        .tp-nav-link::after {
+          content: '';
+          position: absolute;
+          left: 4px;
+          right: 4px;
+          bottom: 3px;
+          height: 2px;
+          background: var(--tp-blue);
+          border-radius: 2px;
+          transform: scaleX(0);
+          transform-origin: left;
+          transition: transform .25s cubic-bezier(.4,0,.2,1);
+        }
+
+        .tp-nav-link:hover {
+          color: var(--tp-navy);
+        }
+
+        .tp-nav-link:hover::after {
+          transform: scaleX(1);
+        }
+
+        .tp-nav-group {
+          display: flex;
+          align-items: center;
+          gap: 22px;
+          margin-right: 18px;
         }
 
         .tp-nav-signup {
@@ -196,13 +294,29 @@ export default async function Home() {
           background: var(--tp-blue);
           padding: 12px 19px;
           border-radius: 10px;
+          font-size: 14px;
+          font-weight: 700;
           box-shadow: 0 5px 14px rgba(21,94,239,.18);
+          transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
         }
 
         .tp-nav-signup:hover {
           background: var(--tp-blue-dark);
           color: #fff !important;
           transform: translateY(-1px);
+          box-shadow: 0 8px 20px rgba(21,94,239,.26);
+        }
+
+        .tp-nav-ghost {
+          padding: 12px 6px;
+          color: #344054;
+          font-size: 14px;
+          font-weight: 600;
+          transition: color .2s ease;
+        }
+
+        .tp-nav-ghost:hover {
+          color: var(--tp-blue);
         }
 
         /* HERO */
@@ -210,7 +324,7 @@ export default async function Home() {
         .tp-hero {
           position: relative;
           background:
-            radial-gradient(circle at 80% 20%, rgba(21,94,239,.10), transparent 30%),
+            radial-gradient(circle at 82% 12%, rgba(21,94,239,.09), transparent 32%),
             linear-gradient(180deg, #f8fbff 0%, #fff 100%);
           padding: 86px 0 65px;
         }
@@ -218,12 +332,11 @@ export default async function Home() {
         .tp-hero::before {
           content: '';
           position: absolute;
-          width: 520px;
-          height: 520px;
-          border-radius: 50%;
-          background: rgba(21,94,239,.045);
-          right: -250px;
-          top: -180px;
+          inset: 0;
+          background-image: radial-gradient(rgba(16,24,40,.055) 1px, transparent 1px);
+          background-size: 26px 26px;
+          -webkit-mask-image: linear-gradient(180deg, transparent, #000 18%, #000 55%, transparent);
+          mask-image: linear-gradient(180deg, transparent, #000 18%, #000 55%, transparent);
           pointer-events: none;
         }
 
@@ -241,10 +354,8 @@ export default async function Home() {
           gap: 9px;
           margin: 0 0 19px;
           color: var(--tp-blue);
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: .13em;
-          text-transform: uppercase;
+          font-size: 13px;
+          font-weight: 700;
         }
 
         .tp-eyebrow::before {
@@ -259,15 +370,10 @@ export default async function Home() {
           max-width: 720px;
           margin: 0;
           color: #0b1220;
-          font-size: clamp(46px, 6vw, 76px);
-          line-height: .98;
-          letter-spacing: -.055em;
+          font-size: clamp(42px, 5.6vw, 68px);
+          line-height: 1.03;
+          letter-spacing: -.03em;
           font-weight: 800;
-        }
-
-        .tp-hero h1 em {
-          color: var(--tp-blue);
-          font-style: normal;
         }
 
         .tp-hero-copy {
@@ -356,8 +462,7 @@ export default async function Home() {
           min-height: 430px;
           border-radius: 28px;
           padding: 30px;
-          background:
-            linear-gradient(145deg, #0d1b33 0%, #122b52 58%, #155eef 100%);
+          background: linear-gradient(145deg, #0d1b33 0%, #122b52 58%, #155eef 100%);
           box-shadow: 0 30px 70px rgba(16,24,40,.18);
           overflow: hidden;
         }
@@ -449,25 +554,10 @@ export default async function Home() {
           font-size: 13px;
         }
 
-        .tp-search-icon {
-          width: 17px;
-          height: 17px;
-          border: 2px solid #98a2b3;
-          border-radius: 50%;
-          position: relative;
+        .tp-search-field svg {
           flex-shrink: 0;
-        }
-
-        .tp-search-icon::after {
-          content: '';
-          width: 7px;
-          height: 2px;
-          background: #98a2b3;
-          position: absolute;
-          right: -5px;
-          bottom: -2px;
-          transform: rotate(45deg);
-          border-radius: 2px;
+          width: 16px;
+          height: 16px;
         }
 
         .tp-category-pills {
@@ -571,9 +661,8 @@ export default async function Home() {
           display: block;
           margin-top: 9px;
           color: #98a2b3;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: .11em;
+          font-size: 12px;
+          font-weight: 600;
         }
 
         /* GENERAL SECTIONS */
@@ -583,7 +672,7 @@ export default async function Home() {
         }
 
         .tp-section-light {
-          background: #f8fafc;
+          background: var(--tp-light);
         }
 
         .tp-section-dark {
@@ -598,9 +687,9 @@ export default async function Home() {
 
         .tp-section-heading h2 {
           margin: 0;
-          font-size: clamp(34px, 4vw, 50px);
-          line-height: 1.08;
-          letter-spacing: -.045em;
+          font-size: clamp(32px, 3.6vw, 46px);
+          line-height: 1.1;
+          letter-spacing: -.03em;
         }
 
         .tp-section-heading p {
@@ -612,6 +701,98 @@ export default async function Home() {
 
         .tp-section-dark .tp-section-heading p {
           color: #98a2b3;
+        }
+
+        /* PROBLEM / SOLUTION — signature illustrated section */
+
+        .tp-shift {
+          border: 1px solid var(--tp-border);
+          border-radius: 26px;
+          overflow: hidden;
+          background: #fff;
+        }
+
+        .tp-shift-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .tp-shift-col {
+          padding: 48px 44px;
+        }
+
+        .tp-shift-col.is-problem {
+          background: #fafafa;
+          border-right: 1px solid var(--tp-border);
+        }
+
+        .tp-shift-col.is-solution {
+          background:
+            radial-gradient(circle at 100% 0%, rgba(21,94,239,.10), transparent 45%),
+            #0b1220;
+          color: #fff;
+        }
+
+        .tp-shift-label {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 13px;
+          font-weight: 700;
+          margin-bottom: 26px;
+        }
+
+        .is-problem .tp-shift-label { color: #98a2b3; }
+        .is-solution .tp-shift-label { color: #6ce9a6; }
+
+        .tp-shift-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 50%;
+        }
+
+        .is-problem .tp-shift-dot { background: #98a2b3; }
+        .is-solution .tp-shift-dot { background: #6ce9a6; }
+
+        .tp-shift-row {
+          display: flex;
+          gap: 16px;
+          padding: 18px 0;
+        }
+
+        .is-problem .tp-shift-row + .tp-shift-row { border-top: 1px solid #ececec; }
+        .is-solution .tp-shift-row + .tp-shift-row { border-top: 1px solid rgba(255,255,255,.08); }
+
+        .tp-shift-icon {
+          flex-shrink: 0;
+          width: 40px;
+          height: 40px;
+          border-radius: 11px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .is-problem .tp-shift-icon { background: #eee; color: #667085; }
+        .is-solution .tp-shift-icon { background: rgba(50,213,131,.14); color: #6ce9a6; }
+
+        .tp-shift-row b {
+          display: block;
+          font-size: 15px;
+        }
+
+        .tp-shift-row p {
+          margin: 5px 0 0;
+          font-size: 13px;
+          line-height: 1.6;
+        }
+
+        .is-problem .tp-shift-row p { color: #667085; }
+        .is-solution .tp-shift-row p { color: #98a2b3; }
+
+        @media (max-width: 820px) {
+          .tp-shift-grid { grid-template-columns: 1fr; }
+          .tp-shift-col.is-problem { border-right: 0; border-bottom: 1px solid var(--tp-border); }
         }
 
         /* SERVICES */
@@ -661,6 +842,78 @@ export default async function Home() {
           color: #fff;
         }
 
+        /* FEATURED PROFESSIONALS */
+
+        .tp-pros-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+        }
+
+        .tp-pro-card {
+          border: 1px solid var(--tp-border);
+          border-radius: 18px;
+          overflow: hidden;
+          background: #fff;
+        }
+
+        .tp-pro-photo {
+          position: relative;
+          aspect-ratio: 4 / 5;
+          background:
+            linear-gradient(160deg, #eef4ff 0%, #f7f9fc 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #b2ccff;
+        }
+
+        .tp-pro-photo img {
+          position: absolute;
+          inset: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .tp-pro-badge {
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          padding: 6px 9px;
+          border-radius: 999px;
+          background: rgba(11,18,32,.72);
+          color: #6ce9a6;
+          font-size: 10px;
+          font-weight: 800;
+          backdrop-filter: blur(6px);
+        }
+
+        .tp-pro-info {
+          padding: 16px 18px;
+        }
+
+        .tp-pro-info b {
+          display: block;
+          font-size: 15px;
+          color: #101828;
+        }
+
+        .tp-pro-info span {
+          display: block;
+          margin-top: 3px;
+          color: #98a2b3;
+          font-size: 12px;
+        }
+
+        .tp-pro-trade {
+          color: var(--tp-blue);
+          font-weight: 600;
+        }
+
         /* TRUST */
 
         .tp-trust-grid {
@@ -691,8 +944,6 @@ export default async function Home() {
           border-radius: 12px;
           background: #eef4ff;
           color: var(--tp-blue);
-          font-size: 20px;
-          font-weight: 900;
           margin-bottom: 24px;
         }
 
@@ -732,9 +983,8 @@ export default async function Home() {
           display: block;
           margin-bottom: 55px;
           color: var(--tp-blue);
-          font-size: 12px;
-          font-weight: 900;
-          letter-spacing: .12em;
+          font-size: 13px;
+          font-weight: 800;
         }
 
         .tp-step b {
@@ -769,9 +1019,9 @@ export default async function Home() {
         .tp-copy h2 {
           margin: 0;
           max-width: 600px;
-          font-size: clamp(34px, 4vw, 52px);
-          line-height: 1.06;
-          letter-spacing: -.045em;
+          font-size: clamp(32px, 3.6vw, 46px);
+          line-height: 1.1;
+          letter-spacing: -.03em;
         }
 
         .tp-copy p {
@@ -841,9 +1091,9 @@ export default async function Home() {
         .tp-pro-box h2 {
           margin: 0;
           max-width: 650px;
-          font-size: clamp(35px, 4vw, 52px);
-          line-height: 1.05;
-          letter-spacing: -.045em;
+          font-size: clamp(32px, 3.6vw, 46px);
+          line-height: 1.1;
+          letter-spacing: -.03em;
         }
 
         .tp-pro-box p {
@@ -905,6 +1155,26 @@ export default async function Home() {
           line-height: 1.7;
         }
 
+        .tp-testimonial-who {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .tp-testimonial-avatar {
+          width: 38px;
+          height: 38px;
+          border-radius: 50%;
+          background: #eef4ff;
+          color: var(--tp-blue);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 800;
+          font-size: 13px;
+          flex-shrink: 0;
+        }
+
         .tp-testimonial b {
           display: block;
           color: #101828;
@@ -913,7 +1183,7 @@ export default async function Home() {
 
         .tp-testimonial span {
           display: block;
-          margin-top: 4px;
+          margin-top: 2px;
           color: #98a2b3;
           font-size: 12px;
         }
@@ -932,9 +1202,9 @@ export default async function Home() {
         .tp-final h2 {
           max-width: 820px;
           margin: 0 auto;
-          font-size: clamp(40px, 6vw, 68px);
-          line-height: 1;
-          letter-spacing: -.055em;
+          font-size: clamp(36px, 5vw, 58px);
+          line-height: 1.05;
+          letter-spacing: -.03em;
         }
 
         .tp-final p {
@@ -1006,8 +1276,7 @@ export default async function Home() {
           margin-bottom: 17px;
           color: #fff;
           font-size: 12px;
-          text-transform: uppercase;
-          letter-spacing: .08em;
+          font-weight: 700;
         }
 
         .tp-footer-col a {
@@ -1034,38 +1303,25 @@ export default async function Home() {
         /* RESPONSIVE */
 
         @media (max-width: 1050px) {
-          .tp-nav-links {
-            gap: 15px;
-          }
+          .tp-nav-group { gap: 14px; }
 
-          .tp-hero-grid {
-            gap: 40px;
-          }
+          .tp-hero-grid { gap: 40px; }
 
           .tp-services,
-          .tp-trust-grid {
+          .tp-trust-grid,
+          .tp-pros-grid {
             grid-template-columns: repeat(2, 1fr);
           }
 
-          .tp-pro-box {
-            padding: 45px;
-          }
+          .tp-pro-box { padding: 45px; }
         }
 
         @media (max-width: 820px) {
-          .tp-nav {
-            min-height: 68px;
-          }
+          .tp-nav { min-height: 68px; }
 
-          .tp-nav-links a:nth-child(2),
-          .tp-nav-links a:nth-child(3),
-          .tp-nav-links a:nth-child(4) {
-            display: none;
-          }
+          .tp-nav-group { display: none; }
 
-          .tp-hero {
-            padding: 60px 0 45px;
-          }
+          .tp-hero { padding: 60px 0 45px; }
 
           .tp-hero-grid,
           .tp-split,
@@ -1074,69 +1330,36 @@ export default async function Home() {
             grid-template-columns: 1fr;
           }
 
-          .tp-hero-visual {
-            min-height: 390px;
-          }
+          .tp-hero-visual { min-height: 390px; }
 
-          .tp-stats {
-            margin-top: 35px;
-          }
+          .tp-stats { margin-top: 35px; }
 
-          .tp-steps {
-            grid-template-columns: repeat(2, 1fr);
-          }
+          .tp-steps { grid-template-columns: repeat(2, 1fr); }
 
-          .tp-step:nth-child(2) {
-            border-right: 0;
-          }
+          .tp-step:nth-child(2) { border-right: 0; }
 
-          .tp-step:nth-child(-n+2) {
-            border-bottom: 1px solid var(--tp-border);
-          }
+          .tp-step:nth-child(-n+2) { border-bottom: 1px solid var(--tp-border); }
 
-          .tp-testimonials {
-            grid-template-columns: 1fr;
-          }
+          .tp-testimonials { grid-template-columns: 1fr; }
 
           .tp-split.reverse .tp-copy,
           .tp-split.reverse .tp-list {
             order: initial;
           }
 
-          .tp-footer-cols {
-            grid-template-columns: repeat(2, 1fr);
-          }
+          .tp-footer-cols { grid-template-columns: repeat(2, 1fr); }
         }
 
         @media (max-width: 600px) {
-          .tp-container {
-            width: min(100% - 28px, 1180px);
-          }
+          .tp-container { width: min(100% - 28px, 1180px); }
 
-          .tp-logo img {
-            width: 125px;
-          }
+          .tp-logo img { width: 125px; }
 
-          .tp-nav-links {
-            gap: 8px;
-          }
+          .tp-nav-signup { padding: 10px 13px; }
 
-          .tp-nav-links a:nth-child(1),
-          .tp-nav-links a:nth-child(5) {
-            display: none;
-          }
+          .tp-hero h1 { font-size: 40px; }
 
-          .tp-nav-signup {
-            padding: 10px 13px;
-          }
-
-          .tp-hero h1 {
-            font-size: 47px;
-          }
-
-          .tp-hero-copy {
-            font-size: 16px;
-          }
+          .tp-hero-copy { font-size: 16px; }
 
           .tp-hero-actions {
             align-items: stretch;
@@ -1144,9 +1367,7 @@ export default async function Home() {
           }
 
           .tp-primary,
-          .tp-secondary {
-            width: 100%;
-          }
+          .tp-secondary { width: 100%; }
 
           .tp-hero-visual {
             min-height: 370px;
@@ -1154,26 +1375,21 @@ export default async function Home() {
             border-radius: 20px;
           }
 
-          .tp-stats {
-            grid-template-columns: 1fr;
-          }
+          .tp-stats { grid-template-columns: 1fr; }
 
           .tp-stat {
             border-right: 0;
             border-bottom: 1px solid var(--tp-border);
           }
 
-          .tp-stat:last-child {
-            border-bottom: 0;
-          }
+          .tp-stat:last-child { border-bottom: 0; }
 
-          .tp-section {
-            padding: 70px 0;
-          }
+          .tp-section { padding: 70px 0; }
 
           .tp-services,
           .tp-trust-grid,
-          .tp-steps {
+          .tp-steps,
+          .tp-pros-grid {
             grid-template-columns: 1fr;
           }
 
@@ -1182,22 +1398,16 @@ export default async function Home() {
             border-bottom: 1px solid var(--tp-border);
           }
 
-          .tp-step:last-child {
-            border-bottom: 0;
-          }
+          .tp-step:last-child { border-bottom: 0; }
 
           .tp-pro-box {
             padding: 30px 22px;
             border-radius: 20px;
           }
 
-          .tp-footer-cols {
-            grid-template-columns: 1fr 1fr;
-          }
+          .tp-footer-cols { grid-template-columns: 1fr 1fr; }
 
-          .tp-footer-bottom {
-            flex-direction: column;
-          }
+          .tp-footer-bottom { flex-direction: column; }
         }
       `}</style>
 
@@ -1209,14 +1419,15 @@ export default async function Home() {
           </Link>
 
           <nav className="tp-nav-links">
-            <Link href="/marketplace">Find a professional</Link>
-            <Link href="#services">Services</Link>
-            <Link href="#how-it-works">How It Works</Link>
-            <Link href="/register">Become a Professional</Link>
-            <Link href="/login">Log In</Link>
-            <Link href="/register" className="tp-nav-signup">
-              Sign Up
-            </Link>
+            <div className="tp-nav-group">
+              <Link href="/marketplace" className="tp-nav-link">Find a professional</Link>
+              <Link href="#services" className="tp-nav-link">Services</Link>
+              <Link href="#how-it-works" className="tp-nav-link">How it works</Link>
+              <Link href="/register" className="tp-nav-link">Become a professional</Link>
+            </div>
+
+            <Link href="/login" className="tp-nav-ghost">Log in</Link>
+            <Link href="/register" className="tp-nav-signup">Sign up</Link>
           </nav>
         </header>
       </div>
@@ -1226,15 +1437,14 @@ export default async function Home() {
         <div className="tp-container">
           <div className="tp-hero-grid">
             <div className="reveal">
-              <p className="tp-eyebrow">TRUSTED PROFESSIONALS, READY TO WORK</p>
+              <p className="tp-eyebrow">Nigeria&rsquo;s trusted professional network</p>
 
-              <h1>
-                Get the right pro for <em>every job.</em>
-              </h1>
+              <h1>Find the right person for the job, every time.</h1>
 
               <p className="tp-hero-copy">
                 Book dependable, verified experts for your home, business or
-                estate — all from one trusted platform.
+                estate — plumbers, electricians, cleaners, drivers, security
+                and more, all from one trusted platform.
               </p>
 
               <div className="tp-hero-actions">
@@ -1253,22 +1463,17 @@ export default async function Home() {
               </div>
             </div>
 
-            <div
-              className="tp-hero-visual reveal"
-              style={{ transitionDelay: '120ms' }}
-            >
+            <div className="tp-hero-visual reveal" style={{ transitionDelay: '120ms' }}>
               <div className="tp-dashboard-top">
                 <span className="tp-dashboard-title">Find a professional</span>
                 <span className="tp-live">TRUX PYLOT</span>
               </div>
 
               <div className="tp-search-card">
-                <span className="tp-search-label">
-                  What service do you need?
-                </span>
+                <span className="tp-search-label">What service do you need?</span>
 
                 <div className="tp-search-field">
-                  <span className="tp-search-icon" />
+                  <Icon name="search" />
                   Search for a service...
                 </div>
 
@@ -1308,48 +1513,92 @@ export default async function Home() {
           {/* LIVE PLATFORM STATS */}
           <div className="tp-stats reveal">
             <div className="tp-stat">
-              <strong>
-                <Counter target={verifiedCount} />
-              </strong>
-              <span>VERIFIED PROFESSIONALS</span>
+              <strong><Counter target={verifiedCount} /></strong>
+              <span>Verified professionals</span>
             </div>
 
             <div className="tp-stat">
-              <strong>
-                <Counter target={completedJobsCount} />
-              </strong>
-              <span>JOBS COMPLETED</span>
+              <strong><Counter target={completedJobsCount} /></strong>
+              <span>Jobs completed</span>
             </div>
 
             <div className="tp-stat">
-              <strong>
-                <Counter target={customerCount} />
-              </strong>
-              <span>CUSTOMERS SERVED</span>
+              <strong><Counter target={customerCount} /></strong>
+              <span>Customers served</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* THE PROBLEM WE SOLVE — signature illustrated section */}
+      <section className="tp-section">
+        <div className="tp-container">
+          <div className="tp-section-heading reveal">
+            <p className="tp-eyebrow">Why Trux Pylot exists</p>
+            <h2>Finding someone reliable shouldn&rsquo;t feel like a gamble.</h2>
+            <p>
+              Hiring help in Nigeria today usually means asking around and hoping for the best.
+              We built Trux Pylot to replace that guesswork with a verified network you can rely on.
+            </p>
+          </div>
+
+          <div className="tp-shift reveal">
+            <div className="tp-shift-grid">
+              <div className="tp-shift-col is-problem">
+                <span className="tp-shift-label">
+                  <span className="tp-shift-dot" /> Before Trux Pylot
+                </span>
+
+                {PROBLEM_POINTS.map((point, i) => (
+                  <div className="tp-shift-row" key={point.title}>
+                    <span className="tp-shift-icon">
+                      <Icon name={['question', 'thumbsdown', 'clock'][i]} />
+                    </span>
+                    <div>
+                      <b>{point.title}</b>
+                      <p>{point.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="tp-shift-col is-solution">
+                <span className="tp-shift-label">
+                  <span className="tp-shift-dot" /> With Trux Pylot
+                </span>
+
+                {SOLUTION_POINTS.map((point, i) => (
+                  <div className="tp-shift-row" key={point.title}>
+                    <span className="tp-shift-icon">
+                      <Icon name={['search', 'star', 'handshake'][i]} />
+                    </span>
+                    <div>
+                      <b>{point.title}</b>
+                      <p>{point.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* SERVICES */}
-      <section className="tp-section" id="services">
+      <section className="tp-section tp-section-light" id="services">
         <div className="tp-container">
           <div className="tp-section-heading reveal">
-            <p className="tp-eyebrow">EXPLORE THE MARKETPLACE</p>
+            <p className="tp-eyebrow">Explore the marketplace</p>
             <h2>Whatever you need done, start here.</h2>
-            <p>
-              Discover trusted professionals across the services you need
-              most.
-            </p>
+            <p>Discover trusted professionals across the services you need most.</p>
           </div>
 
           <div className="tp-services">
-            {categories.map((category, i) => (
+            {categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/marketplace?category=${category.slug}`}
-                className="tp-service reveal"
-                style={{ transitionDelay: `${i * 40}ms` }}
+                className="tp-service"
               >
                 <span>{category.name}</span>
               </Link>
@@ -1362,26 +1611,56 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* FEATURED PROFESSIONALS —
+          Photo slots below read from /public/images/professionals/*.
+          Add real, licensed photography of Trux Pylot professionals there;
+          until then each card falls back to a clean icon treatment
+          so nothing ever looks like a broken or generic stock image. */}
+      <section className="tp-section">
+        <div className="tp-container">
+          <div className="tp-section-heading reveal">
+            <p className="tp-eyebrow">Meet the network</p>
+            <h2>Real professionals, verified and ready to work.</h2>
+            <p>A small sample of the people who take on jobs through Trux Pylot every day.</p>
+          </div>
+
+          <div className="tp-pros-grid">
+            {FEATURED_PROS.map((pro) => (
+              <div className="tp-pro-card" key={pro.name}>
+                <div className="tp-pro-photo">
+                  <Icon name={pro.icon} />
+                  <img
+                    src={pro.img}
+                    alt={`${pro.name}, ${pro.trade} on Trux Pylot`}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <span className="tp-pro-badge">✓ Verified</span>
+                </div>
+
+                <div className="tp-pro-info">
+                  <b>{pro.name}</b>
+                  <span className="tp-pro-trade">{pro.trade}</span>
+                  <span>{pro.years}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* TRUST */}
       <section className="tp-section tp-section-light">
         <div className="tp-container">
           <div className="tp-section-heading reveal">
-            <p className="tp-eyebrow">WHY TRUX PYLOT</p>
+            <p className="tp-eyebrow">Why Trux Pylot</p>
             <h2>Built for trust from booking to payment.</h2>
-            <p>
-              Every part of the experience is designed to give customers and
-              professionals more confidence.
-            </p>
+            <p>Every part of the experience is designed to give customers and professionals more confidence.</p>
           </div>
 
           <div className="tp-trust-grid">
-            {TRUST_POINTS.map((point, i) => (
-              <div
-                className="tp-trust-card reveal"
-                key={point.title}
-                style={{ transitionDelay: `${i * 80}ms` }}
-              >
-                <span className="tp-icon">{point.icon}</span>
+            {TRUST_POINTS.map((point) => (
+              <div className="tp-trust-card" key={point.title}>
+                <span className="tp-icon"><Icon name={point.icon} /></span>
                 <b>{point.title}</b>
                 <p>{point.text}</p>
               </div>
@@ -1394,17 +1673,13 @@ export default async function Home() {
       <section className="tp-section" id="how-it-works">
         <div className="tp-container">
           <div className="tp-section-heading reveal">
-            <p className="tp-eyebrow">HOW IT WORKS</p>
+            <p className="tp-eyebrow">How it works</p>
             <h2>Four simple steps to a job well done.</h2>
           </div>
 
           <div className="tp-steps">
-            {HOW_IT_WORKS.map((step, i) => (
-              <div
-                className="tp-step reveal"
-                key={step.step}
-                style={{ transitionDelay: `${i * 80}ms` }}
-              >
+            {HOW_IT_WORKS.map((step) => (
+              <div className="tp-step" key={step.step}>
                 <span className="tp-step-number">{step.step}</span>
                 <b>{step.title}</b>
                 <p>{step.text}</p>
@@ -1419,16 +1694,13 @@ export default async function Home() {
         <div className="tp-container">
           <div className="tp-split reveal">
             <div className="tp-copy">
-              <p className="tp-eyebrow">FOR ESTATES</p>
-
+              <p className="tp-eyebrow">For estates</p>
               <h2>Give your estate a trusted service network.</h2>
-
               <p>
                 Equip your residents with verified professionals for
                 maintenance and repairs, backed by a service history for every
                 job requested across the estate.
               </p>
-
               <Link href="/register" className="tp-primary">
                 Partner your estate with Trux Pylot →
               </Link>
@@ -1449,16 +1721,13 @@ export default async function Home() {
         <div className="tp-container">
           <div className="tp-split reverse reveal">
             <div className="tp-copy">
-              <p className="tp-eyebrow">FOR BUSINESSES</p>
-
+              <p className="tp-eyebrow">For businesses</p>
               <h2>Keep operations running, without the chasing.</h2>
-
               <p>
                 Book recurring or one-off professional services for your
                 business and track every request from a single place — no more
                 chasing down contractors.
               </p>
-
               <Link href="/register" className="tp-primary">
                 Get business services →
               </Link>
@@ -1479,16 +1748,13 @@ export default async function Home() {
         <div className="tp-container">
           <div className="tp-pro-box reveal">
             <div>
-              <p className="tp-eyebrow">FOR PROFESSIONALS</p>
-
+              <p className="tp-eyebrow">For professionals</p>
               <h2>Grow your reputation. Get more jobs.</h2>
-
               <p>
                 Get verified, build a rating that speaks for itself, and
                 receive job requests from customers, estates and businesses
                 actively looking for someone like you.
               </p>
-
               <Link href="/register" className="tp-primary">
                 Become a Trux Pylot professional →
               </Link>
@@ -1518,23 +1784,23 @@ export default async function Home() {
       <section className="tp-section">
         <div className="tp-container">
           <div className="tp-section-heading reveal">
-            <p className="tp-eyebrow">WHAT PEOPLE SAY</p>
+            <p className="tp-eyebrow">What people say</p>
             <h2>Real people. Real jobs.</h2>
           </div>
 
           <div className="tp-testimonials">
-            {TESTIMONIALS.map((testimonial, i) => (
-              <div
-                className="tp-testimonial reveal"
-                key={testimonial.name}
-                style={{ transitionDelay: `${i * 80}ms` }}
-              >
+            {TESTIMONIALS.map((testimonial) => (
+              <div className="tp-testimonial" key={testimonial.name}>
                 <div className="tp-stars">★★★★★</div>
-
                 <p>&ldquo;{testimonial.quote}&rdquo;</p>
 
-                <b>{testimonial.name}</b>
-                <span>{testimonial.role}</span>
+                <div className="tp-testimonial-who">
+                  <span className="tp-testimonial-avatar">{testimonial.initials}</span>
+                  <div>
+                    <b>{testimonial.name}</b>
+                    <span>{testimonial.role}</span>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -1545,7 +1811,6 @@ export default async function Home() {
       <section className="tp-final reveal">
         <div className="tp-container">
           <h2>Whatever the job, find someone you can trust.</h2>
-
           <p>
             From quick repairs to ongoing business maintenance, Trux Pylot
             connects you with professionals ready to work.
@@ -1555,7 +1820,6 @@ export default async function Home() {
             <Link href="/marketplace" className="tp-primary">
               Find a professional →
             </Link>
-
             <Link href="/register" className="tp-secondary">
               Join as a professional
             </Link>
@@ -1571,7 +1835,6 @@ export default async function Home() {
               <Link href="/">
                 <img src="/trux-pylot-logo.png" alt="Trux Pylot" />
               </Link>
-
               <p className="tp-footer-tagline">
                 A trusted marketplace connecting customers, businesses and
                 estates with verified professionals.
@@ -1611,10 +1874,7 @@ export default async function Home() {
           </div>
 
           <div className="tp-footer-bottom">
-            <span>
-              © {new Date().getFullYear()} Trux Pylot. All rights reserved.
-            </span>
-
+            <span>© {new Date().getFullYear()} Trux Pylot. All rights reserved.</span>
             <span>Trusted professionals. Better service.</span>
           </div>
         </div>
