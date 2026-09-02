@@ -38,38 +38,59 @@ export async function POST(request: Request) {
     }
     const location = [meta.area, meta.city, meta.state].filter(Boolean).join(', ') || undefined;
 
-    user = await prisma.user.create({
-      data: {
-        id: authUser.id,
-        email: verifiedEmail,
-        role,
-        phone: (meta.phone as string | undefined) || undefined,
-        customer: role === 'CUSTOMER' ? {
-          create: {
-            fullName,
-            country: meta.country as string | undefined,
-            state: meta.state as string | undefined,
-            city: meta.city as string | undefined,
-            area: meta.area as string | undefined,
-            street: meta.street as string | undefined,
-            location,
-          },
-        } : undefined,
-        professional: role === 'PROFESSIONAL' ? {
-          create: {
-            fullName,
-            country: meta.country as string | undefined,
-            state: meta.state as string | undefined,
-            city: meta.city as string | undefined,
-            area: meta.area as string | undefined,
-            street: meta.street as string | undefined,
-            location,
-            profession: meta.profession as string | undefined,
-            yearsExperience: meta.yearsExperience as number | undefined,
-          },
-        } : undefined,
-      },
-    });
+    try {
+      user = await prisma.user.create({
+        data: {
+          id: authUser.id,
+          email: verifiedEmail,
+          role,
+          phone: (meta.phone as string | undefined) || undefined,
+          customer: role === 'CUSTOMER' ? {
+            create: {
+              fullName,
+              country: meta.country as string | undefined,
+              state: meta.state as string | undefined,
+              city: meta.city as string | undefined,
+              area: meta.area as string | undefined,
+              street: meta.street as string | undefined,
+              location,
+            },
+          } : undefined,
+          professional: role === 'PROFESSIONAL' ? {
+            create: {
+              fullName,
+              country: meta.country as string | undefined,
+              state: meta.state as string | undefined,
+              city: meta.city as string | undefined,
+              area: meta.area as string | undefined,
+              street: meta.street as string | undefined,
+              location,
+              profession: meta.profession as string | undefined,
+              yearsExperience: meta.yearsExperience as number | undefined,
+            },
+          } : undefined,
+        },
+      });
+    } catch (err) {
+      // Prisma unique-constraint violation (P2002) — most commonly the
+      // phone number (or, less likely, the email/id) already belongs to
+      // another account. The Supabase OTP was already consumed by the
+      // time we get here, so we can't silently retry — surface exactly
+      // what conflicted instead of a generic crash, so the person isn't
+      // misled into thinking their code was wrong.
+      const prismaErr = err as { code?: string; meta?: { target?: string[] } };
+      if (prismaErr.code === 'P2002') {
+        const target = prismaErr.meta?.target?.join(', ') ?? 'a field on your account';
+        console.error('[otp/verify] unique constraint on create:', target);
+        return NextResponse.json({
+          error: target.includes('phone')
+            ? 'That phone number is already registered to another account. Use a different number, or contact support if this is your number.'
+            : `An account with that ${target} already exists. Try signing in instead, or contact support.`,
+        }, { status: 409 });
+      }
+      console.error('[otp/verify] user creation failed:', err instanceof Error ? err.message : err);
+      return NextResponse.json({ error: 'Could not finish creating your account. Please try registering again.' }, { status: 500 });
+    }
 
     if (role === 'ADMIN') {
       await prisma.auditLog.create({
