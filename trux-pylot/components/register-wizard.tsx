@@ -84,7 +84,18 @@ export function RegisterWizard() {
       });
       const d = await r.json().catch(() => ({ error: 'The service is temporarily unavailable. Please try again.' }));
       setSubmitting(false);
-      if (!r.ok) return setError(d.error || 'Something went wrong.');
+      if (!r.ok) {
+        // A 409 means Supabase already accepted this code (it's now
+        // burned — one-time use) but creating the account failed for an
+        // unrelated reason (e.g. duplicate phone number). Re-entering the
+        // same code again would just fail again, so send the user back to
+        // request a fresh one after they fix the conflicting field.
+        if (r.status === 409) {
+          setOtpSent(false);
+          setCode('');
+        }
+        return setError(d.error || 'Something went wrong.');
+      }
       router.push(d.redirect || '/dashboard');
       router.refresh();
     } catch {
@@ -171,7 +182,7 @@ export function RegisterWizard() {
 
       <div className="wizard-actions">
         {step > 0 && step < lastStep && <button type="button" className="wizard-back" onClick={back}>← Back</button>}
-        {step > 0 && step === lastStep && !otpSent && <button type="button" className="wizard-back" onClick={back}>← Back</button>}
+        {step > 0 && step === lastStep && <button type="button" className="wizard-back" onClick={back}>← Back</button>}
         {step < lastStep && <button type="button" onClick={next}>Continue →</button>}
         {step === lastStep && !otpSent && <button type="button" onClick={sendCode} disabled={submitting}>{submitting ? 'Sending code…' : 'Send code →'}</button>}
         {step === lastStep && otpSent && <button type="button" onClick={verifyCode} disabled={submitting}>{submitting ? 'Verifying…' : 'Verify & create account →'}</button>}
