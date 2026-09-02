@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { Counter } from '@/components/counter';
+import { ProPhoto } from '@/components/pro-photo';
 
 export const dynamic = 'force-dynamic';
 
@@ -1629,11 +1630,7 @@ export default async function Home() {
               <div className="tp-pro-card" key={pro.name}>
                 <div className="tp-pro-photo">
                   <Icon name={pro.icon} />
-                  <img
-                    src={pro.img}
-                    alt={`${pro.name}, ${pro.trade} on Trux Pylot`}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                  />
+                  <ProPhoto src={pro.img} alt={`${pro.name}, ${pro.trade} on Trux Pylot`} />
                   <span className="tp-pro-badge">✓ Verified</span>
                 </div>
 
