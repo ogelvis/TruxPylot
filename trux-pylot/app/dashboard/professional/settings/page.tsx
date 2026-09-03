@@ -8,9 +8,8 @@ export default async function Settings() {
   if (!professional) return null;
 
   return (
-    <AppShell role="PROFESSIONAL" name={professional.fullName} active="/dashboard/professional/settings">
+    <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus==='APPROVED'} active="/dashboard/professional/settings">
       <main className="dash-page">
-        <p className="page-kicker">SETTINGS</p>
         <h1>Account settings.</h1>
         <p className="subcopy">Manage your account security and preferences.</p>
 

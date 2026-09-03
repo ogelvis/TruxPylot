@@ -18,13 +18,13 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
   if (!job) notFound();
 
   return (
-    <AppShell role="PROFESSIONAL" name={professional.fullName} active="/dashboard/professional/jobs">
+    <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus==='APPROVED'} active="/dashboard/professional/jobs">
       <main className="dash-page">
         <Link href="/dashboard/professional/jobs" className="back-link">← Back to my jobs</Link>
         <div className="overview-top">
           <div>
-            <p className="page-kicker">JOB #{job.id.slice(-6).toUpperCase()}</p>
             <h1>{job.category.name}</h1>
+            <p className="page-ref">Job #{job.id.slice(-6).toUpperCase()}</p>
           </div>
           <span className={`status ${job.status.toLowerCase()}`}>{job.status.replaceAll('_', ' ')}</span>
         </div>

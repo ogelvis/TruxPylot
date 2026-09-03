@@ -20,7 +20,6 @@ export default async function ProfessionalJobs({ searchParams }: { searchParams:
   const professional = await prisma.professional.findUnique({ where: { userId: session.userId } });
   if (!professional) {
     return <AppShell role="PROFESSIONAL" name="Professional" active="/dashboard/professional/jobs">
-      <main className="dash-page"><p className="page-kicker">MY JOBS</p><h1>My jobs</h1>
       <div className="empty">Complete your professional profile to start receiving jobs.</div></main>
     </AppShell>;
   }
@@ -33,9 +32,8 @@ export default async function ProfessionalJobs({ searchParams }: { searchParams:
   });
 
   return (
-    <AppShell role="PROFESSIONAL" name={professional.fullName} active="/dashboard/professional/jobs">
+    <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus==='APPROVED'} active="/dashboard/professional/jobs">
       <main className="dash-page">
-        <p className="page-kicker">MY JOBS</p>
         <h1>Job management</h1>
         <p className="subcopy">Track every job you have been requested for, from first contact to settlement.</p>
 

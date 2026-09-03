@@ -34,9 +34,8 @@ export default async function Earnings() {
   });
 
   return (
-    <AppShell role="PROFESSIONAL" name={professional.fullName} active="/dashboard/professional/earnings">
+    <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus==='APPROVED'} active="/dashboard/professional/earnings">
       <main className="dash-page">
-        <p className="page-kicker">EARNINGS</p>
         <h1>Your financial overview.</h1>
         <p className="subcopy">Track balances and payments from completed jobs.</p>
 

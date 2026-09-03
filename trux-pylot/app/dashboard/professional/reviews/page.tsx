@@ -19,9 +19,8 @@ export default async function Reviews() {
   const fiveStarPct = total ? Math.round((fiveStarCount / total) * 100) : 0;
 
   return (
-    <AppShell role="PROFESSIONAL" name={professional.fullName} active="/dashboard/professional/reviews">
+    <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus==='APPROVED'} active="/dashboard/professional/reviews">
       <main className="dash-page">
-        <p className="page-kicker">REVIEWS</p>
         <h1>What your customers are saying.</h1>
         <p className="subcopy">Reviews are only left by customers with a completed, paid job.</p>
 
