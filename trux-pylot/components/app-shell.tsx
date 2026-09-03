@@ -24,6 +24,40 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Audit log',href:'/dashboard/admin/audit-log',icon:'▣'},
   ]
 };
-export function AppShell({role,name,children,active}:{role:Role;name:string;children:React.ReactNode;active?:string}){
+
+function initials(name:string){return name.split(' ').map(n=>n[0]).filter(Boolean).slice(0,2).join('').toUpperCase();}
+
+export function AppShell({role,name,avatarUrl,verified,children,active}:{role:Role;name:string;avatarUrl?:string|null;verified?:boolean;children:React.ReactNode;active?:string}){
   const items = nav[role];
-  return <div className="app-shell"><aside className="sidebar"><Link className="dash-brand" href="/"><img src="/trux-pylot-logo.png" alt="Trux Pylot"/></Link><p className="nav-title">WORKSPACE</p><nav>{items.map((item)=><Link className={(active??items[0].href)===item.href?'active':''} key={item.href} href={item.href}><span>{item.icon}</span>{item.label}</Link>)}</nav><div className="support-card"><span>◌</span><b>Need assistance?</b><p>Our support team is here to help.</p><a href="mailto:info@truxpylot.co">Contact support →</a></div></aside><section className="dashboard-content"><header className="dash-header"><div className="mobile-brand">TRUX PYLOT</div><div className="header-right"><button className="notification" aria-label="Notifications">♧<i></i></button><div className="user-chip"><span>{name.split(' ').map(n=>n[0]).slice(0,2).join('')}</span><div><b>{name}</b><small>{role.toLowerCase()}</small></div></div></div></header>{children}</section></div>}
+  return <div className="app-shell">
+    <aside className="sidebar">
+      <Link className="dash-brand" href="/"><img src="/trux-pylot-logo.png" alt="Trux Pylot"/></Link>
+      <div className="sidebar-identity">
+        <span className="sidebar-avatar">{avatarUrl ? <img src={avatarUrl} alt={name}/> : initials(name)}</span>
+        <div className="sidebar-identity-text">
+          <b>{name}</b>
+          <div className="sidebar-role-row">
+            <span>{role.toLowerCase()}</span>
+            {verified && <span className="verified-chip">✓ Verified</span>}
+          </div>
+        </div>
+      </div>
+      <p className="nav-title">WORKSPACE</p>
+      <nav>{items.map((item)=><Link className={(active??items[0].href)===item.href?'active':''} key={item.href} href={item.href}><span>{item.icon}</span>{item.label}</Link>)}</nav>
+      <div className="support-card"><span>◌</span><b>Need assistance?</b><p>Our support team is here to help.</p><a href="mailto:info@truxpylot.co">Contact support →</a></div>
+    </aside>
+    <section className="dashboard-content">
+      <header className="dash-header">
+        <div className="mobile-brand">TRUX PYLOT</div>
+        <div className="header-right">
+          <button className="notification" aria-label="Notifications">♧<i></i></button>
+          <Link href={role==='ADMIN'?'/dashboard/admin':`/dashboard/${role.toLowerCase()}/profile`} className="user-chip">
+            <span>{avatarUrl ? <img src={avatarUrl} alt={name}/> : initials(name)}</span>
+            <div><b>{name}</b><small>{role.toLowerCase()}</small></div>
+          </Link>
+        </div>
+      </header>
+      {children}
+    </section>
+  </div>;
+}
