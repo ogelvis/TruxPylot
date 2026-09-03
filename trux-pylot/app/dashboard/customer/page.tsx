@@ -19,11 +19,10 @@ export default async function CustomerDashboard() {
   const totalSpent = jobs.reduce((sum, j) => sum + (j.payment?.status === 'SUCCESS' ? j.payment.amount : 0), 0);
 
   return (
-    <AppShell role="CUSTOMER" name={customer?.fullName ?? 'Customer'} active="/dashboard/customer">
+    <AppShell role="CUSTOMER" name={customer?.fullName ?? 'Customer'} avatarUrl={customer?.avatarUrl} active="/dashboard/customer">
       <main className="dash-page">
         <div className="overview-top">
           <div>
-            <p className="page-kicker">CUSTOMER WORKSPACE</p>
             <h1>Good morning, {customer?.fullName?.split(' ')[0]}.</h1>
             <p className="subcopy">Here is what is happening with your service requests.</p>
           </div>

@@ -8,9 +8,8 @@ export default async function CustomerSettings() {
   if (!customer) return null;
 
   return (
-    <AppShell role="CUSTOMER" name={customer.fullName} active="/dashboard/customer/settings">
+    <AppShell role="CUSTOMER" name={customer.fullName} avatarUrl={customer.avatarUrl} active="/dashboard/customer/settings">
       <main className="dash-page">
-        <p className="page-kicker">SETTINGS</p>
         <h1>Account settings.</h1>
         <p className="subcopy">Manage your account security.</p>
 

@@ -18,13 +18,13 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
   if (!job) notFound();
 
   return (
-    <AppShell role="CUSTOMER" name={customer.fullName} active="/dashboard/customer/jobs">
+    <AppShell role="CUSTOMER" name={customer.fullName} avatarUrl={customer.avatarUrl} active="/dashboard/customer/jobs">
       <main className="dash-page">
         <Link href="/dashboard/customer/jobs" className="back-link">← Back to my requests</Link>
         <div className="overview-top">
           <div>
-            <p className="page-kicker">REQUEST #{job.id.slice(-6).toUpperCase()}</p>
             <h1>{job.category.name}</h1>
+            <p className="page-ref">Request #{job.id.slice(-6).toUpperCase()}</p>
           </div>
           <span className={`status ${job.status.toLowerCase()}`}>{job.status.replaceAll('_', ' ')}</span>
         </div>

@@ -28,11 +28,10 @@ export default async function CustomerJobs({ searchParams }: { searchParams: Pro
   });
 
   return (
-    <AppShell role="CUSTOMER" name={customer.fullName} active="/dashboard/customer/jobs">
+    <AppShell role="CUSTOMER" name={customer.fullName} avatarUrl={customer.avatarUrl} active="/dashboard/customer/jobs">
       <main className="dash-page">
         <div className="overview-top">
           <div>
-            <p className="page-kicker">MY REQUESTS</p>
             <h1>Your service requests.</h1>
           </div>
           <a className="primary" href="/marketplace">New request →</a>
