@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const NG_STATES = [
@@ -30,6 +30,13 @@ export function RegisterWizard() {
   const [error, setError] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [code, setCode] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
 
   const steps = role === 'PROFESSIONAL'
     ? ['Role', 'Personal info', 'Location', 'Professional info', 'Verify email']
@@ -48,6 +55,7 @@ export function RegisterWizard() {
   }
 
   async function sendCode() {
+    if (resendCooldown > 0) return;
     setError('');
     setSubmitting(true);
     const body = {
@@ -67,6 +75,8 @@ export function RegisterWizard() {
       setSubmitting(false);
       if (!r.ok) return setError(d.error || 'Something went wrong.');
       setOtpSent(true);
+      setCode('');
+      setResendCooldown(60);
     } catch {
       setSubmitting(false);
       setError('Could not reach the server. Check your connection and try again.');
@@ -173,6 +183,15 @@ export function RegisterWizard() {
             <>
               <p className="hint-text">Enter the 6-digit code we sent to <b>{email}</b>.</p>
               <input value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" placeholder="6-digit code" required />
+              <p className="auth-switch">
+                <button type="button" onClick={sendCode} disabled={submitting || resendCooldown > 0}>
+                  {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Didn't get a code? Resend"}
+                </button>
+                {' · '}
+                <button type="button" onClick={() => { setOtpSent(false); setCode(''); setError(''); setResendCooldown(0); setStep(1); }}>
+                  Use a different email
+                </button>
+              </p>
             </>
           )}
         </div>
