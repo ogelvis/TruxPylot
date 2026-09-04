@@ -38,7 +38,7 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
           {categories.map(c => (
             
               key={c.id}
-              href={`/marketplace?category=${c.slug}`}
+              href={'/marketplace?category=' + c.slug}
               className={category === c.slug ? 'active' : ''}
             >
               {c.name}
@@ -48,7 +48,7 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
 
         <div className="professional-grid">
           {professionals.map(p => (
-            <Link key={p.id} href={`/marketplace/${p.id}`} className="professional-card">
+            <Link key={p.id} href={'/marketplace/' + p.id} className="professional-card">
               <div className="professional-card-head">
                 <b>{p.fullName}</b>
                 <span className="verified-badge">✓ Verified</span>
