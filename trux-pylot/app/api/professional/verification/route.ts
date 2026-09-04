@@ -1,7 +1,7 @@
-import { requireRole } from '@/lib/guard';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { AppShell } from '@/components/app-shell';
-import { VerificationSubmitForm } from '@/components/verification-submit-form';
+import { getSession } from '@/lib/auth';
+import { uploadVerificationDocument } from '@/lib/storage';
 
 const RESUBMITTABLE = new Set(['DRAFT', 'REJECTED', 'MORE_INFO_REQUIRED']);
 
