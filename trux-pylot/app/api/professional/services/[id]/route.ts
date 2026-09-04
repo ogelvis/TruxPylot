@@ -1,5 +1,4 @@
 
-Services id route · TS
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
