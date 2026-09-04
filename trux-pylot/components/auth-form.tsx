@@ -1,5 +1,5 @@
 'use client';
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export function AuthForm() {
@@ -9,9 +9,16 @@ export function AuthForm() {
   const [sent, setSent] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
-  async function sendCode(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resendCooldown]);
+
+  async function requestCode() {
+    if (resendCooldown > 0) return;
     setError('');
     setSubmitting(true);
     try {
@@ -24,10 +31,17 @@ export function AuthForm() {
       setSubmitting(false);
       if (!r.ok) return setError(d.error || 'Something went wrong');
       setSent(true);
+      setCode('');
+      setResendCooldown(60);
     } catch {
       setSubmitting(false);
       setError('Could not reach the server. Check your connection and try again.');
     }
+  }
+
+  function sendCode(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    requestCode();
   }
 
   async function verifyCode(e: FormEvent<HTMLFormElement>) {
@@ -60,7 +74,15 @@ export function AuthForm() {
         <input value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" placeholder="6-digit code" required />
         <button type="submit" disabled={submitting}>{submitting ? 'Verifying…' : 'Verify & sign in →'}</button>
         {error && <p role="alert">{error}</p>}
-        <p className="auth-switch"><button type="button" onClick={() => { setSent(false); setCode(''); setError(''); }}>Use a different email</button></p>
+        <p className="auth-switch">
+          <button type="button" onClick={requestCode} disabled={submitting || resendCooldown > 0}>
+            {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Didn't get a code? Resend"}
+          </button>
+          {' · '}
+          <button type="button" onClick={() => { setSent(false); setCode(''); setError(''); setResendCooldown(0); }}>
+            Use a different email
+          </button>
+        </p>
       </form>
     );
   }
