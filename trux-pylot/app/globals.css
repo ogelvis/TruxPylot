@@ -230,3 +230,11 @@
 .footer-admin a:hover{color:var(--muted)}
 .footer-copy{color:var(--muted);font-size:12px;padding-top:22px;border-top:1px solid var(--line)}
 @media(max-width:700px){.footer-cols{gap:28px}.footer-admin{justify-content:flex-start}}
+
+/* Verification status badges (admin verification center + professional verification page) */
+.status.draft{background:#eef1f6;color:var(--muted)}
+.status.submitted{background:#e8f0ff;color:var(--blue)}
+.status.under_review{background:#fff3d6;color:#9a6b00}
+.status.approved{background:#e4f6ec;color:#087743}
+.status.rejected{background:#fdeaea;color:#c22828}
+.status.more_info_required{background:#faf1de;color:#9c6b12}
