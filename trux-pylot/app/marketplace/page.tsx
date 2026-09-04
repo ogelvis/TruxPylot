@@ -35,7 +35,7 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
 
         <nav className="category-filters">
           <a href="/marketplace" className={!category ? 'active' : ''}>All services</a>
-          {categories.map(c => (
+                 {categories.map(c => (
             
               key={c.id}
               href={'/marketplace?category=' + c.slug}
