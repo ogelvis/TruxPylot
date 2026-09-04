@@ -1,0 +1,34 @@
+# Dependencies
+/node_modules
+
+# Next.js build output
+/.next
+/out
+
+# Production build
+/build
+
+# Environment variables — never commit real secrets
+.env
+.env.local
+.env.*.local
+
+# Prisma
+/prisma/dev.db
+/prisma/dev.db-journal
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor/OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+*.pem
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
