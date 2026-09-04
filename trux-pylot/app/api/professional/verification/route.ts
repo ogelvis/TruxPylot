@@ -5,52 +5,53 @@ import { uploadVerificationDocument } from '@/lib/storage';
 
 const RESUBMITTABLE = new Set(['DRAFT', 'REJECTED', 'MORE_INFO_REQUIRED']);
 
-const STATUS_COPY: Record<string, string> = {
-  DRAFT: "You haven't submitted for verification yet.",
-  SUBMITTED: 'Your documents are in the queue for review.',
-  UNDER_REVIEW: 'An admin is currently reviewing your submission.',
-  APPROVED: "You're verified — customers can see your badge and request your services.",
-  REJECTED: 'Your last submission was not approved. You can submit again below.',
-  MORE_INFO_REQUIRED: 'We need more information before approving you. Please resubmit below.',
-};
+export async function POST(request: Request) {
+  const session = await getSession();
+  if (!session || session.role !== 'PROFESSIONAL') {
+    return NextResponse.json({ error: 'Professional sign-in required.' }, { status: 401 });
+  }
 
-export default async function VerificationPage() {
-  const session = await requireRole('PROFESSIONAL');
-  const professional = await prisma.professional.findUnique({
-    where: { userId: session.userId },
-    include: {
-      verificationRequests: { orderBy: { createdAt: 'desc' }, take: 1, include: { documents: true } },
-    },
+  const professional = await prisma.professional.findUnique({ where: { userId: session.userId } });
+  if (!professional) return NextResponse.json({ error: 'Professional profile missing.' }, { status: 403 });
+  if (!RESUBMITTABLE.has(professional.verificationStatus)) {
+    return NextResponse.json({ error: 'Your verification is already ' + professional.verificationStatus.toLowerCase().replaceAll('_', ' ') + '.' }, { status: 409 });
+  }
+
+  let formData: FormData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json({ error: 'Could not read the uploaded files.' }, { status: 400 });
+  }
+
+  const files = formData.getAll('documents').filter((f): f is File => f instanceof File && f.size > 0);
+  if (!files.length) {
+    return NextResponse.json({ error: 'Attach at least one document (e.g. a valid ID or trade certificate).' }, { status: 400 });
+  }
+  if (files.length > 5) {
+    return NextResponse.json({ error: 'You can attach up to 5 documents at once.' }, { status: 400 });
+  }
+
+  const uploaded: { path: string; mimeType: string; size: number }[] = [];
+  try {
+    for (const file of files) {
+      uploaded.push(await uploadVerificationDocument(professional.id, file));
+    }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Could not upload your documents. Please try again.';
+    console.error('[professional/verification] upload failed:', message);
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
+
+  await prisma.$transaction(async tx => {
+    const req = await tx.verificationRequest.create({
+      data: { professionalId: professional.id, status: 'SUBMITTED' },
+    });
+    await tx.verificationDocument.createMany({
+      data: uploaded.map(u => ({ requestId: req.id, privateKey: u.path, mimeType: u.mimeType, size: u.size })),
+    });
+    await tx.professional.update({ where: { id: professional.id }, data: { verificationStatus: 'SUBMITTED' } });
   });
-  if (!professional) return null;
-  const latest = professional.verificationRequests[0];
 
-  return (
-    <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus === 'APPROVED'} active="/dashboard/professional/verification">
-      <main className="dash-page">
-        <h1>Get verified.</h1>
-        <p className="subcopy">Verification builds trust and is required before you appear in the marketplace.</p>
-
-        <section className="panel">
-          <div className="panel-head">
-            <h2>Status</h2>
-            <span className={'status ' + professional.verificationStatus.toLowerCase()}>{professional.verificationStatus.replaceAll('_', ' ')}</span>
-          </div>
-          <div className="job-detail-body">
-            <p>{STATUS_COPY[professional.verificationStatus]}</p>
-            {latest?.notes && (
-              <p style={{ marginTop: 10 }}><b>Reviewer notes:</b> {latest.notes}</p>
-            )}
-          </div>
-        </section>
-
-        {RESUBMITTABLE.has(professional.verificationStatus) && (
-          <section className="panel">
-            <div className="panel-head"><h2>Submit documents</h2></div>
-            <VerificationSubmitForm />
-          </section>
-        )}
-      </main>
-    </AppShell>
-  );
+  return NextResponse.json({ ok: true });
 }
