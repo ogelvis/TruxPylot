@@ -32,7 +32,7 @@ export default async function VerificationDetail({ params }: { params: Promise<{
     orderBy: { createdAt: 'asc' },
   });
 
-  const canAct = request.status === 'SUBMITTED' || request.status === 'UNDER_REVIEW';
+  const status = request.status;
 
   return (
     <AppShell role="ADMIN" name="Platform admin" active="/dashboard/admin/verifications">
@@ -102,10 +102,10 @@ export default async function VerificationDetail({ params }: { params: Promise<{
           </section>
         )}
 
-        {canAct ? (
+        {status === 'SUBMITTED' || status === 'UNDER_REVIEW' ? (
           <section className="panel verification-card">
             <div className="panel-head"><h2>Review this request</h2></div>
-            <VerificationActions requestId={request.id} status={request.status} />
+            <VerificationActions requestId={request.id} status={status} />
           </section>
         ) : (
           <section className="panel">
