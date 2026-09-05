@@ -5,6 +5,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
   CUSTOMER:[
     {label:'Overview',href:'/dashboard/customer',icon:'⌂'},
     {label:'My requests',href:'/dashboard/customer/jobs',icon:'▣'},
+    {label:'Service requests',href:'/dashboard/customer/service-requests',icon:'☎'},
     {label:'Find a professional',href:'/marketplace',icon:'◎'},
     {label:'Manage profile',href:'/dashboard/customer/profile',icon:'◈'},
     {label:'Settings',href:'/dashboard/customer/settings',icon:'⚙'},
@@ -20,6 +21,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
   ],
   ADMIN:[
     {label:'Overview',href:'/dashboard/admin',icon:'⌂'},
+    {label:'Service requests (CSD)',href:'/dashboard/admin/service-requests',icon:'☎'},
     {label:'Verifications',href:'/dashboard/admin/verifications',icon:'✓'},
     {label:'Users',href:'/dashboard/admin/users',icon:'◎'},
     {label:'Audit log',href:'/dashboard/admin/audit-log',icon:'▣'},

@@ -84,6 +84,17 @@ enum AccountType {
   BUSINESS
 }
 
+enum ServiceRequestStatus {
+  SUBMITTED
+  CSD_REVIEWING
+  AVAILABILITY_CONFIRMATION
+  PROFESSIONAL_CONFIRMED
+  CONNECTED
+  COMPLETED
+  DECLINED
+  CANCELLED
+}
+
 model Customer {
   id String @id @default(cuid())
   userId String @unique
@@ -101,6 +112,7 @@ model Customer {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   jobs Job[]
   reviews Review[]
+  serviceRequests ServiceRequest[]
 }
 
 model Professional {
@@ -128,7 +140,48 @@ model Professional {
   jobs Job[]
   reviews Review[]
   verificationRequests VerificationRequest[]
+  serviceRequests ServiceRequest[]
+  reports ProfessionalReport[]
   wallet Wallet?
+}
+
+// A "Request Service" submission from a professional's public profile.
+// Deliberately separate from Job/JobStatus: this never touches the
+// professional directly. Truxpylot's Customer Service/Disburser (CSD) —
+// handled by ADMIN accounts, no new role — reviews it, verifies
+// availability off-platform, and only then connects the two parties.
+// Converting a connected request into an actual paid Job (existing
+// pipeline) is a manual step for CSD, not automatic.
+model ServiceRequest {
+  id String @id @default(cuid())
+  customerId String
+  professionalId String
+  categoryId String
+  description String
+  location String
+  preferredDate DateTime?
+  preferredTime String?
+  additionalRequirements String?
+  status ServiceRequestStatus @default(SUBMITTED)
+  csdNotes String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  customer Customer @relation(fields: [customerId], references: [id])
+  professional Professional @relation(fields: [professionalId], references: [id])
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+  @@index([status, createdAt])
+}
+
+// A customer report about a professional, reviewed by CSD/admin.
+model ProfessionalReport {
+  id String @id @default(cuid())
+  professionalId String
+  customerId String?
+  reason String
+  description String
+  status String @default("OPEN")
+  createdAt DateTime @default(now())
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 }
 
 model ServiceCategory {
@@ -139,6 +192,7 @@ model ServiceCategory {
   active Boolean @default(true)
   professionals ProfessionalService[]
   jobs Job[]
+  serviceRequests ServiceRequest[]
 }
 
 model ProfessionalService {
