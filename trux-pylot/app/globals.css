@@ -352,3 +352,142 @@
   .mobile-tab-bar a{font-size:9px}
   .mobile-tab-bar a span{font-size:16px}
 }
+
+/* =========================================================================
+   PROFESSIONAL TIER CENTER — additive only. Nothing below removes or
+   restructures existing rules; the tier page uses its own namespaced
+   classes throughout (tier-*, premium-*, btn-premium-*) so it can't
+   collide with existing dashboard/marketplace/profile styling.
+   ========================================================================= */
+
+/* Small chips reused in the sidebar, marketplace cards, and public profile.
+   Kept visually distinct from the existing brass "verified" language on
+   purpose — Premium and Verified are different signals, never merged. */
+.premium-chip{display:inline-flex;align-items:center;gap:3px;background:linear-gradient(135deg,#1a3fae,#3f6ff2);color:#fff;font-size:9px;font-weight:800;padding:2px 6px;border-radius:5px;letter-spacing:.02em;box-shadow:0 0 0 1px #ffffff22 inset}
+.card-badges{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.premium-badge{font-size:10px;font-weight:800;padding:5px 9px;border-radius:6px;background:linear-gradient(135deg,#12308f,#2f5fe0);color:#fff;white-space:nowrap;box-shadow:0 4px 10px #12308f40}
+.pro-credential.premium{background:linear-gradient(135deg,#12308f,#2f5fe0);border-color:transparent;color:#fff;box-shadow:0 4px 10px #12308f40}
+
+/* ---- Tier Center page shell: rich blue, layered, glassy ---- */
+.tier-page{position:relative;padding:0;max-width:none;overflow:hidden}
+.tier-hero-bg{position:absolute;inset:0;background:
+    radial-gradient(circle at 12% 8%, #2c5cf0 0%, transparent 45%),
+    radial-gradient(circle at 88% 0%, #6c8ef8 0%, transparent 40%),
+    linear-gradient(165deg,#04123f 0%,#0a2478 42%,#123fae 78%,#1a52d6 100%);
+  z-index:0;overflow:hidden}
+.tier-glow{position:absolute;border-radius:50%;filter:blur(60px);opacity:.55;animation:tierFloat 14s ease-in-out infinite}
+.tier-glow-a{width:340px;height:340px;background:#3f7bff;top:-90px;right:-60px}
+.tier-glow-b{width:260px;height:260px;background:#7aa6ff;bottom:40px;left:-80px;animation-delay:-6s}
+.tier-shape{position:absolute;border:1px solid #ffffff22;border-radius:28px;transform:rotate(18deg);opacity:.5}
+.tier-shape-a{width:180px;height:180px;top:60px;left:58%;border-radius:50%;animation:tierFloat 18s ease-in-out infinite}
+.tier-shape-b{width:120px;height:120px;bottom:-30px;right:10%;animation:tierFloat 16s ease-in-out infinite reverse}
+@keyframes tierFloat{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-22px) rotate(6deg)}}
+@media (prefers-reduced-motion: reduce){.tier-glow,.tier-shape{animation:none}}
+
+.tier-hero-content{position:relative;z-index:1;padding:40px 38px 70px;max-width:1100px;margin:0 auto}
+.tier-kicker{color:#a9c2ff !important}
+.tier-hero-title{color:#fff;font-size:32px;max-width:640px}
+.tier-hero-sub{color:#c3d3fb !important}
+
+/* Current tier card — glass surface over the blue background */
+.tier-current-card{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.18);
+  backdrop-filter:blur(14px);
+  border-radius:20px;padding:26px 28px;margin:28px 0 34px;
+  box-shadow:0 20px 50px #03123f55;
+  animation:tierEnter .5s ease both;
+}
+.tier-current-badge{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.04em;padding:6px 13px;border-radius:20px;background:#ffffff1a;color:#dbe6ff;border:1px solid #ffffff30;margin-bottom:12px}
+.tier-current-premium .tier-current-badge{background:linear-gradient(135deg,#ffd98a,#f2a93a);color:#4a2e00;border-color:transparent;box-shadow:0 0 22px #f2a93a66;animation:badgeGlow 2.4s ease-in-out infinite}
+.tier-current-verified .tier-current-badge{background:#e8c574;color:#3a2c0f;border-color:transparent}
+@keyframes badgeGlow{0%,100%{box-shadow:0 0 14px #f2a93a55}50%{box-shadow:0 0 28px #f2a93aaa}}
+.tier-current-card h2{color:#fff;font-size:22px;margin-bottom:6px}
+.tier-current-card p{color:#c9d7fb;line-height:1.6;margin:0;max-width:560px}
+
+/* Tier journey */
+.tier-journey{display:flex;align-items:center;gap:10px;margin-bottom:34px}
+.tier-journey-step{display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;flex:1;opacity:.55}
+.tier-journey-step.is-done,.tier-journey-step.is-current{opacity:1}
+.tier-journey-dot{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#ffffff14;border:1px solid #ffffff30;color:#fff;font-weight:800;font-size:13px}
+.tier-journey-step.is-done .tier-journey-dot{background:#2f6fe8;border-color:#5c8bf5}
+.tier-journey-step.is-current .tier-journey-dot{background:linear-gradient(135deg,#ffd98a,#f2a93a);color:#4a2e00;border-color:transparent;box-shadow:0 0 18px #f2a93a77}
+.tier-journey-step b{color:#fff;font-size:13px}
+.tier-journey-step small{color:#a9bdf0;font-size:11px}
+.tier-journey-line{height:1px;flex:.4;background:#ffffff30;margin-top:-22px}
+
+/* Tier comparison cards */
+.tier-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.tier-card{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
+  border-radius:18px;padding:24px;color:#dbe6ff;
+  transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+  display:flex;flex-direction:column;gap:10px;position:relative;
+}
+.tier-card:hover{transform:translateY(-4px);border-color:#ffffff40;box-shadow:0 18px 40px #03123f55}
+.tier-card.is-current{border-color:#7aa6ff;box-shadow:0 0 0 1px #7aa6ff55 inset}
+.tier-card-name{font-weight:800;font-size:15px;letter-spacing:.03em;color:#fff}
+.tier-card-price{font:800 22px Manrope;color:#fff;margin:0}
+.tier-card-price span{font-size:11px;font-weight:600;color:#a9bdf0;margin-left:4px}
+.tier-card ul{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:13px;flex:1}
+.tier-card li{padding-left:18px;position:relative;color:#c9d7fb}
+.tier-card li:before{content:'✓';position:absolute;left:0;color:#7fe0a8;font-weight:800}
+.tier-card-current{display:inline-block;font-size:11px;font-weight:800;color:#dbe6ff;background:#ffffff1a;border:1px solid #ffffff30;padding:6px 12px;border-radius:20px;text-align:center}
+.tier-card-cta{color:#fff;font-weight:700;font-size:13px;text-decoration:underline;text-underline-offset:3px}
+.tier-card-locked{font-size:12px;color:#9fb3e6;font-style:italic;margin:0}
+
+/* The Premium card is the visual focal point — brighter surface, gold accent */
+.tier-card-premium{
+  background:linear-gradient(160deg,#12308f,#1e4bd6);
+  border-color:#5c8bf5;
+  box-shadow:0 20px 50px #0a237a88;
+}
+.tier-card-premium .tier-card-name{background:linear-gradient(135deg,#ffe9b8,#f2a93a);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tier-card-premium li:before{color:#ffd98a}
+.tier-card-premium.is-current{border-color:#ffd98a;box-shadow:0 0 0 1px #ffd98a66 inset, 0 20px 50px #0a237a88}
+
+/* ---- Premium purchase flow: buttons + confirmation card + states ---- */
+.btn-premium-unlock{
+  width:100%;border:0;border-radius:12px;padding:13px 18px;font-weight:800;font-size:14px;
+  background:linear-gradient(135deg,#ffd98a,#f2a93a);color:#4a2e00;
+  box-shadow:0 10px 24px #f2a93a55;transition:transform .15s ease, box-shadow .15s ease;
+}
+.btn-premium-unlock:hover{transform:translateY(-2px);box-shadow:0 14px 30px #f2a93a77}
+.btn-premium-unlock:active{transform:translateY(0)}
+.btn-premium-unlock:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+.premium-confirm-card{background:#ffffff12;border:1px solid #ffffff2a;border-radius:16px;padding:20px;animation:tierEnter .3s ease both}
+.premium-confirm-label{font-size:11px;font-weight:800;letter-spacing:.05em;color:#a9c2ff;margin:0}
+.premium-confirm-note{font-size:12px;color:#c9d7fb;margin:4px 0 14px}
+.premium-confirm-list{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:6px;font-size:13px}
+.premium-confirm-list li{padding-left:18px;position:relative;color:#dbe6ff}
+.premium-confirm-list li:before{content:'✓';position:absolute;left:0;color:#7fe0a8;font-weight:800}
+.premium-confirm-price{font:800 26px Manrope;color:#fff;margin:0 0 16px}
+.premium-confirm-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-premium-buy{flex:1;min-width:160px;border:0;border-radius:12px;padding:13px 18px;font-weight:800;font-size:14px;background:linear-gradient(135deg,#ffd98a,#f2a93a);color:#4a2e00;transition:.15s ease}
+.btn-premium-buy:disabled{opacity:.7;cursor:progress}
+.btn-premium-buy:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 14px 30px #f2a93a55}
+.btn-premium-cancel{border:1px solid #ffffff30;background:transparent;color:#dbe6ff;border-radius:12px;padding:13px 18px;font-weight:700;font-size:14px}
+.btn-premium-cancel:disabled{opacity:.5}
+.btn-premium-cancel:not(:disabled):hover{background:#ffffff10}
+
+@keyframes tierEnter{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---- Premium payment callback page: blue aside variant ---- */
+.premium-aside{background:linear-gradient(160deg,#04123f,#0a2478,#1a52d6) !important}
+.premium-success-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.primary-ghost{display:inline-block;border:1px solid var(--line);color:var(--ink);padding:12px 18px;border-radius:8px;font-weight:700}
+.primary-ghost:hover{border-color:#86a9ff;color:var(--blue)}
+
+/* ---- Mobile: tier page stacks cleanly, no horizontal overflow ---- */
+@media(max-width:850px){
+  .tier-hero-content{padding:28px 18px 90px}
+  .tier-hero-title{font-size:24px}
+  .tier-compare{grid-template-columns:1fr}
+  .tier-journey{flex-wrap:wrap;gap:14px}
+  .tier-journey-line{display:none}
+  .tier-current-card{padding:20px}
+  .tier-glow-a{width:220px;height:220px}
+  .tier-glow-b{width:180px;height:180px}
+  .tier-shape-a,.tier-shape-b{width:100px;height:100px}
+}

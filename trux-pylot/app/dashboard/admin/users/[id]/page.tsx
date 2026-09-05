@@ -13,7 +13,7 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
     where: { id },
     include: {
       customer: true,
-      professional: true,
+      professional: { include: { premiumPurchases: { where: { status: 'SUCCESS' }, take: 1 } } },
     },
   });
   if (!user) notFound();
@@ -60,6 +60,9 @@ export default async function AdminUserDetail({ params }: { params: Promise<{ id
               <p><b>{jobCount}</b> job{jobCount === 1 ? '' : 's'} on record</p>
               {user.professional && <p><b>Verification</b> — {user.professional.verificationStatus}</p>}
               {user.professional && <p><b>Rating</b> — {user.professional.rating.toFixed(1)} ★</p>}
+              {user.professional && (
+                <p><b>Tier</b> — {user.professional.premiumPurchases.length ? '★ Premium' : user.professional.verificationStatus === 'APPROVED' ? '✓ Verified' : 'Basic'}</p>
+              )}
             </div>
           </div>
           <div className="panel">

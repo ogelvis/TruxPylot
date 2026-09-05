@@ -19,6 +19,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
       include: {
         services: { include: { category: true } },
         reviews: { include: { customer: true }, orderBy: { createdAt: 'desc' }, take: 8 },
+        premiumPurchases: { where: { status: 'SUCCESS' }, take: 1 },
       },
     }),
     prisma.review.count({ where: { professionalId: id } }),
@@ -35,9 +36,11 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
   const approvedBatch = approvedRequest?.reviewedAt ? monthYearFmt.format(approvedRequest.reviewedAt) : null;
   const completionRate = jobCount > 0 ? Math.round((professional.completedJobs / jobCount) * 100) : null;
   const displayName = professional.accountType === 'BUSINESS' ? (professional.businessName || professional.fullName) : professional.fullName;
+  const isPremium = professional.premiumPurchases.length > 0;
 
   const whyChoose = [
     'Truxpylot Verified professional',
+    isPremium ? 'Premium Trux Pylot professional' : null,
     `${professional.completedJobs} job${professional.completedJobs === 1 ? '' : 's'} completed on Truxpylot`,
     reviewCount > 0 ? `${professional.rating.toFixed(1)} average rating from ${reviewCount} review${reviewCount === 1 ? '' : 's'}` : null,
     professional.services.length > 0 ? `Approved for ${professional.services.length} service${professional.services.length === 1 ? '' : 's'}` : null,
@@ -74,6 +77,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
             </div>
           </div>
           <div className="pro-hero-badges">
+            {isPremium && <span className="pro-credential premium">★ Premium</span>}
             <span className="pro-credential brass">✓ Truxpylot Verified</span>
             <span className="pro-credential">{tsid}</span>
             {approvedBatch && <span className="pro-credential">Approved {approvedBatch}</span>}

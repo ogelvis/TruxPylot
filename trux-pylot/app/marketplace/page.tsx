@@ -4,17 +4,33 @@ export const dynamic = 'force-dynamic';
 
 export default async function Marketplace({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const { category } = await searchParams;
-  const [professionals, categories] = await Promise.all([
+  const [professionalsRaw, categories] = await Promise.all([
     prisma.professional.findMany({
       where: {
         verificationStatus: 'APPROVED',
         services: category ? { some: { category: { slug: category } } } : undefined,
       },
-      include: { services: { include: { category: true } }, user: true },
+      include: {
+        services: { include: { category: true } },
+        user: true,
+        premiumPurchases: { where: { status: 'SUCCESS' }, take: 1 },
+      },
+      // Base order: highest-rated first. (There was no explicit ordering
+      // here before; findMany previously returned insertion order.)
+      // Premium placement is applied as a stable JS sort below — Prisma
+      // can't order by a to-many relation's existence directly.
+      orderBy: [{ rating: 'desc' }],
       take: 30,
     }),
     prisma.serviceCategory.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
   ]);
+
+  // Premium is an additional visibility signal layered on top of the
+  // existing rating order, not a replacement for it — a stable sort here
+  // preserves the rating order within the Premium and non-Premium groups.
+  const professionals = [...professionalsRaw].sort(
+    (a, b) => (b.premiumPurchases.length - a.premiumPurchases.length),
+  );
 
   return (
     <main>
@@ -51,7 +67,10 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
             <Link key={p.id} href={'/marketplace/' + p.id} className="professional-card">
               <div className="professional-card-head">
                 <b>{p.fullName}</b>
-                <span className="verified-badge">✓ Verified</span>
+                <span className="card-badges">
+                  {p.premiumPurchases.length > 0 && <span className="premium-badge">★ Premium</span>}
+                  <span className="verified-badge">✓ Verified</span>
+                </span>
               </div>
               <p className="professional-meta">{p.profession} · {p.location}</p>
               <p className="professional-meta">★ {p.rating.toFixed(1)} · {p.completedJobs} completed jobs</p>
