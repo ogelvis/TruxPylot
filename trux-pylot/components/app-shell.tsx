@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Role } from '@prisma/client';
+import { MobileTabBar } from '@/components/mobile-tab-bar';
 
 const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
   CUSTOMER:[
@@ -47,11 +48,14 @@ export function AppShell({role,name,avatarUrl,verified,children,active}:{role:Ro
       </div>
       <p className="nav-title">WORKSPACE</p>
       <nav>{items.map((item)=><Link className={(active??items[0].href)===item.href?'active':''} key={item.href} href={item.href}><span>{item.icon}</span>{item.label}</Link>)}</nav>
-      <div className="support-card"><span>◌</span><b>Need assistance?</b><p>Our support team is here to help.</p><a href="mailto:info@truxpylot.co">Contact support →</a></div>
+      <div className="support-card"><span>◌</span><b>Need assistance?</b><p>Our support team is here to help.</p><a href="mailto:info@truxpylot.com">Contact support →</a></div>
     </aside>
     <section className="dashboard-content">
       <header className="dash-header">
-        <div className="mobile-brand">TRUX PYLOT</div>
+        <div className="mobile-brand">
+          <span className="mobile-brand-logo">TRUX PYLOT</span>
+          <span className="mobile-brand-greeting">Hi, {name.split(' ')[0]} 👋</span>
+        </div>
         <div className="header-right">
           <button className="notification" aria-label="Notifications">♧<i></i></button>
           <Link href={role==='ADMIN'?'/dashboard/admin':`/dashboard/${role.toLowerCase()}/profile`} className="user-chip">
@@ -61,6 +65,7 @@ export function AppShell({role,name,avatarUrl,verified,children,active}:{role:Ro
         </div>
       </header>
       {children}
+      <MobileTabBar role={role} active={active ?? items[0].href} />
     </section>
   </div>;
 }
