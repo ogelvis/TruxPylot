@@ -11,12 +11,16 @@ const NG_STATES = [
 ];
 
 type Role = 'CUSTOMER' | 'PROFESSIONAL';
+type AccountType = 'INDIVIDUAL' | 'BUSINESS';
 
 export function RegisterWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [role, setRole] = useState<Role | null>(null);
+  const [accountType, setAccountType] = useState<AccountType | null>(null);
   const [fullName, setFullName] = useState('');
+  const [businessName, setBusinessName] = useState('');
+  const [registrationNumber, setRegistrationNumber] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [country, setCountry] = useState('Nigeria');
@@ -39,14 +43,22 @@ export function RegisterWizard() {
   }, [resendCooldown]);
 
   const steps = role === 'PROFESSIONAL'
-    ? ['Role', 'Personal info', 'Location', 'Professional info', 'Verify email']
-    : ['Role', 'Personal info', 'Location', 'Verify email'];
+    ? ['Role', 'Account type', 'Personal info', 'Location', 'Professional info', 'Verify email']
+    : ['Role', 'Account type', 'Personal info', 'Location', 'Verify email'];
   const lastStep = steps.length - 1;
 
   function next() {
     setError('');
     if (step === 0 && !role) return setError('Choose an option to continue.');
-    if (step === 1 && (!fullName.trim() || !email.trim())) return setError('Full name and email are required.');
+    if (step === 1 && !accountType) return setError('Choose an option to continue.');
+    if (step === 2) {
+      if (accountType === 'BUSINESS' && (!businessName.trim() || !registrationNumber.trim() || !fullName.trim() || !email.trim())) {
+        return setError('Business name, registration number, contact person and email are required.');
+      }
+      if (accountType === 'INDIVIDUAL' && (!fullName.trim() || !email.trim())) {
+        return setError('Full name and email are required.');
+      }
+    }
     setStep(s => Math.min(lastStep, s + 1));
   }
   function back() {
@@ -59,7 +71,9 @@ export function RegisterWizard() {
     setError('');
     setSubmitting(true);
     const body = {
-      mode: 'register', role, fullName, email, phone: phone || undefined,
+      mode: 'register', role, accountType, fullName, email, phone: phone || undefined,
+      businessName: accountType === 'BUSINESS' ? businessName : undefined,
+      registrationNumber: accountType === 'BUSINESS' ? registrationNumber : undefined,
       country: country || undefined, state: state || undefined, city: city || undefined,
       area: area || undefined, street: street || undefined,
       profession: role === 'PROFESSIONAL' ? profession || undefined : undefined,
@@ -143,14 +157,36 @@ export function RegisterWizard() {
       )}
 
       {step === 1 && (
+        <div className="role-picker">
+          <p className="wizard-question">
+            {role === 'PROFESSIONAL' ? 'Are you registering as an individual or a business?' : 'Are you signing up as an individual or a business?'}
+          </p>
+          <button type="button" className={`role-card ${accountType === 'INDIVIDUAL' ? 'selected' : ''}`} onClick={() => setAccountType('INDIVIDUAL')}>
+            <b>Individual</b>
+            <span>{role === 'PROFESSIONAL' ? 'You personally offer the service.' : 'You are booking for yourself.'}</span>
+          </button>
+          <button type="button" className={`role-card ${accountType === 'BUSINESS' ? 'selected' : ''}`} onClick={() => setAccountType('BUSINESS')}>
+            <b>Business / Organization</b>
+            <span>{role === 'PROFESSIONAL' ? 'A registered company offering the service.' : 'You are booking on behalf of a company or estate.'}</span>
+          </button>
+        </div>
+      )}
+
+      {step === 2 && (
         <div className="wizard-fields">
-          <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder="Full name" required />
+          {accountType === 'BUSINESS' && (
+            <>
+              <input value={businessName} onChange={e => setBusinessName(e.target.value)} placeholder="Business / company name" required />
+              <input value={registrationNumber} onChange={e => setRegistrationNumber(e.target.value)} placeholder="CAC registration number" required />
+            </>
+          )}
+          <input value={fullName} onChange={e => setFullName(e.target.value)} placeholder={accountType === 'BUSINESS' ? 'Contact person\u2019s full name' : 'Full name'} required />
           <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email address" required />
           <input value={phone} onChange={e => setPhone(e.target.value)} placeholder="WhatsApp phone number" />
         </div>
       )}
 
-      {step === 2 && (
+      {step === 3 && (
         <div className="wizard-fields">
           <select value={country} onChange={e => setCountry(e.target.value)}>
             <option>Nigeria</option>
@@ -167,7 +203,7 @@ export function RegisterWizard() {
         </div>
       )}
 
-      {step === 3 && role === 'PROFESSIONAL' && (
+      {step === 4 && role === 'PROFESSIONAL' && (
         <div className="wizard-fields">
           <input value={profession} onChange={e => setProfession(e.target.value)} placeholder="What service do you provide? e.g. Electrician" />
           <input value={yearsExperience} onChange={e => setYearsExperience(e.target.value)} type="number" min={0} max={60} placeholder="Years of experience" />
@@ -178,7 +214,10 @@ export function RegisterWizard() {
       {step === lastStep && (
         <div className="wizard-fields">
           {!otpSent ? (
-            <p className="hint-text">We&apos;ll email a 6-digit code to <b>{email}</b> to confirm it&apos;s you and finish creating your account.</p>
+            <p className="hint-text">
+              We&apos;ll email a 6-digit code to <b>{email}</b> to confirm it&apos;s you and finish creating your account.
+              {role === 'PROFESSIONAL' && ' Your profile will only appear in the marketplace after our team reviews and approves it — we\u2019ll email you as soon as that happens.'}
+            </p>
           ) : (
             <>
               <p className="hint-text">Enter the 6-digit code we sent to <b>{email}</b>.</p>
@@ -188,7 +227,7 @@ export function RegisterWizard() {
                   {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Didn't get a code? Resend"}
                 </button>
                 {' · '}
-                <button type="button" onClick={() => { setOtpSent(false); setCode(''); setError(''); setResendCooldown(0); setStep(1); }}>
+                <button type="button" onClick={() => { setOtpSent(false); setCode(''); setError(''); setResendCooldown(0); setStep(2); }}>
                   Use a different email
                 </button>
               </p>

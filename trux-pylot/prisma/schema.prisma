@@ -79,10 +79,18 @@ model User {
   auditLogs AuditLog[]
 }
 
+enum AccountType {
+  INDIVIDUAL
+  BUSINESS
+}
+
 model Customer {
   id String @id @default(cuid())
   userId String @unique
   fullName String
+  accountType AccountType @default(INDIVIDUAL)
+  businessName String?
+  registrationNumber String?
   avatarUrl String? @db.Text
   country String?
   state String?
@@ -99,6 +107,9 @@ model Professional {
   id String @id @default(cuid())
   userId String @unique
   fullName String
+  accountType AccountType @default(INDIVIDUAL)
+  businessName String?
+  registrationNumber String?
   avatarUrl String? @db.Text
   profession String?
   bio String?
