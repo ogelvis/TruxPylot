@@ -1,34 +1,32 @@
-# Dependencies
-/node_modules
+# Copy this file to .env (local) or set these in your deploy platform's
+# Environment tab (e.g. Render). See README-FIX.md for the full setup guide.
 
-# Next.js build output
-/.next
-/out
+# --- Database (Prisma / Postgres, e.g. from Supabase) ---
+DATABASE_URL=
 
-# Production build
-/build
+# --- App session signing (tp_session cookie, lib/auth.ts) ---
+AUTH_SECRET=
 
-# Environment variables — never commit real secrets
-.env
-.env.local
-.env.*.local
+# --- Supabase Auth (email OTP, lib/otp.ts) — anon/public key only ---
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
 
-# Prisma
-/prisma/dev.db
-/prisma/dev.db-journal
+# --- Supabase Storage (lib/storage.ts) — SERVICE ROLE key, server-only.
+# Required for avatar uploads AND for the admin verification document
+# viewer (getVerificationDocumentUrl / GET /api/admin/documents/[id]) to
+# generate signed URLs. Never expose this to the browser. ---
+SUPABASE_SERVICE_ROLE_KEY=
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-*.log
+# --- One-time admin bootstrap (app/api/admin/bootstrap, app/api/admin/diagnostics) ---
+ADMIN_BOOTSTRAP_SECRET=
 
-# Editor/OS
-.DS_Store
-.vscode/*
-!.vscode/extensions.json
-*.pem
+# --- Paystack (app/api/payments/*) ---
+PAYSTACK_SECRET_KEY=
+PAYSTACK_WEBHOOK_SECRET=
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
+# Used to build the Paystack callback_url after payment initialization.
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+# Optional — platform commission percentage applied to job payments (lib/jobs.ts).
+# Defaults to 10 if unset.
+PLATFORM_COMMISSION_PERCENT=10
