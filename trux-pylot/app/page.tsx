@@ -508,15 +508,28 @@ export default async function Home() {
               className="tp-service reveal"
               style={{ transitionDelay: `${index * 35}ms` }}
             >
-              <span>{String(index + 1).padStart(2, '0')}</span>
-              <strong>{category.name}</strong>
-              <b>↗</b>
+              <span className="tp-service-number">{String(index + 1).padStart(2, '0')}</span>
+              <span className="tp-service-main">
+                <strong>{category.name}</strong>
+                {category.description && <small>{category.description}</small>}
+              </span>
+              <span className="tp-service-arrow">↗</span>
             </Link>
           ))}
 
           {!categories.length && (
             <p className="tp-muted">Service categories are being set up. Check back soon.</p>
           )}
+        </div>
+
+        <div className="tp-services-more reveal">
+          <div>
+            <strong>Looking for something else?</strong>
+            <span>Explore the complete TruxPylot service directory.</span>
+          </div>
+          <Link href="/services" className="tp-button tp-services-more-button">
+            See More Services <span>↗</span>
+          </Link>
         </div>
       </section>
 
