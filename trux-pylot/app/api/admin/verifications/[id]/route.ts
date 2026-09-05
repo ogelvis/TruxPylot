@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { VerificationStatus } from '@prisma/client';
+import { sendVerificationApprovedEmail, sendVerificationRejectedEmail, sendVerificationMoreInfoEmail } from '@/lib/email';
 
 const input = z
   .object({
@@ -52,7 +53,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { action, notes } = parsed.data;
 
   const { id } = await params;
-  const requestItem = await prisma.verificationRequest.findUnique({ where: { id } });
+  const requestItem = await prisma.verificationRequest.findUnique({
+    where: { id },
+    include: { professional: { include: { user: true } } },
+  });
   if (!requestItem) {
     return NextResponse.json({ error: 'Verification request not found.' }, { status: 404 });
   }
@@ -89,6 +93,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   } catch (err) {
     console.error('[admin/verifications] update failed:', err instanceof Error ? err.message : err);
     return NextResponse.json({ error: 'Could not save this review right now. Please try again.' }, { status: 500 });
+  }
+
+  // Best-effort notification — a bounced/misconfigured email should never
+  // undo the review decision that already saved successfully above.
+  try {
+    const to = requestItem.professional.user.email;
+    const name = requestItem.professional.fullName;
+    if (action === 'APPROVE') await sendVerificationApprovedEmail(to, name);
+    else if (action === 'REJECT') await sendVerificationRejectedEmail(to, name, notes);
+    else if (action === 'REQUEST_MORE_INFORMATION') await sendVerificationMoreInfoEmail(to, name, notes);
+  } catch (err) {
+    console.error('[admin/verifications] notification email failed:', err instanceof Error ? err.message : err);
   }
 
   return NextResponse.json({ ok: true, status });

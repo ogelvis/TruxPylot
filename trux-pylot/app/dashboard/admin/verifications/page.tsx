@@ -78,8 +78,11 @@ export default async function VerificationsQueue({ searchParams }: { searchParam
           {requests.length ? requests.map((r) => (
             <Link href={`/dashboard/admin/verifications/${r.id}`} className="table-row job-row" key={r.id}>
               <div className="job-name">
-                <b>{r.professional.fullName}</b>
-                <span>{r.professional.user.email} · {r.documents.length} document{r.documents.length === 1 ? '' : 's'}</span>
+                <b>{r.professional.accountType === 'BUSINESS' ? (r.professional.businessName || r.professional.fullName) : r.professional.fullName}</b>
+                <span>
+                  {r.professional.accountType === 'BUSINESS' ? `Business · Contact: ${r.professional.fullName} · ` : ''}
+                  {r.professional.user.email} · {r.documents.length} document{r.documents.length === 1 ? '' : 's'}
+                </span>
               </div>
               <small>{r.professional.profession ?? 'Not specified'}</small>
               <small>{dateFmt.format(r.createdAt)}</small>

@@ -37,6 +37,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'We could not find your registration details. Please register again.' }, { status: 400 });
     }
     const location = [meta.area, meta.city, meta.state].filter(Boolean).join(', ') || undefined;
+    const accountType = (meta.accountType as 'INDIVIDUAL' | 'BUSINESS' | undefined) ?? 'INDIVIDUAL';
+    const businessName = meta.businessName as string | undefined;
+    const registrationNumber = meta.registrationNumber as string | undefined;
 
     try {
       user = await prisma.user.create({
@@ -48,6 +51,9 @@ export async function POST(request: Request) {
           customer: role === 'CUSTOMER' ? {
             create: {
               fullName,
+              accountType,
+              businessName,
+              registrationNumber,
               country: meta.country as string | undefined,
               state: meta.state as string | undefined,
               city: meta.city as string | undefined,
@@ -59,6 +65,9 @@ export async function POST(request: Request) {
           professional: role === 'PROFESSIONAL' ? {
             create: {
               fullName,
+              accountType,
+              businessName,
+              registrationNumber,
               country: meta.country as string | undefined,
               state: meta.state as string | undefined,
               city: meta.city as string | undefined,

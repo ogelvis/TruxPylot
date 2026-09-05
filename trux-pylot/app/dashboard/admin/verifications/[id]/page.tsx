@@ -51,6 +51,14 @@ export default async function VerificationDetail({ params }: { params: Promise<{
           <section className="panel">
             <div className="panel-head"><h2>Professional</h2></div>
             <div className="job-detail-body">
+              {request.professional.accountType === 'BUSINESS' && (
+                <>
+                  <p><b>Business name</b> — {request.professional.businessName ?? 'Not provided'}</p>
+                  <p><b>Registration number (CAC)</b> — {request.professional.registrationNumber ?? 'Not provided'}</p>
+                  <p><b>Contact person</b> — {request.professional.fullName}</p>
+                </>
+              )}
+              <p><b>Account type</b> — {request.professional.accountType === 'BUSINESS' ? 'Business / Organization' : 'Individual'}</p>
               <p><b>Email</b> — {request.professional.user.email}</p>
               <p><b>Phone</b> — {request.professional.user.phone ?? 'Not provided'}</p>
               <p><b>Profession</b> — {request.professional.profession ?? 'Not specified'}</p>

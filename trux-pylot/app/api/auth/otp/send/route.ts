@@ -10,6 +10,9 @@ const registerFields = z.object({
   email: emailField,
   fullName: z.string().min(2),
   role: z.enum(['CUSTOMER', 'PROFESSIONAL']),
+  accountType: z.enum(['INDIVIDUAL', 'BUSINESS']).default('INDIVIDUAL'),
+  businessName: z.string().max(160).optional(),
+  registrationNumber: z.string().max(60).optional(),
   phone: z.string().min(7).optional(),
   country: z.string().max(80).optional(),
   state: z.string().max(80).optional(),
@@ -54,6 +57,9 @@ export async function POST(request: Request) {
 
   if (d.mode === 'register') {
     if (existing) return NextResponse.json({ error: 'That email is already registered. Try signing in instead.' }, { status: 409 });
+    if (d.accountType === 'BUSINESS' && (!d.businessName?.trim() || !d.registrationNumber?.trim())) {
+      return NextResponse.json({ error: 'Business name and registration number are required for a business account.' }, { status: 400 });
+    }
     const { mode: _mode, email, ...profile } = d;
     try {
       await sendEmailOtp(email, { shouldCreateUser: true, data: profile });
