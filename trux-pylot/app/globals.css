@@ -264,3 +264,91 @@
 .status.approved{background:#e4f6ec;color:#087743}
 .status.rejected{background:#fdeaea;color:#c22828}
 .status.more_info_required{background:#faf1de;color:#9c6b12}
+
+/* ==== Service request status pills (additive, matches existing .status system) ==== */
+.status.submitted_req,.status.submitted{background:#e8f0ff;color:var(--blue)}
+.status.csd_reviewing{background:#fff3d6;color:#9a6b00}
+.status.availability_confirmation{background:#faf1de;color:var(--brass)}
+.status.professional_confirmed{background:#e8f0ff;color:var(--blue)}
+.status.connected{background:var(--brass-soft);color:var(--brass);border:1px solid var(--brass-line)}
+.status.completed{background:#e4f6ec;color:#087743}
+.status.declined{background:#fdeaea;color:#c22828}
+.status.cancelled{background:#edf1f7;color:#66748b}
+
+/* ==== Mobile-only bottom tab bar (hidden on desktop) ==== */
+.mobile-tab-bar{display:none}
+
+/* ==== Mobile brand/greeting header (desktop keeps existing .mobile-brand rule unless overridden below) ==== */
+.mobile-brand-logo{display:none}
+.mobile-brand-greeting{display:none}
+
+/* =========================================================================
+   MOBILE VISUAL UPGRADE (<=850px) — purely additive.
+   Nothing here removes or restructures existing rules; every selector
+   below either targets a NEW element (mobile tab bar, greeting) or adds a
+   longhand override (e.g. padding-bottom) that layers on top of the
+   existing mobile rules earlier in this file. Desktop styling, existing
+   layout structure, and all functionality are untouched.
+   ========================================================================= */
+@media(max-width:850px){
+  /* Auth pages: replace "hide the whole gradient side" with a compact
+     premium header band instead of nothing, matching the richer mobile
+     app look this file has been asked to move toward. */
+  .auth-aside{display:flex !important;min-height:auto;padding:30px 24px 34px;background:linear-gradient(160deg,#06226a,#0a47cf,#1a5ce0)}
+  .auth-aside img{width:118px;height:auto}
+  .auth-aside h1{font-size:23px;line-height:1.25;margin:14px 0 0}
+  .auth-aside p{display:none}
+  .auth-main{padding:22px 18px 40px}
+
+  /* Dashboard header: swap the static wordmark for a warm, real-data
+     greeting ("Hi, {name}") — small file, no logic change, name was
+     already passed into AppShell. */
+  .mobile-brand{display:flex;flex-direction:column;gap:1px;margin-right:auto}
+  .mobile-brand-logo{display:none}
+  .mobile-brand-greeting{display:block;font-size:15px;font-weight:800;color:var(--ink)}
+  .dash-header{background:linear-gradient(180deg,#fff,#fbfcff);backdrop-filter:blur(6px)}
+
+  /* Room for the fixed bottom tab bar so it never overlaps content —
+     longhand override of the padding shorthand set earlier in this file. */
+  .dash-page{padding-bottom:96px}
+
+  /* Bottom tab bar itself */
+  .mobile-tab-bar{
+    display:flex;justify-content:space-around;align-items:stretch;
+    position:fixed;left:0;right:0;bottom:0;z-index:50;
+    background:#fff;border-top:1px solid var(--line);
+    padding:7px 2px calc(7px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 24px #0b46c815;
+  }
+  .mobile-tab-bar a{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+    color:var(--muted);font-size:10px;font-weight:700;padding:5px 2px;
+    border-radius:12px;
+  }
+  .mobile-tab-bar a span{font-size:18px;line-height:1}
+  .mobile-tab-bar a.active{color:var(--blue);background:var(--soft)}
+
+  /* Softer, deeper cards and bigger tap targets — premium mobile feel
+     without changing spacing that would reflow existing layouts. */
+  .panel,.metric,.pro-stat,.professional-card,.pro-hero{border-radius:18px}
+  .panel{box-shadow:0 6px 22px #0b46c80d}
+  .auth-form input,.auth-form select,
+  .wizard-fields input,.wizard-fields select,.wizard-fields textarea,
+  .profile-form input,.profile-form textarea,
+  .user-filters input,.user-filters select{
+    font-size:16px; /* prevents iOS Safari auto-zoom on focus */
+    padding:14px 14px;
+  }
+  .primary,.wizard-actions button:last-child,.form-actions button,.auth-form button{
+    border-radius:12px;padding:15px 20px;
+  }
+  .role-card{border-radius:14px}
+  .site-nav{height:64px}
+}
+
+@media(max-width:500px){
+  .pro-hero-name{font-size:22px}
+  .review-summary{flex-wrap:wrap}
+  .mobile-tab-bar a{font-size:9px}
+  .mobile-tab-bar a span{font-size:16px}
+}

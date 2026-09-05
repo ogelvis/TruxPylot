@@ -47,7 +47,7 @@ export default async function Home() {
             <a href="#services">Services</a>
             <a href="#how-it-works">How it works</a>
             <Link href="/register">Become a professional</Link>
-            <Link href="/contact">Contact</Link>
+            <Link href="/support">Contact</Link>
             <Link href="/login" className="tp-login">Log in</Link>
             <Link href="/register" className="tp-signup">Sign up</Link>
           </nav>
@@ -124,7 +124,7 @@ export default async function Home() {
 
       <section className="tp-final-cta reveal"><div className="tp-container"><p className="tp-kicker">YOUR NEXT JOB STARTS HERE</p><h2>Stop guessing. Start with someone you can trust.</h2><Link href="/marketplace" className="tp-button light">Find a professional <span>↗</span></Link></div></section>
 
-      <footer className="tp-footer"><div className="tp-container tp-footer-grid"><div><Link href="/" className="tp-logo"><img src="/trux-pylot-logo.png" alt="Trux Pylot" /></Link><p>Trusted professionals, connected to the people who need them.</p></div><div><strong>Explore</strong><Link href="/marketplace">Find a professional</Link><a href="#services">Services</a><a href="#how-it-works">How it works</a></div><div><strong>Join Trux Pylot</strong><Link href="/register">Become a professional</Link><Link href="/login">Log in</Link><Link href="/register">Sign up</Link></div><div><strong>Support</strong><a href="mailto:info@truxpylot.com">info@truxpylot.com</a><a href="tel:+2348054306905">+234 805 430 6905</a><Link href="/contact">Contact & complaints</Link></div></div><div className="tp-container tp-footer-bottom"><span>© {new Date().getFullYear()} Trux Pylot</span><span>Built for reliable work across Nigeria.</span></div></footer>
+      <footer className="tp-footer"><div className="tp-container tp-footer-grid"><div><Link href="/" className="tp-logo"><img src="/trux-pylot-logo.png" alt="Trux Pylot" /></Link><p>Trusted professionals, connected to the people who need them.</p></div><div><strong>Explore</strong><Link href="/marketplace">Find a professional</Link><a href="#services">Services</a><a href="#how-it-works">How it works</a></div><div><strong>Join Trux Pylot</strong><Link href="/register">Become a professional</Link><Link href="/login">Log in</Link><Link href="/register">Sign up</Link></div><div><strong>Support</strong><Link href="/support">Talk to an agent</Link><Link href="/privacy">Privacy policy</Link><a href="mailto:info@truxpylot.com">info@truxpylot.com</a><a href="tel:+2348054306905">+234 805 430 6905</a><Link href="/support">Contact & complaints</Link></div></div><div className="tp-container tp-footer-bottom"><span>© {new Date().getFullYear()} Trux Pylot</span><span>Built for reliable work across Nigeria.</span></div></footer>
     </main>
   );
 }
