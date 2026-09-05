@@ -6,12 +6,7 @@ import { ProPhoto } from '@/components/pro-photo';
 
 export const dynamic = 'force-dynamic';
 
-const FEATURED_PROS = [
-  { name: 'Blessing A.', trade: 'Electrician', image: '/images/professionals/electrician.jpg', accent: 'bolt' },
-  { name: 'Ifeanyi O.', trade: 'Plumber', image: '/images/professionals/plumber.jpg', accent: 'drop' },
-  { name: 'Ngozi E.', trade: 'Cleaning specialist', image: '/images/professionals/cleaner.jpg', accent: 'spark' },
-  { name: 'David K.', trade: 'Security personnel', image: '/images/professionals/security.jpg', accent: 'shield' },
-];
+const PRO_ACCENTS = ['drop', 'spark', 'shield', 'drop'];
 
 const HOW_IT_WORKS = [
   ['01', 'Tell us what you need', 'Choose a service and share a few details about the job.'],
@@ -29,11 +24,16 @@ function Mark({ type }: { type: 'check' | 'shield' | 'search' | 'clock' | 'star'
 }
 
 export default async function Home() {
-  const [categories, verifiedCount, completedJobsCount, customerCount] = await Promise.all([
+  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros] = await Promise.all([
     prisma.serviceCategory.findMany({ where: { active: true }, take: 12, orderBy: { name: 'asc' } }),
     prisma.professional.count({ where: { verificationStatus: 'APPROVED' } }),
     prisma.job.count({ where: { status: 'SETTLED' } }),
     prisma.customer.count(),
+    prisma.professional.findMany({
+      where: { verificationStatus: 'APPROVED' },
+      orderBy: { rating: 'desc' },
+      take: 4,
+    }),
   ]);
 
   return (
@@ -103,7 +103,23 @@ export default async function Home() {
       </section>
 
       <section className="tp-pros">
-        <div className="tp-container"><div className="tp-section-heading reveal"><p className="tp-kicker">PEOPLE BEHIND THE WORK</p><h2>Meet professionals ready to help.</h2><p>Real skills, local knowledge and a reputation to protect.</p></div><div className="tp-pro-grid">{FEATURED_PROS.map((pro, index) => <article className="tp-pro-card reveal" key={pro.name} style={{ transitionDelay: `${index * 70}ms` }}><ProPhoto src={pro.image} alt={`${pro.name}, ${pro.trade}`} accent={pro.accent} /><div><strong>{pro.name}</strong><span>{pro.trade}</span><small><Mark type="check" /> Verified professional</small></div></article>)}</div></div>
+        <div className="tp-container">
+          <div className="tp-section-heading reveal"><p className="tp-kicker">PEOPLE BEHIND THE WORK</p><h2>Meet professionals ready to help.</h2><p>Real skills, local knowledge and a reputation to protect.</p></div>
+          {featuredPros.length > 0 ? (
+            <div className="tp-pro-grid">
+              {featuredPros.map((pro, index) => (
+                <Link href={`/marketplace/${pro.id}`} className="tp-pro-card reveal" key={pro.id} style={{ transitionDelay: `${index * 70}ms` }}>
+                  <ProPhoto src={pro.avatarUrl} alt={`${pro.fullName}, ${pro.profession ?? 'professional'}`} accent={PRO_ACCENTS[index % PRO_ACCENTS.length]} />
+                  <div><strong>{pro.fullName}</strong><span>{pro.profession ?? 'Professional'}</span><small><Mark type="check" /> Verified professional</small></div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="tp-muted" style={{ marginTop: 30 }}>
+              Be one of our first verified professionals — <Link href="/register">join Trux Pylot</Link> and get discovered here.
+            </p>
+          )}
+        </div>
       </section>
 
       <section className="tp-final-cta reveal"><div className="tp-container"><p className="tp-kicker">YOUR NEXT JOB STARTS HERE</p><h2>Stop guessing. Start with someone you can trust.</h2><Link href="/marketplace" className="tp-button light">Find a professional <span>↗</span></Link></div></section>

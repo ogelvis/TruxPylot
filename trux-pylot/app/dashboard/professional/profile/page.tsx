@@ -3,13 +3,17 @@ import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
 import { ProfileForm } from '@/components/profile-form';
 import { AvatarUpload } from '@/components/avatar-upload';
+import { ManageServicesForm } from '@/components/manage-services-form';
 
 export default async function ManageProfile() {
   const session = await requireRole('PROFESSIONAL');
-  const professional = await prisma.professional.findUnique({
-    where: { userId: session.userId },
-    include: { user: true, services: { include: { category: true } } },
-  });
+  const [professional, categories] = await Promise.all([
+    prisma.professional.findUnique({
+      where: { userId: session.userId },
+      include: { user: true, services: { include: { category: true } } },
+    }),
+    prisma.serviceCategory.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
+  ]);
   if (!professional) return null;
 
   return (
@@ -35,23 +39,10 @@ export default async function ManageProfile() {
             </div>
           </section>
 
-          <section className="panel">
-            <div className="panel-head"><h2>Services offered</h2></div>
-            <div className="job-detail-body">
-              {professional.services.length ? (
-                <div className="professional-tags">
-                  {professional.services.map(s => (
-                    <span key={s.id} className="tag">
-                      {s.category.name}{s.startingPrice ? ` · from ₦${(s.startingPrice / 100).toLocaleString()}` : ''}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <p className="subcopy" style={{ marginBottom: 0 }}>You have not added any services yet.</p>
-              )}
-              <p className="hint-text">Service categories are managed by the platform. Contact support to add or change which categories you appear under.</p>
-            </div>
-          </section>
+          <ManageServicesForm
+            availableCategories={categories}
+            currentServices={professional.services}
+          />
         </div>
       </main>
     </AppShell>
