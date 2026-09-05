@@ -13,6 +13,7 @@ const TABS: Record<Role, { label: string; href: string; icon: string }[]> = {
     { label: 'Home', href: '/dashboard/professional', icon: '⌂' },
     { label: 'Jobs', href: '/dashboard/professional/jobs', icon: '▣' },
     { label: 'Earnings', href: '/dashboard/professional/earnings', icon: '◈' },
+    { label: 'Tier', href: '/dashboard/professional/tier', icon: '◆' },
     { label: 'Support', href: '/support', icon: '☎' },
     { label: 'Profile', href: '/dashboard/professional/profile', icon: '◎' },
   ],

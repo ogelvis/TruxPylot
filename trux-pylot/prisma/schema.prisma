@@ -143,6 +143,30 @@ model Professional {
   serviceRequests ServiceRequest[]
   reports ProfessionalReport[]
   wallet Wallet?
+  premiumPurchases PremiumPurchase[]
+}
+
+// One-time Premium tier purchase. Deliberately NOT reused from the
+// existing job Payment model (Payment.jobId is required + unique, since
+// it's 1:1 with a paid Job — Premium purchases aren't tied to a job at
+// all). Multiple PENDING/FAILED rows per professional are allowed (retry
+// after a failed/abandoned attempt), but a partial unique index (added in
+// the hand-written migration, not expressible in schema.prisma) enforces
+// at most one SUCCESS row per professional at the database level — see
+// migration 20260905130000_add_premium_purchase. Premium is one-time: no
+// renewal/expiry field on purpose.
+model PremiumPurchase {
+  id String @id @default(cuid())
+  professionalId String
+  reference String @unique
+  amount Int
+  status PaymentStatus @default(PENDING)
+  providerEventId String? @unique
+  activatedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  @@index([professionalId, status])
 }
 
 // A "Request Service" submission from a professional's public profile.
