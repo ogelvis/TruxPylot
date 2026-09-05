@@ -54,7 +54,7 @@ export function ProfessionalJobActions({ jobId, status }: { jobId: string; statu
               type="button"
               className="btn-approve"
               disabled={busy || !amount}
-              onClick={() => run({ action: 'quote', amount: Number(amount) })}
+              onClick={() => run({ action: 'quote', amount: Math.round(Number(amount) * 100) })}
             >
               {busy ? 'Sending…' : 'Send quote'}
             </button>

@@ -59,7 +59,7 @@ export function CustomerJobActions({
       <section className="panel">
         <div className="panel-head"><h2>Quote received</h2></div>
         <div className="job-detail-body">
-          <p style={{ fontSize: 22, fontFamily: 'Manrope', fontWeight: 800, marginBottom: 14 }}>₦{latestQuoteAmount.toLocaleString()}</p>
+          <p style={{ fontSize: 22, fontFamily: 'Manrope', fontWeight: 800, marginBottom: 14 }}>₦{(latestQuoteAmount / 100).toLocaleString()}</p>
           <div className="verification-buttons">
             <button className="btn-approve" type="button" disabled={busy} onClick={() => run({ action: 'accept' })}>
               {busy ? 'Working…' : 'Accept quote'}
