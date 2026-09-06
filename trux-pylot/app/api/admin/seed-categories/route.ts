@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-const DEFAULT_CATEGORIES = ['Electrical', 'Plumbing', 'AC & Cooling', 'Cleaning', 'Carpentry', 'Solar & Generator'];
+const DEFAULT_CATEGORIES = ['Painter', 'Plumber', 'Electrician', 'Bricklayer / Mason', 'Carpenter', 'Welder', 'Cleaner', 'Barber', 'Hair Stylist', 'Nail Technician', 'Tailor / Fashion Designer', 'Graphic Designer', 'Photographer', 'Videographer', 'Web Designer', 'Software Developer', 'Phone Repair Technician', 'Computer Repair Technician', 'AC Technician', 'Generator Technician', 'Auto Mechanic', 'Car Wash / Detailing', 'Furniture Maker', 'Interior Decorator', 'Tiler', 'POP Installer', 'Aluminium / Glass Installer', 'Door Installer', 'Roofer', 'Landscaper / Gardener', 'Pest Control', 'Mover', 'Truck / Van Driver', 'Delivery Service', 'Caterer', 'Baker', 'Private Chef', 'Laundry Service', 'Babysitter', 'Caregiver', 'Tutor', 'Typist / Document Services', 'Accountant', 'Legal Consultant', 'Social Media Manager', 'Digital Marketer', 'Printing Services', 'Locksmith', 'Security System Installer', 'Satellite / CCTV Installer', 'Solar Installer', 'Water Treatment Technician', 'Refrigerator Technician', 'Appliance Repair Technician'];
 
 function slugify(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '');
