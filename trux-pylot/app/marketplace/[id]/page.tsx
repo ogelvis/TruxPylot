@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { RequestServiceForm } from '@/components/request-service-form';
 import { ReportProfessionalForm } from '@/components/report-professional-form';
+import { ContactTruxPylot } from '@/components/contact-truxpylot';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,12 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
   if (!professional || professional.verificationStatus !== 'APPROVED') notFound();
 
   const session = await getSession();
+  const customerForContact = session?.role === 'CUSTOMER'
+    ? await prisma.customer.findUnique({
+        where: { userId: session.userId },
+        include: { user: { select: { email: true, phone: true } } },
+      })
+    : null;
   const tsid = 'TSID-' + professional.id.slice(-8).toUpperCase();
   const approvedBatch = approvedRequest?.reviewedAt ? monthYearFmt.format(approvedRequest.reviewedAt) : null;
   const completionRate = jobCount > 0 ? Math.round((professional.completedJobs / jobCount) * 100) : null;
@@ -150,7 +157,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
               <div className="panel-head"><h2>Request this service</h2></div>
               <div className="job-detail-body">
                 {!professional.services.length ? (
-                  <p>This professional hasn&apos;t listed any services yet.</p>
+                  <p>This professional hasn&apos;t listed any services yet. You can still contact TruxPylot Customer Service about this professional.</p>
                 ) : !session ? (
                   <>
                     <p style={{ marginBottom: 14 }}>Sign in as a customer to request this service.</p>
@@ -164,6 +171,23 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
                     services={professional.services.map(s => ({ categoryId: s.categoryId, categoryName: s.category.name }))}
                   />
                 )}
+                <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #e6edf7' }}>
+                  <ContactTruxPylot
+                    professionalId={professional.id}
+                    professionalName={professional.fullName}
+                    professionalBusinessName={professional.businessName}
+                    profession={professional.profession}
+                    professionalLocation={professional.location}
+                    serviceNames={professional.services.map(s => s.category.name)}
+                    profileUrl={`${process.env.NEXT_PUBLIC_APP_URL || 'https://trux-pylot.onrender.com'}/marketplace/${professional.id}`}
+                    customer={customerForContact ? {
+                      name: customerForContact.fullName,
+                      email: customerForContact.user.email,
+                      phone: customerForContact.user.phone,
+                      customerId: customerForContact.id,
+                    } : null}
+                  />
+                </div>
               </div>
             </section>
 
