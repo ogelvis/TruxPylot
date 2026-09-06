@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 const prisma = new PrismaClient();
 
 async function main() {
-  for (const name of ['Electrical', 'Plumbing', 'AC & Cooling', 'Cleaning', 'Carpentry', 'Solar & Generator']) {
+  for (const name of ['Painter', 'Plumber', 'Electrician', 'Bricklayer / Mason', 'Carpenter', 'Welder', 'Cleaner', 'Barber', 'Hair Stylist', 'Nail Technician', 'Tailor / Fashion Designer', 'Graphic Designer', 'Photographer', 'Videographer', 'Web Designer', 'Software Developer', 'Phone Repair Technician', 'Computer Repair Technician', 'AC Technician', 'Generator Technician', 'Auto Mechanic', 'Car Wash / Detailing', 'Furniture Maker', 'Interior Decorator', 'Tiler', 'POP Installer', 'Aluminium / Glass Installer', 'Door Installer', 'Roofer', 'Landscaper / Gardener', 'Pest Control', 'Mover', 'Truck / Van Driver', 'Delivery Service', 'Caterer', 'Baker', 'Private Chef', 'Laundry Service', 'Babysitter', 'Caregiver', 'Tutor', 'Typist / Document Services', 'Accountant', 'Legal Consultant', 'Social Media Manager', 'Digital Marketer', 'Printing Services', 'Locksmith', 'Security System Installer', 'Satellite / CCTV Installer', 'Solar Installer', 'Water Treatment Technician', 'Refrigerator Technician', 'Appliance Repair Technician']) {
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-$/, '');
     await prisma.serviceCategory.upsert({ where: { slug }, update: {}, create: { name, slug } });
   }
