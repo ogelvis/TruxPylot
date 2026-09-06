@@ -46,9 +46,9 @@ export function RequestServiceForm({ professionalId, services }: { professionalI
   if (reference) {
     return (
       <div className="job-detail-body">
-        <p className="form-status ok" style={{ marginBottom: 10 }}>Request submitted.</p>
+        <p className="form-status ok" style={{ marginBottom: 10 }}>Request submitted to TruxPylot Customer Service.</p>
         <p style={{ marginBottom: 14 }}>
-          Your reference number is <b>REQ-{reference}</b>. Our Customer Service team will review your request,
+          Your reference number is <b>REQ-{reference}</b>. Our Customer Service team has received the full request details, will review the request,
           confirm the professional&apos;s availability, and connect you both — you&apos;ll see progress in your dashboard.
         </p>
         <Link className="primary" href="/dashboard/customer/service-requests" style={{ display: 'inline-block', width: 'auto' }}>
