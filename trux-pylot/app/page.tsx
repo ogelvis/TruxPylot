@@ -6,6 +6,34 @@ import { ProPhoto } from '@/components/pro-photo';
 
 export const dynamic = 'force-dynamic';
 
+function ServiceIcon({ slug }: { slug: string }) {
+  const common = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const key = slug.toLowerCase();
+  if (key.includes('plumb')) return <svg {...common}><path d="M7 4v6a5 5 0 0 0 10 0V4"/><path d="M5 4h4M15 4h4M12 15v5M9 20h6"/></svg>;
+  if (key.includes('paint')) return <svg {...common}><path d="m4 20 6-6"/><path d="m9 15 5-5"/><path d="M14 4h5v5"/><path d="m19 4-8 8"/><path d="M4 20h5"/></svg>;
+  if (key.includes('electric')) return <svg {...common}><path d="m13 2-8 11h6l-1 9 8-12h-6l1-8Z"/></svg>;
+  if (key.includes('graphic') || key.includes('design')) return <svg {...common}><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 16 3-4 3 2 2-3 3 5"/><circle cx="8" cy="8" r="1"/></svg>;
+  if (key.includes('carpent')) return <svg {...common}><path d="m4 19 15-15"/><path d="m7 21-3-3 4-4 3 3-4 4Z"/><path d="m14 10 4 4"/></svg>;
+  if (key.includes('weld')) return <svg {...common}><path d="M5 19h8"/><path d="M8 16V7h4l2 3-2 3h-4"/><path d="M15 7h4M16 4v3M19 4v3"/></svg>;
+  if (key.includes('clean')) return <svg {...common}><path d="m9 3 6 6"/><path d="m12 6-8 8 4 4 8-8"/><path d="M15 12h5M17 9v6"/></svg>;
+  if (key.includes('barber') || key.includes('hair')) return <svg {...common}><path d="M6 4v16M18 4v16"/><path d="M6 8h12M6 16h12"/><path d="M9 8v8M15 8v8"/></svg>;
+  if (key.includes('photo') || key.includes('video')) return <svg {...common}><path d="M4 7h4l2-2h4l2 2h4v12H4V7Z"/><circle cx="12" cy="13" r="4"/></svg>;
+  if (key.includes('web') || key.includes('software') || key.includes('developer')) return <svg {...common}><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/></svg>;
+  if (key.includes('phone') || key.includes('computer') || key.includes('appliance') || key.includes('repair')) return <svg {...common}><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M10 6h4M11 18h2"/></svg>;
+  if (key.includes('solar')) return <svg {...common}><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>;
+  if (key.includes('mechanic') || key.includes('auto')) return <svg {...common}><path d="M14 6a4 4 0 0 0-5 5L4 16l4 4 5-5a4 4 0 0 0 5-5l-3 3-3-3 2-4Z"/></svg>;
+  if (key.includes('delivery') || key.includes('driver') || key.includes('mover')) return <svg {...common}><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg>;
+  if (key.includes('chef') || key.includes('cater') || key.includes('baker')) return <svg {...common}><path d="M5 12h14v8H5z"/><path d="M8 12a4 4 0 1 1 8 0"/><path d="M9 16h6"/></svg>;
+  if (key.includes('laundry')) return <svg {...common}><circle cx="12" cy="13" r="4"/><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h1M11 7h1"/></svg>;
+  if (key.includes('tutor') || key.includes('document') || key.includes('typist')) return <svg {...common}><path d="M5 3h10l4 4v14H5z"/><path d="M15 3v5h4M8 12h8M8 16h6"/></svg>;
+  if (key.includes('account') || key.includes('consult')) return <svg {...common}><circle cx="12" cy="8" r="3"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>;
+  if (key.includes('print')) return <svg {...common}><path d="M7 9V4h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/><path d="M7 14h10v7H7z"/></svg>;
+  if (key.includes('lock') || key.includes('security')) return <svg {...common}><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>;
+  if (key.includes('roof') || key.includes('mason') || key.includes('brick')) return <svg {...common}><path d="M3 19h18M4 19V10l8-6 8 6v9M8 19v-5h8v5"/></svg>;
+  if (key.includes('garden') || key.includes('landscape') || key.includes('pest')) return <svg {...common}><path d="M12 21V10"/><path d="M12 13c-5 0-7-3-7-7 5 0 7 3 7 7ZM12 16c5 0 7-3 7-7-5 0-7 3-7 7Z"/></svg>;
+  return <svg {...common}><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>;
+}
+
 const PRO_ACCENTS = ['drop', 'spark', 'shield', 'drop'];
 
 const HOW_IT_WORKS = [
@@ -13,6 +41,24 @@ const HOW_IT_WORKS = [
   ['02', 'Meet the right pro', 'Review verified profiles, ratings and experience before you choose.'],
   ['03', 'Track it through', 'Book securely, follow progress and leave a review when it is done.'],
 ];
+
+function HomeServiceIcon({ slug }: { slug: string }) {
+  const common = { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  const k = slug.toLowerCase();
+  if (k.includes('plumb')) return <svg {...common}><path d="M7 4v6a5 5 0 0 0 10 0V4"/><path d="M5 4h4M15 4h4M12 15v5M9 20h6"/></svg>;
+  if (k.includes('paint')) return <svg {...common}><path d="m4 20 6-6M9 15l5-5M14 4h5v5M19 4l-8 8M4 20h5"/></svg>;
+  if (k.includes('electric')) return <svg {...common}><path d="m13 2-8 11h6l-1 9 8-12h-6l1-8Z"/></svg>;
+  if (k.includes('graphic') || k.includes('design')) return <svg {...common}><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 16 3-4 3 2 2-3 3 5"/><circle cx="8" cy="8" r="1"/></svg>;
+  if (k.includes('carpent')) return <svg {...common}><path d="m4 19 15-15M7 21l-3-3 4-4 3 3-4 4ZM14 10l4 4"/></svg>;
+  if (k.includes('clean')) return <svg {...common}><path d="m9 3 6 6M12 6l-8 8 4 4 8-8M15 12h5M17 9v6"/></svg>;
+  if (k.includes('photo') || k.includes('video')) return <svg {...common}><path d="M4 7h4l2-2h4l2 2h4v12H4V7Z"/><circle cx="12" cy="13" r="4"/></svg>;
+  if (k.includes('web') || k.includes('software') || k.includes('developer')) return <svg {...common}><path d="m8 8-4 4 4 4M16 8l4 4-4 4M14 5l-4 14"/></svg>;
+  if (k.includes('mechanic') || k.includes('auto')) return <svg {...common}><path d="M14 6a4 4 0 0 0-5 5L4 16l4 4 5-5a4 4 0 0 0 5-5l-3 3-3-3 2-4Z"/></svg>;
+  if (k.includes('solar')) return <svg {...common}><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>;
+  if (k.includes('delivery') || k.includes('driver')) return <svg {...common}><path d="M3 6h11v11H3zM14 10h4l3 3v4h-7z"/><circle cx="7" cy="19" r="2"/><circle cx="18" cy="19" r="2"/></svg>;
+  if (k.includes('lock') || k.includes('security')) return <svg {...common}><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>;
+  return <svg {...common}><circle cx="12" cy="12" r="8.5"/><path d="M12 8v8M8 12h8"/></svg>;
+}
 
 function Mark({ type }: { type: 'check' | 'shield' | 'search' | 'clock' | 'star' }) {
   const common = {
@@ -217,20 +263,27 @@ export default async function Home() {
         .tp-upgraded-home .tp-section-heading > p:last-child { color:#728096; line-height:1.7; margin:17px 0 0; font-size:15px; }
 
         .tp-upgraded-home .tp-service-list {
-          display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+          display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; width:100%;
         }
         .tp-upgraded-home .tp-service {
-          min-height:130px; padding:21px; display:flex; flex-direction:column; justify-content:space-between;
+          min-width:0; min-height:145px; padding:18px; display:grid; grid-template-columns:auto 1fr auto; grid-template-rows:auto 1fr auto; align-items:start; gap:10px 12px;
           border:1px solid var(--line); border-radius:19px; background:#fff; color:var(--ink);
-          box-shadow:0 7px 22px rgba(25,55,100,.035); transition:.25s ease;
+          box-shadow:0 7px 22px rgba(25,55,100,.035); transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease,background .25s ease;
+          overflow:hidden;
         }
         .tp-upgraded-home .tp-service:hover {
           border-color:#b9d1ff; transform:translateY(-5px); box-shadow:0 18px 35px rgba(23,105,255,.1);
           background:#f9fbff;
         }
-        .tp-upgraded-home .tp-service > span { color:#9aa6b9; font-size:10px; font-weight:900; letter-spacing:.08em; }
-        .tp-upgraded-home .tp-service strong { font-size:16px; line-height:1.2; }
-        .tp-upgraded-home .tp-service b { align-self:flex-end; color:var(--blue); font-size:20px; }
+        .tp-upgraded-home .tp-service-icon { grid-column:1; grid-row:1; width:42px; height:42px; display:grid; place-items:center; border-radius:12px; background:#eef5ff; color:var(--blue); border:1px solid #dceaff; }
+        .tp-upgraded-home .tp-service-icon svg { width:21px; height:21px; display:block; }
+        .tp-upgraded-home .tp-service-number { grid-column:3; grid-row:1; color:#9aa6b9; font-size:10px; font-weight:900; letter-spacing:.08em; padding-top:5px; }
+        .tp-upgraded-home .tp-service-main { grid-column:1/-1; grid-row:2; min-width:0; display:grid; align-content:start; gap:6px; }
+        .tp-upgraded-home .tp-service-main strong { font-size:15px; line-height:1.25; overflow-wrap:anywhere; }
+        .tp-upgraded-home .tp-service-main small { color:#71809a; font-size:11px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+        .tp-upgraded-home .tp-service-arrow { grid-column:3; grid-row:3; align-self:end; color:var(--blue); font-size:19px; line-height:1; transition:transform .25s ease; }
+        .tp-upgraded-home .tp-service:hover .tp-service-icon { background:linear-gradient(135deg,var(--blue),var(--cyan)); color:#fff; border-color:transparent; }
+        .tp-upgraded-home .tp-service:hover .tp-service-arrow { transform:translate(3px,-3px); }
 
         .tp-upgraded-home .tp-trust-section {
           padding:105px 0; background:#f4f7fc; position:relative;
@@ -367,9 +420,12 @@ export default async function Home() {
           .tp-upgraded-home .tp-section,.tp-upgraded-home .tp-trust-section,.tp-upgraded-home .tp-pros { padding-top:72px; padding-bottom:72px; }
           .tp-upgraded-home .tp-section-heading { margin-bottom:30px; }
           .tp-upgraded-home .tp-section-heading h2,.tp-upgraded-home .tp-trust-intro h2 { font-size:38px; }
-          .tp-upgraded-home .tp-service-list { grid-template-columns:repeat(2,1fr); gap:9px; }
-          .tp-upgraded-home .tp-service { min-height:112px; padding:16px; }
-          .tp-upgraded-home .tp-service strong { font-size:13px; }
+          .tp-upgraded-home .tp-service-list { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+          .tp-upgraded-home .tp-service { min-height:132px; padding:14px; border-radius:16px; }
+          .tp-upgraded-home .tp-service-icon { width:38px; height:38px; border-radius:11px; }
+          .tp-upgraded-home .tp-service-icon svg { width:19px; height:19px; }
+          .tp-upgraded-home .tp-service-main strong { font-size:13px; }
+          .tp-upgraded-home .tp-service-main small { font-size:10.5px; }
           .tp-upgraded-home .tp-trust-grid,.tp-upgraded-home .tp-steps,.tp-upgraded-home .tp-pro-grid { grid-template-columns:1fr; }
           .tp-upgraded-home .tp-trust-intro { grid-column:auto; }
           .tp-upgraded-home .tp-step { min-height:205px; }
@@ -508,6 +564,8 @@ export default async function Home() {
               className="tp-service reveal"
               style={{ transitionDelay: `${index * 35}ms` }}
             >
+              <span className="tp-service-icon" aria-hidden="true"><ServiceIcon slug={category.slug} /></span>
+              <span className="tp-service-icon" aria-hidden="true"><HomeServiceIcon slug={category.slug} /></span>
               <span className="tp-service-number">{String(index + 1).padStart(2, '0')}</span>
               <span className="tp-service-main">
                 <strong>{category.name}</strong>
