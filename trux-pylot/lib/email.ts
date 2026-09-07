@@ -67,124 +67,39 @@ export async function sendVerificationMoreInfoEmail(to: string, fullName: string
   );
 }
 
+// --- Service request milestone emails --------------------------------------
+// Deliberately limited to the handful of transitions a customer actually
+// needs an email about (connected, completed, declined). The intermediate
+// CSD-review stages already show up as in-app notifications (lib/notify.ts)
+// — emailing every single status bump would be spammy.
 
-function escapeHtml(value: unknown) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
-export async function sendCsdServiceRequestEmail(data: {
-  requestId: string;
-  customerName: string;
-  customerEmail: string;
-  customerPhone?: string | null;
-  customerId: string;
-  customerLocation?: string | null;
-  professionalName: string;
-  professionalBusinessName?: string | null;
-  professionalId: string;
-  professionalEmail?: string | null;
-  professionalPhone?: string | null;
-  profession?: string | null;
-  professionalLocation?: string | null;
-  verificationStatus: string;
-  rating: number;
-  completedJobs: number;
-  serviceName: string;
-  serviceCategoryId: string;
-  serviceId?: string;
-  startingPrice?: number | null;
-  serviceDescription?: string | null;
-  description: string;
-  requestLocation: string;
-  preferredDate?: Date | null;
-  preferredTime?: string | null;
-  additionalRequirements?: string | null;
-  profileUrl: string;
-}) {
-  const date = data.preferredDate ? new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium' }).format(data.preferredDate) : 'Not specified';
-  const money = data.startingPrice != null ? `₦${(data.startingPrice / 100).toLocaleString('en-NG')}` : 'Not specified';
-
+export async function sendServiceRequestConnectedEmail(to: string, customerName: string, professionalName: string, requestId: string) {
   await sendEmail(
-    'info@truxpylot.com',
-    `New TruxPylot Service Request — ${data.serviceName} — ${data.professionalName}`,
-    `<h2>New TruxPylot Service Request</h2>
-     <p>A customer has submitted a service request through the TruxPylot marketplace.</p>
-     <h3>Customer Information</h3>
-     <p><b>Name:</b> ${escapeHtml(data.customerName)}<br>
-     <b>Email:</b> ${escapeHtml(data.customerEmail)}<br>
-     <b>Phone:</b> ${escapeHtml(data.customerPhone || 'Not provided')}<br>
-     <b>Customer ID:</b> ${escapeHtml(data.customerId)}<br>
-     <b>Location:</b> ${escapeHtml(data.customerLocation || 'Not provided')}</p>
-     <h3>Professional Information</h3>
-     <p><b>Name:</b> ${escapeHtml(data.professionalName)}<br>
-     <b>Business:</b> ${escapeHtml(data.professionalBusinessName || 'Not provided')}<br>
-     <b>Professional ID:</b> ${escapeHtml(data.professionalId)}<br>
-     <b>Profession:</b> ${escapeHtml(data.profession || 'Professional')}<br>
-     <b>Email:</b> ${escapeHtml(data.professionalEmail || 'Not provided')}<br>
-     <b>Phone:</b> ${escapeHtml(data.professionalPhone || 'Not provided')}<br>
-     <b>Location:</b> ${escapeHtml(data.professionalLocation || 'Not provided')}<br>
-     <b>Verification:</b> ${escapeHtml(data.verificationStatus)}<br>
-     <b>Rating:</b> ${escapeHtml(data.rating.toFixed(1))}<br>
-     <b>Completed Jobs:</b> ${escapeHtml(data.completedJobs)}</p>
-     <h3>Service Information</h3>
-     <p><b>Service:</b> ${escapeHtml(data.serviceName)}<br>
-     <b>Category ID:</b> ${escapeHtml(data.serviceCategoryId)}<br>
-     <b>Service ID:</b> ${escapeHtml(data.serviceId || 'Not provided')}<br>
-     <b>Starting Price:</b> ${escapeHtml(money)}<br>
-     <b>Description:</b> ${escapeHtml(data.serviceDescription || 'Not provided')}</p>
-     <h3>Request Information</h3>
-     <p><b>Request ID:</b> ${escapeHtml(data.requestId)}<br>
-     <b>Submitted:</b> ${escapeHtml(new Date().toLocaleString('en-NG'))}<br>
-     <b>Service Location:</b> ${escapeHtml(data.requestLocation)}<br>
-     <b>Preferred Date:</b> ${escapeHtml(date)}<br>
-     <b>Preferred Time:</b> ${escapeHtml(data.preferredTime || 'Not specified')}</p>
-     <p><b>Job Description</b><br>${escapeHtml(data.description).replace(/\n/g, '<br>')}</p>
-     ${data.additionalRequirements ? `<p><b>Additional Requirements</b><br>${escapeHtml(data.additionalRequirements).replace(/\n/g, '<br>')}</p>` : ''}
-     <h3>Profile</h3>
-     <p><a href="${escapeHtml(data.profileUrl)}">${escapeHtml(data.profileUrl)}</a></p>
-     <p><b>TruxPylot CSD:</b> info@truxpylot.com</p>`
+    to,
+    "You're connected! — Trux Pylot",
+    `<h2>Good news, ${customerName}!</h2>
+     <p>Truxpylot Customer Service has confirmed availability and connected you with <b>${professionalName}</b> for your request.</p>
+     <p><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/customer/service-requests/${requestId}">View your request →</a></p>`
   );
 }
 
-export async function sendCsdContactEmail(data: {
-  customerName: string;
-  customerEmail: string;
-  customerPhone?: string | null;
-  customerId?: string | null;
-  professionalName: string;
-  professionalBusinessName?: string | null;
-  professionalId: string;
-  profession?: string | null;
-  professionalLocation?: string | null;
-  serviceNames: string[];
-  message: string;
-  profileUrl: string;
-}) {
+export async function sendServiceRequestCompletedEmail(to: string, customerName: string, requestId: string) {
   await sendEmail(
-    'info@truxpylot.com',
-    `TruxPylot Customer Support Enquiry — ${data.professionalName}`,
-    `<h2>TruxPylot Customer Support Enquiry</h2>
-     <p>A customer has contacted TruxPylot Customer Service from a professional profile.</p>
-     <h3>Customer</h3>
-     <p><b>Name:</b> ${escapeHtml(data.customerName)}<br>
-     <b>Email:</b> ${escapeHtml(data.customerEmail)}<br>
-     <b>Phone:</b> ${escapeHtml(data.customerPhone || 'Not provided')}<br>
-     <b>Customer ID:</b> ${escapeHtml(data.customerId || 'Guest')}</p>
-     <h3>Professional</h3>
-     <p><b>Name:</b> ${escapeHtml(data.professionalName)}<br>
-     <b>Business:</b> ${escapeHtml(data.professionalBusinessName || 'Not provided')}<br>
-     <b>Professional ID:</b> ${escapeHtml(data.professionalId)}<br>
-     <b>Profession:</b> ${escapeHtml(data.profession || 'Professional')}<br>
-     <b>Location:</b> ${escapeHtml(data.professionalLocation || 'Not provided')}<br>
-     <b>Services:</b> ${escapeHtml(data.serviceNames.join(', ') || 'No services listed')}</p>
-     <h3>Customer Message</h3>
-     <p>${escapeHtml(data.message).replace(/\n/g, '<br>')}</p>
-     <p><b>Professional Profile:</b> <a href="${escapeHtml(data.profileUrl)}">${escapeHtml(data.profileUrl)}</a></p>
-     <p><b>TruxPylot CSD:</b> info@truxpylot.com</p>`
+    to,
+    'Your service request is complete — Trux Pylot',
+    `<h2>Hi ${customerName},</h2>
+     <p>Your request has been marked complete. We'd love to hear how it went.</p>
+     <p><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/customer/service-requests/${requestId}">Leave a review →</a></p>`
+  );
+}
+
+export async function sendServiceRequestDeclinedEmail(to: string, customerName: string, notes?: string) {
+  await sendEmail(
+    to,
+    'An update on your service request — Trux Pylot',
+    `<h2>Hi ${customerName},</h2>
+     <p>We were not able to proceed with this request.</p>
+     ${notes ? `<p><b>Reason:</b> ${notes}</p>` : ''}
+     <p><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/marketplace">Browse other professionals →</a></p>`
   );
 }

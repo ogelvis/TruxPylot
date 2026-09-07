@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Role } from '@prisma/client';
 import { MobileTabBar } from '@/components/mobile-tab-bar';
+import { NotificationBell } from '@/components/notification-bell';
 
 const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
   CUSTOMER:[
@@ -17,7 +18,6 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Earnings',href:'/dashboard/professional/earnings',icon:'◈'},
     {label:'Reviews',href:'/dashboard/professional/reviews',icon:'★'},
     {label:'Verification',href:'/dashboard/professional/verification',icon:'✓'},
-    {label:'Tier',href:'/dashboard/professional/tier',icon:'◆'},
     {label:'Manage profile',href:'/dashboard/professional/profile',icon:'◎'},
     {label:'Settings',href:'/dashboard/professional/settings',icon:'⚙'},
   ],
@@ -32,7 +32,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
 
 function initials(name:string){return name.split(' ').map(n=>n[0]).filter(Boolean).slice(0,2).join('').toUpperCase();}
 
-export function AppShell({role,name,avatarUrl,verified,premium,children,active}:{role:Role;name:string;avatarUrl?:string|null;verified?:boolean;premium?:boolean;children:React.ReactNode;active?:string}){
+export function AppShell({role,name,avatarUrl,verified,children,active}:{role:Role;name:string;avatarUrl?:string|null;verified?:boolean;children:React.ReactNode;active?:string}){
   const items = nav[role];
   return <div className="app-shell">
     <aside className="sidebar">
@@ -44,7 +44,6 @@ export function AppShell({role,name,avatarUrl,verified,premium,children,active}:
           <div className="sidebar-role-row">
             <span>{role.toLowerCase()}</span>
             {verified && <span className="verified-chip">✓ Verified</span>}
-            {premium && <span className="premium-chip">★ Premium</span>}
           </div>
         </div>
       </div>
@@ -59,7 +58,7 @@ export function AppShell({role,name,avatarUrl,verified,premium,children,active}:
           <span className="mobile-brand-greeting">Hi, {name.split(' ')[0]} 👋</span>
         </div>
         <div className="header-right">
-          <button className="notification" aria-label="Notifications">♧<i></i></button>
+          <NotificationBell />
           <Link href={role==='ADMIN'?'/dashboard/admin':`/dashboard/${role.toLowerCase()}/profile`} className="user-chip">
             <span>{avatarUrl ? <img src={avatarUrl} alt={name}/> : initials(name)}</span>
             <div><b>{name}</b><small>{role.toLowerCase()}</small></div>
