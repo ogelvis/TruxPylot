@@ -35,7 +35,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const payload = parsed.data;
   const { action } = payload;
 
-  const job = await prisma.job.findUnique({ where: { id }, include: { quotes: true } });
+  const job = await prisma.job.findUnique({
+    where: { id },
+    include: {
+      quotes: true,
+      customer: { select: { userId: true } },
+      professional: { select: { userId: true } },
+    },
+  });
   if (!job) return NextResponse.json({ error: 'Job not found.' }, { status: 404 });
 
   if (PROFESSIONAL_ACTIONS.has(action)) {
@@ -60,11 +67,24 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!quote || quote.status !== 'PENDING') return NextResponse.json({ error: 'Proposal not found or already decided.' }, { status: 404 });
     await prisma.$transaction(async tx => {
       await tx.quote.update({ where: { id: quote.id }, data: { status: payload.action === 'accept_proposal' ? 'ACCEPTED' : 'DECLINED' } });
-      if (action === 'accept_proposal') {
+      if (payload.action === 'accept_proposal') {
         await tx.quote.updateMany({ where: { jobId: job.id, id: { not: quote.id }, status: 'PENDING' }, data: { status: 'DECLINED' } });
         await tx.job.update({ where: { id: job.id }, data: { status: 'ACCEPTED' } });
       }
     });
+    if (job.professional?.userId) {
+      await prisma.notification.create({
+        data: {
+          userId: job.professional.userId,
+          type: 'proposal',
+          title: payload.action === 'accept_proposal' ? 'Proposal accepted' : 'Proposal declined',
+          body: payload.action === 'accept_proposal'
+            ? 'The customer accepted your proposal.'
+            : 'The customer declined your proposal.',
+          link: `/dashboard/professional/jobs/${job.id}`,
+        },
+      });
+    }
     return NextResponse.json({ ok: true, status: payload.action === 'accept_proposal' ? 'ACCEPTED' : job.status });
   }
 
@@ -89,6 +109,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       : { jobId: job.id, amount: payload.amount };
     await prisma.quote.create({ data: quoteData });
     await prisma.job.update({ where: { id: job.id }, data: { status: targetStatus } });
+    if (payload.action === 'proposal') {
+      await prisma.notification.create({
+        data: {
+          userId: job.customer.userId,
+          type: 'proposal',
+          title: 'New proposal received',
+          body: 'A professional has sent a proposal for your job.',
+          link: `/dashboard/customer/jobs/${job.id}`,
+        },
+      });
+    }
   } else if (action === 'confirm') {
     // Confirming completion is also the moment a professional's pending
     // balance becomes available to withdraw — there's no separate manual
