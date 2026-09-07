@@ -170,6 +170,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
                     services={professional.services.map(s => ({ categoryId: s.categoryId, categoryName: s.category.name }))}
                   />
                 )}
+                {session?.role === 'CUSTOMER' && <a className="secondary-action" href={`/dashboard/customer/messages?professional=${professional.id}`}>Message this professional</a>}
                 {whatsappNumber && <a className="whatsapp-button" href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer">Chat on WhatsApp ↗</a>}
               </div>
             </section>

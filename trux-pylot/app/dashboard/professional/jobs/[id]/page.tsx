@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
+import { ProposalForm } from '@/components/proposal-form';
 
 export default async function JobDetail({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRole('PROFESSIONAL');
@@ -35,6 +36,31 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
             <p>{job.description}</p>
           </div>
         </section>
+
+        {job.quotes.length === 0 && !['COMPLETED', 'SETTLED', 'CANCELLED', 'REJECTED'].includes(job.status) && (
+          <section className="panel">
+            <div className="panel-head"><h2>Send your proposal</h2></div>
+            <div className="job-detail-body">
+              <p>Give the customer a clear price, timeline and description of the work you will deliver.</p>
+              <ProposalForm jobId={job.id} budget={job.budget} />
+            </div>
+          </section>
+        )}
+
+        {job.quotes.length > 0 && (
+          <section className="panel">
+            <div className="panel-head"><h2>Your proposal</h2></div>
+            <div className="job-detail-body">
+              {job.quotes.map(quote => (
+                <div key={quote.id}>
+                  <p><b>₦{quote.amount.toLocaleString()}</b> · {quote.priceType.toLowerCase()} · {quote.status.toLowerCase()}</p>
+                  {quote.estimatedDuration && <p>Duration: {quote.estimatedDuration}</p>}
+                  {quote.message && <p>{quote.message}</p>}
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="detail-grid">
           <div className="panel">

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
+import { ProposalActions } from '@/components/proposal-actions';
 
 export default async function CustomerJobDetail({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRole('CUSTOMER');
@@ -13,7 +14,7 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
 
   const job = await prisma.job.findFirst({
     where: { id, customerId: customer.id },
-    include: { professional: true, category: true, payment: true, review: true },
+    include: { professional: true, category: true, payment: true, review: true, quotes: true },
   });
   if (!job) notFound();
 
@@ -32,6 +33,25 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
         <section className="panel">
           <div className="panel-head"><h2>What you asked for</h2></div>
           <div className="job-detail-body"><p>{job.description}</p></div>
+        </section>
+
+        <section className="panel">
+          <div className="panel-head"><h2>Professional proposals</h2></div>
+          <div className="job-detail-body">
+            {job.quotes.length === 0 ? <p>No proposal has been submitted yet. We&apos;ll notify you when one is ready.</p> : job.quotes.map(quote => (
+              <article key={quote.id} className="proposal-card">
+                <div>
+                  <p><b>₦{quote.amount.toLocaleString()}</b> · {quote.priceType.toLowerCase()}</p>
+                  {quote.estimatedDuration && <p>Estimated duration: {quote.estimatedDuration}</p>}
+                  {quote.availableAt && <p>Available: {new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium', timeStyle: 'short' }).format(quote.availableAt)}</p>}
+                  {quote.message && <p>{quote.message}</p>}
+                  {quote.workDescription && <p>{quote.workDescription}</p>}
+                  <small>Status: {quote.status.toLowerCase()}</small>
+                </div>
+                {quote.status === 'PENDING' && <ProposalActions jobId={job.id} quoteId={quote.id} />}
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="detail-grid">
