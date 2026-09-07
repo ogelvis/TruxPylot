@@ -19,6 +19,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
       include: {
         services: { include: { category: true } },
         reviews: { include: { customer: true }, orderBy: { createdAt: 'desc' }, take: 8 },
+        user: { select: { phone: true } },
       },
     }),
     prisma.review.count({ where: { professionalId: id } }),
@@ -35,6 +36,8 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
   const approvedBatch = approvedRequest?.reviewedAt ? monthYearFmt.format(approvedRequest.reviewedAt) : null;
   const completionRate = jobCount > 0 ? Math.round((professional.completedJobs / jobCount) * 100) : null;
   const displayName = professional.accountType === 'BUSINESS' ? (professional.businessName || professional.fullName) : professional.fullName;
+  const trustScore = Math.min(99, Math.round(60 + professional.rating * 7 + Math.min(professional.completedJobs, 20) * 1.2));
+  const whatsappNumber = professional.user.phone?.replace(/[^\d]/g, '');
 
   const whyChoose = [
     'Truxpylot Verified professional',
@@ -75,6 +78,9 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
           </div>
           <div className="pro-hero-badges">
             <span className="pro-credential brass">✓ Truxpylot Verified</span>
+            <span className="pro-credential trust-score">Trust score {trustScore}/100</span>
+            {professional.rating >= 4.5 && <span className="pro-credential">★ Top rated</span>}
+            {professional.completedJobs >= 10 && <span className="pro-credential">Reliable pro</span>}
             <span className="pro-credential">{tsid}</span>
             {approvedBatch && <span className="pro-credential">Approved {approvedBatch}</span>}
           </div>
@@ -145,6 +151,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
             <section className="panel request-service-card">
               <div className="panel-head"><h2>Request this service</h2></div>
               <div className="job-detail-body">
+                <div className="profile-assurance"><strong>Trux Pylot accountability</strong><span>Your request is reviewed by Customer Service before you are connected. We keep a clear trail from request to completion.</span></div>
                 {!professional.services.length ? (
                   <p>This professional hasn&apos;t listed any services yet.</p>
                 ) : !session ? (
@@ -160,6 +167,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
                     services={professional.services.map(s => ({ categoryId: s.categoryId, categoryName: s.category.name }))}
                   />
                 )}
+                {whatsappNumber && <a className="whatsapp-button" href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer">Chat on WhatsApp ↗</a>}
               </div>
             </section>
 

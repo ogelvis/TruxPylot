@@ -109,6 +109,11 @@ export default async function Home() {
           <div><strong><Counter target={completedJobsCount} /></strong><span>jobs completed</span></div>
           <div><strong><Counter target={customerCount} /></strong><span>customers served</span></div>
         </div>
+        <div className="tp-container tp-unique-strip reveal">
+          <Link href="/marketplace?emergency=1"><span>⚡</span><strong>Need urgent help?</strong><small>Activate emergency matching</small></Link>
+          <Link href="/marketplace"><span>◎</span><strong>Trust, not guesswork</strong><small>Compare verified work signals</small></Link>
+          <Link href="/support"><span>☎</span><strong>Human support</strong><small>Our CSD team helps you choose</small></Link>
+        </div>
       </section>
 
       <section className="tp-section tp-container" id="services">
