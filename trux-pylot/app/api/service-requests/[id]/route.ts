@@ -80,9 +80,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   const status = NEXT_STATUS[action];
+  const responseData = action === 'CONFIRM_AVAILABILITY'
+    ? { responseAvailableAt: new Date() }
+    : action === 'CONFIRM_PROFESSIONAL'
+    ? { professionalRespondedAt: new Date() }
+    : {};
   await prisma.serviceRequest.update({
     where: { id },
-    data: { status, csdNotes: notes ?? serviceRequest.csdNotes },
+    data: { status, csdNotes: notes ?? serviceRequest.csdNotes, ...responseData },
   });
 
   // Best-effort notifications — never let a bounced email or a failed

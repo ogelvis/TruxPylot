@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { RequestServiceForm } from '@/components/request-service-form';
 import { ReportProfessionalForm } from '@/components/report-professional-form';
+import { getTruxPylotScore } from '@/lib/truxpylot-score';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,8 +19,10 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
       where: { id },
       include: {
         services: { include: { category: true } },
-        reviews: { include: { customer: true }, orderBy: { createdAt: 'desc' }, take: 8 },
+        reviews: { include: { customer: true, job: { select: { status: true } } }, orderBy: { createdAt: 'desc' } },
         user: { select: { phone: true } },
+        jobs: { select: { status: true } },
+        serviceRequests: { select: { status: true, requiresProfessionalResponse: true, responseExcluded: true, responseAvailableAt: true, professionalRespondedAt: true } },
       },
     }),
     prisma.review.count({ where: { professionalId: id } }),
@@ -36,7 +39,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
   const approvedBatch = approvedRequest?.reviewedAt ? monthYearFmt.format(approvedRequest.reviewedAt) : null;
   const completionRate = jobCount > 0 ? Math.round((professional.completedJobs / jobCount) * 100) : null;
   const displayName = professional.accountType === 'BUSINESS' ? (professional.businessName || professional.fullName) : professional.fullName;
-  const trustScore = Math.min(99, Math.round(60 + professional.rating * 7 + Math.min(professional.completedJobs, 20) * 1.2));
+  const score = await getTruxPylotScore(professional.id);
   const whatsappNumber = professional.user.phone?.replace(/[^\d]/g, '');
 
   const whyChoose = [
@@ -78,8 +81,8 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
           </div>
           <div className="pro-hero-badges">
             <span className="pro-credential brass">✓ Truxpylot Verified</span>
-            <span className="pro-credential trust-score">Trust score {trustScore}/100</span>
-            {professional.rating >= 4.5 && <span className="pro-credential">★ Top rated</span>}
+            {score?.eligibleForPublicScore ? <span className="pro-credential trust-score">TruxPylot Score {score.score}</span> : <span className="pro-credential">{score?.publicLabel ?? 'New Professional'}</span>}
+            {score?.eligibleForPublicScore && score.level && <span className="pro-credential">★ {score.level}</span>}
             {professional.completedJobs >= 10 && <span className="pro-credential">Reliable pro</span>}
             <span className="pro-credential">{tsid}</span>
             {approvedBatch && <span className="pro-credential">Approved {approvedBatch}</span>}
@@ -87,7 +90,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
         </div>
 
         <div className="pro-stats">
-          <div className="pro-stat"><b>{professional.rating.toFixed(1)}</b><span>★ Rating · {reviewCount} review{reviewCount === 1 ? '' : 's'}</span></div>
+          <div className="pro-stat"><b>{reviewCount ? professional.rating.toFixed(1) : '—'}</b><span>{reviewCount ? `★ Rating · ${reviewCount} review${reviewCount === 1 ? '' : 's'}` : 'No reviews yet'}</span></div>
           <div className="pro-stat"><b>{professional.completedJobs}</b><span>Jobs completed</span></div>
           <div className="pro-stat"><b>{professional.services.length}</b><span>Service{professional.services.length === 1 ? '' : 's'} offered</span></div>
           <div className="pro-stat"><b>{professional.yearsExperience ?? '—'}</b><span>Years of experience</span></div>

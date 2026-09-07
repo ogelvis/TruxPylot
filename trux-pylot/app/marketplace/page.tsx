@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
+import { getTruxPylotScore } from '@/lib/truxpylot-score';
 export const dynamic = 'force-dynamic';
 
 export default async function Marketplace({ searchParams }: { searchParams: Promise<{ category?: string; emergency?: string }> }) {
@@ -10,11 +11,12 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
         verificationStatus: 'APPROVED',
         services: category ? { some: { category: { slug: category } } } : undefined,
       },
-      include: { services: { include: { category: true } }, user: true },
+      include: { services: { include: { category: true } }, user: true, reviews: { select: { rating: true, job: { select: { status: true } } } }, serviceRequests: { select: { status: true, requiresProfessionalResponse: true, responseExcluded: true, responseAvailableAt: true, professionalRespondedAt: true } } },
       take: 30,
     }),
     prisma.serviceCategory.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
   ]);
+  const scores = Object.fromEntries(await Promise.all(professionals.map(async professional => [professional.id, await getTruxPylotScore(professional.id)] as const)));
 
   return (
     <main>
@@ -62,13 +64,17 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
                 <b>{p.fullName}</b>
                 <span className="verified-badge">✓ Verified</span>
               </div>
-              <div className="professional-trust-row">
-                <strong>Trust score {Math.min(99, Math.round(60 + p.rating * 7 + Math.min(p.completedJobs, 20) * 1.2))}/100</strong>
-                {p.completedJobs >= 10 && <span>Reliable</span>}
-                {p.rating >= 4.5 && <span>Top rated</span>}
-              </div>
+              {(() => {
+                        const score = scores[p.id];
+                return <div className="professional-trust-row">
+                          {score?.eligibleForPublicScore ? <strong>TruxPylot Score {score.score}</strong> : <strong>{score?.publicLabel ?? 'New Professional'}</strong>}
+                          {score?.eligibleForPublicScore && score.level && <span>{score.level}</span>}
+                  {p.completedJobs >= 10 && <span>Reliable</span>}
+                          {p.rating >= 4.5 && (score?.legitimateRatings ?? 0) >= 3 && <span>Top rated</span>}
+                </div>;
+              })()}
               <p className="professional-meta">{p.profession} · {p.location}</p>
-              <p className="professional-meta">★ {p.rating.toFixed(1)} · {p.completedJobs} completed jobs</p>
+              <p className="professional-meta">{p.rating ? `★ ${p.rating.toFixed(1)}` : 'No reviews yet'} · {p.completedJobs} completed jobs</p>
               {p.services.length > 0 && (
                 <div className="professional-tags">
                   {p.services.map(s => (
