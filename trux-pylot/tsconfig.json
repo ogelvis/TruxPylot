@@ -22,7 +22,12 @@
       {
         "name": "next"
       }
-    ]
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "incremental": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true
   },
   "include": [
     "next-env.d.ts",

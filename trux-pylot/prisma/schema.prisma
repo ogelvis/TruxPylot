@@ -143,6 +143,22 @@ model Professional {
   serviceRequests ServiceRequest[]
   reports ProfessionalReport[]
   wallet Wallet?
+  premiumPurchases PremiumPurchase[]
+}
+
+model PremiumPurchase {
+  id              String        @id @default(cuid())
+  professionalId  String
+  reference       String        @unique
+  amount          Int
+  status          PaymentStatus @default(PENDING)
+  providerEventId String?       @unique
+  activatedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  professional    Professional  @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId, status])
 }
 
 // A "Request Service" submission from a professional's public profile.

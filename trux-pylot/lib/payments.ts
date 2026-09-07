@@ -2,6 +2,12 @@ import crypto from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 
 export function makeReference(jobId: string) { return `TP-${jobId}-${crypto.randomUUID().slice(0,8)}`; }
+export function makePremiumReference(professionalId: string) { return `TP-PREM-${professionalId}-${crypto.randomUUID().slice(0,8)}`; }
+export function premiumPriceKobo() {
+  const naira = Number(process.env.PREMIUM_PRICE_NAIRA ?? 15000);
+  if (!Number.isSafeInteger(naira) || naira <= 0) throw new Error('PREMIUM_PRICE_NAIRA must be a positive integer.');
+  return naira * 100;
+}
 export function verifyPaystackSignature(rawBody: string, signature: string | null) { const key = process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY; if (!key || !signature) return false; const expected=crypto.createHmac('sha512',key).update(rawBody).digest('hex'); return signature.length===expected.length && crypto.timingSafeEqual(Buffer.from(signature),Buffer.from(expected)); }
 
 /** Marks a payment SUCCESS, moves the job to PAID, and credits the
@@ -33,6 +39,20 @@ export async function applySuccessfulPayment(reference: string, amountKobo: numb
         update: { pendingBalance: { increment: payment.amount - payment.commission } },
       });
     }
+
+  });
+  return { ok: true as const, already: false };
+}
+
+export async function applySuccessfulPremiumPayment(reference: string, amountKobo: number, providerEventId?: string) {
+  const purchase = await prisma.premiumPurchase.findUnique({ where: { reference } });
+  if (!purchase) return { ok: false as const, reason: 'not_found' as const };
+  if (purchase.status === 'SUCCESS') return { ok: true as const, already: true };
+  if (purchase.amount !== amountKobo) return { ok: false as const, reason: 'amount_mismatch' as const };
+
+  await prisma.premiumPurchase.updateMany({
+    where: { id: purchase.id, status: 'PENDING' },
+    data: { status: 'SUCCESS', providerEventId, activatedAt: new Date() },
   });
   return { ok: true as const, already: false };
 }

@@ -32,6 +32,35 @@ async function sendEmail(to: string, subject: string, html: string) {
     const body = await res.text().catch(() => '');
     throw new Error(`Resend API error (${res.status}): ${body.slice(0, 300)}`);
   }
+
+}
+
+export async function sendCsdContactEmail(data: {
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string | null;
+  customerId: string | null;
+  professionalName: string;
+  professionalBusinessName: string | null;
+  professionalId: string;
+  profession: string | null;
+  professionalLocation: string | null;
+  serviceNames: string[];
+  message: string;
+  profileUrl: string;
+}) {
+  const recipient = process.env.CSD_EMAIL || process.env.SUPPORT_EMAIL || 'info@truxpylot.com';
+  await sendEmail(
+    recipient,
+    `New customer enquiry for ${data.professionalName}`,
+    `<h2>New professional profile enquiry</h2>
+     <p><b>Professional:</b> ${data.professionalName}</p>
+     <p><b>Services:</b> ${data.serviceNames.join(', ') || 'Not specified'}</p>
+     <p><b>Customer:</b> ${data.customerName} (${data.customerEmail})</p>
+     <p><b>Phone:</b> ${data.customerPhone || 'Not provided'}</p>
+     <p><b>Message:</b> ${data.message}</p>
+     <p><a href="${data.profileUrl}">View professional profile</a></p>`
+  );
 }
 
 export async function sendVerificationApprovedEmail(to: string, fullName: string) {

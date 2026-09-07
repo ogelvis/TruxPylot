@@ -32,7 +32,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
 
 function initials(name:string){return name.split(' ').map(n=>n[0]).filter(Boolean).slice(0,2).join('').toUpperCase();}
 
-export function AppShell({role,name,avatarUrl,verified,children,active}:{role:Role;name:string;avatarUrl?:string|null;verified?:boolean;children:React.ReactNode;active?:string}){
+export function AppShell({role,name,avatarUrl,verified,premium,children,active}:{role:Role;name:string;avatarUrl?:string|null;verified?:boolean;premium?:boolean;children:React.ReactNode;active?:string}){
   const items = nav[role];
   return <div className="app-shell">
     <aside className="sidebar">
@@ -44,6 +44,7 @@ export function AppShell({role,name,avatarUrl,verified,children,active}:{role:Ro
           <div className="sidebar-role-row">
             <span>{role.toLowerCase()}</span>
             {verified && <span className="verified-chip">✓ Verified</span>}
+            {premium && <span className="verified-chip">★ Premium</span>}
           </div>
         </div>
       </div>
