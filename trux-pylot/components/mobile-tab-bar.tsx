@@ -5,6 +5,7 @@ const TABS: Record<Role, { label: string; href: string; icon: string }[]> = {
   CUSTOMER: [
     { label: 'Home', href: '/dashboard/customer', icon: '⌂' },
     { label: 'Requests', href: '/dashboard/customer/jobs', icon: '▣' },
+    { label: 'Messages', href: '/dashboard/customer/messages', icon: '✉' },
     { label: 'Find Pro', href: '/marketplace', icon: '◎' },
     { label: 'Support', href: '/support', icon: '☎' },
     { label: 'Profile', href: '/dashboard/customer/profile', icon: '◈' },
@@ -12,6 +13,7 @@ const TABS: Record<Role, { label: string; href: string; icon: string }[]> = {
   PROFESSIONAL: [
     { label: 'Home', href: '/dashboard/professional', icon: '⌂' },
     { label: 'Jobs', href: '/dashboard/professional/jobs', icon: '▣' },
+    { label: 'Messages', href: '/dashboard/professional/messages', icon: '✉' },
     { label: 'Earnings', href: '/dashboard/professional/earnings', icon: '◈' },
     { label: 'Support', href: '/support', icon: '☎' },
     { label: 'Profile', href: '/dashboard/professional/profile', icon: '◎' },
