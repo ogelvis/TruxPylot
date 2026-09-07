@@ -4,7 +4,6 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { RequestServiceForm } from '@/components/request-service-form';
 import { ReportProfessionalForm } from '@/components/report-professional-form';
-import { ContactTruxPylot } from '@/components/contact-truxpylot';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +19,6 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
       include: {
         services: { include: { category: true } },
         reviews: { include: { customer: true }, orderBy: { createdAt: 'desc' }, take: 8 },
-        premiumPurchases: { where: { status: 'SUCCESS' }, take: 1 },
       },
     }),
     prisma.review.count({ where: { professionalId: id } }),
@@ -33,21 +31,13 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
   if (!professional || professional.verificationStatus !== 'APPROVED') notFound();
 
   const session = await getSession();
-  const customerForContact = session?.role === 'CUSTOMER'
-    ? await prisma.customer.findUnique({
-        where: { userId: session.userId },
-        include: { user: { select: { email: true, phone: true } } },
-      })
-    : null;
   const tsid = 'TSID-' + professional.id.slice(-8).toUpperCase();
   const approvedBatch = approvedRequest?.reviewedAt ? monthYearFmt.format(approvedRequest.reviewedAt) : null;
   const completionRate = jobCount > 0 ? Math.round((professional.completedJobs / jobCount) * 100) : null;
   const displayName = professional.accountType === 'BUSINESS' ? (professional.businessName || professional.fullName) : professional.fullName;
-  const isPremium = professional.premiumPurchases.length > 0;
 
   const whyChoose = [
     'Truxpylot Verified professional',
-    isPremium ? 'Premium Trux Pylot professional' : null,
     `${professional.completedJobs} job${professional.completedJobs === 1 ? '' : 's'} completed on Truxpylot`,
     reviewCount > 0 ? `${professional.rating.toFixed(1)} average rating from ${reviewCount} review${reviewCount === 1 ? '' : 's'}` : null,
     professional.services.length > 0 ? `Approved for ${professional.services.length} service${professional.services.length === 1 ? '' : 's'}` : null,
@@ -84,7 +74,6 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
             </div>
           </div>
           <div className="pro-hero-badges">
-            {isPremium && <span className="pro-credential premium">★ Premium</span>}
             <span className="pro-credential brass">✓ Truxpylot Verified</span>
             <span className="pro-credential">{tsid}</span>
             {approvedBatch && <span className="pro-credential">Approved {approvedBatch}</span>}
@@ -157,7 +146,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
               <div className="panel-head"><h2>Request this service</h2></div>
               <div className="job-detail-body">
                 {!professional.services.length ? (
-                  <p>This professional hasn&apos;t listed any services yet. You can still contact TruxPylot Customer Service about this professional.</p>
+                  <p>This professional hasn&apos;t listed any services yet.</p>
                 ) : !session ? (
                   <>
                     <p style={{ marginBottom: 14 }}>Sign in as a customer to request this service.</p>
@@ -171,23 +160,6 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
                     services={professional.services.map(s => ({ categoryId: s.categoryId, categoryName: s.category.name }))}
                   />
                 )}
-                <div style={{ marginTop: 18, paddingTop: 18, borderTop: '1px solid #e6edf7' }}>
-                  <ContactTruxPylot
-                    professionalId={professional.id}
-                    professionalName={professional.fullName}
-                    professionalBusinessName={professional.businessName}
-                    profession={professional.profession}
-                    professionalLocation={professional.location}
-                    serviceNames={professional.services.map(s => s.category.name)}
-                    profileUrl={`${process.env.NEXT_PUBLIC_APP_URL || 'https://trux-pylot.onrender.com'}/marketplace/${professional.id}`}
-                    customer={customerForContact ? {
-                      name: customerForContact.fullName,
-                      email: customerForContact.user.email,
-                      phone: customerForContact.user.phone,
-                      customerId: customerForContact.id,
-                    } : null}
-                  />
-                </div>
               </div>
             </section>
 

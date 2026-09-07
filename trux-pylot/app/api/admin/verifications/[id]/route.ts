@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { VerificationStatus } from '@prisma/client';
 import { sendVerificationApprovedEmail, sendVerificationRejectedEmail, sendVerificationMoreInfoEmail } from '@/lib/email';
+import { notifyUser } from '@/lib/notify';
 
 const input = z
   .object({
@@ -100,9 +101,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const to = requestItem.professional.user.email;
     const name = requestItem.professional.fullName;
-    if (action === 'APPROVE') await sendVerificationApprovedEmail(to, name);
-    else if (action === 'REJECT') await sendVerificationRejectedEmail(to, name, notes);
-    else if (action === 'REQUEST_MORE_INFORMATION') await sendVerificationMoreInfoEmail(to, name, notes);
+    const link = '/dashboard/professional/verification';
+    if (action === 'APPROVE') {
+      await sendVerificationApprovedEmail(to, name);
+      await notifyUser({ userId: requestItem.professional.userId, type: 'verification', title: "You're verified!", body: 'Your profile is now approved and visible in the marketplace.', link });
+    } else if (action === 'REJECT') {
+      await sendVerificationRejectedEmail(to, name, notes);
+      await notifyUser({ userId: requestItem.professional.userId, type: 'verification', title: 'Verification not approved', body: notes ?? 'Your submission was not approved this time.', link });
+    } else if (action === 'REQUEST_MORE_INFORMATION') {
+      await sendVerificationMoreInfoEmail(to, name, notes);
+      await notifyUser({ userId: requestItem.professional.userId, type: 'verification', title: 'More information needed', body: notes ?? 'We need more information to complete your verification.', link });
+    } else if (action === 'MARK_UNDER_REVIEW') {
+      await notifyUser({ userId: requestItem.professional.userId, type: 'verification', title: 'Verification under review', body: 'Our team has started reviewing your submission.', link });
+    }
   } catch (err) {
     console.error('[admin/verifications] notification email failed:', err instanceof Error ? err.message : err);
   }

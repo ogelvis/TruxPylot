@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { ServiceRequestStatus } from '@prisma/client';
+import { notifyUser } from '@/lib/notify';
+import { sendServiceRequestConnectedEmail, sendServiceRequestCompletedEmail, sendServiceRequestDeclinedEmail } from '@/lib/email';
 
 const input = z
   .object({
@@ -21,6 +23,12 @@ const NEXT_STATUS: Record<string, ServiceRequestStatus> = {
   MARK_COMPLETED: 'COMPLETED',
   DECLINE: 'DECLINED',
   CANCEL: 'CANCELLED',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  CSD_REVIEWING: 'Your request is now being reviewed by our Customer Service team.',
+  AVAILABILITY_CONFIRMATION: "We're confirming the professional's availability for your request.",
+  PROFESSIONAL_CONFIRMED: 'The professional has been confirmed and is ready for your job.',
 };
 
 // Which current statuses each action may run from.
@@ -48,7 +56,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { action, notes } = parsed.data;
 
   const { id } = await params;
-  const serviceRequest = await prisma.serviceRequest.findUnique({ where: { id } });
+  const serviceRequest = await prisma.serviceRequest.findUnique({
+    where: { id },
+    include: { customer: { include: { user: true } }, professional: { include: { user: true } } },
+  });
   if (!serviceRequest) return NextResponse.json({ error: 'Request not found.' }, { status: 404 });
 
   if (CSD_ACTIONS.has(action)) {
@@ -73,6 +84,33 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     where: { id },
     data: { status, csdNotes: notes ?? serviceRequest.csdNotes },
   });
+
+  // Best-effort notifications — never let a bounced email or a failed
+  // notification write undo the status change that already saved above.
+  const link = `/dashboard/customer/service-requests/${serviceRequest.id}`;
+  const customerUserId = serviceRequest.customer.userId;
+  const customerEmail = serviceRequest.customer.user.email;
+  const customerName = serviceRequest.customer.fullName;
+
+  try {
+    if (status === 'CONNECTED') {
+      await notifyUser({ userId: customerUserId, type: 'service_request', title: "You're connected!", body: `${serviceRequest.professional.fullName} has been confirmed for your request.`, link });
+      await notifyUser({ userId: serviceRequest.professional.userId, type: 'service_request', title: 'New connection', body: `You've been connected with ${customerName} for a service request.` });
+      await sendServiceRequestConnectedEmail(customerEmail, customerName, serviceRequest.professional.fullName, serviceRequest.id);
+    } else if (status === 'COMPLETED') {
+      await notifyUser({ userId: customerUserId, type: 'service_request', title: 'Request completed', body: 'Your service request is complete. Leave a review!', link });
+      await sendServiceRequestCompletedEmail(customerEmail, customerName, serviceRequest.id);
+    } else if (status === 'DECLINED') {
+      await notifyUser({ userId: customerUserId, type: 'service_request', title: 'Request declined', body: notes ?? 'We could not proceed with this request.', link });
+      await sendServiceRequestDeclinedEmail(customerEmail, customerName, notes);
+    } else if (STATUS_LABEL[status]) {
+      // Lighter intermediate updates — in-app only, no email (avoids
+      // spamming the customer's inbox for every CSD step).
+      await notifyUser({ userId: customerUserId, type: 'service_request', title: 'Request update', body: STATUS_LABEL[status], link });
+    }
+  } catch (err) {
+    console.error('[service-requests] notification/email failed:', err instanceof Error ? err.message : err);
+  }
 
   return NextResponse.json({ ok: true, status });
 }
