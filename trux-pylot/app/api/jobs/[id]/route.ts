@@ -32,7 +32,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   const parsed = input.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Invalid request.' }, { status: 400 });
-  const { action } = parsed.data;
+  const payload = parsed.data;
+  const { action } = payload;
 
   const job = await prisma.job.findUnique({ where: { id }, include: { quotes: true } });
   if (!job) return NextResponse.json({ error: 'Job not found.' }, { status: 404 });
@@ -51,20 +52,20 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
   }
 
-  if (action === 'accept_proposal' || action === 'decline_proposal') {
+  if (payload.action === 'accept_proposal' || payload.action === 'decline_proposal') {
     if (session.role !== 'CUSTOMER') return NextResponse.json({ error: 'Only the customer can decide on a proposal.' }, { status: 403 });
     const customer = await prisma.customer.findUnique({ where: { userId: session.userId } });
     if (!customer || job.customerId !== customer.id) return NextResponse.json({ error: 'This is not your job request.' }, { status: 403 });
-    const quote = job.quotes.find(item => item.id === parsed.data.quoteId);
+    const quote = job.quotes.find(item => item.id === payload.quoteId);
     if (!quote || quote.status !== 'PENDING') return NextResponse.json({ error: 'Proposal not found or already decided.' }, { status: 404 });
     await prisma.$transaction(async tx => {
-      await tx.quote.update({ where: { id: quote.id }, data: { status: action === 'accept_proposal' ? 'ACCEPTED' : 'DECLINED' } });
+      await tx.quote.update({ where: { id: quote.id }, data: { status: payload.action === 'accept_proposal' ? 'ACCEPTED' : 'DECLINED' } });
       if (action === 'accept_proposal') {
         await tx.quote.updateMany({ where: { jobId: job.id, id: { not: quote.id }, status: 'PENDING' }, data: { status: 'DECLINED' } });
         await tx.job.update({ where: { id: job.id }, data: { status: 'ACCEPTED' } });
       }
     });
-    return NextResponse.json({ ok: true, status: action === 'accept_proposal' ? 'ACCEPTED' : job.status });
+    return NextResponse.json({ ok: true, status: payload.action === 'accept_proposal' ? 'ACCEPTED' : job.status });
   }
 
   const targetStatus = TARGET[action];
@@ -74,8 +75,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }, { status: 409 });
   }
 
-  if (parsed.data.action === 'quote' || parsed.data.action === 'proposal') {
-    await prisma.quote.create({ data: { jobId: job.id, amount: parsed.data.amount, ...(parsed.data.action === 'proposal' ? { priceType: parsed.data.priceType, estimatedDuration: parsed.data.estimatedDuration, availableAt: parsed.data.availableAt, message: parsed.data.message, workDescription: parsed.data.workDescription } : {}) } });
+  if (payload.action === 'quote' || payload.action === 'proposal') {
+    const quoteData = payload.action === 'proposal'
+      ? {
+          jobId: job.id,
+          amount: payload.amount,
+          priceType: payload.priceType,
+          estimatedDuration: payload.estimatedDuration,
+          availableAt: payload.availableAt,
+          message: payload.message,
+          workDescription: payload.workDescription,
+        }
+      : { jobId: job.id, amount: payload.amount };
+    await prisma.quote.create({ data: quoteData });
     await prisma.job.update({ where: { id: job.id }, data: { status: targetStatus } });
   } else if (action === 'confirm') {
     // Confirming completion is also the moment a professional's pending
