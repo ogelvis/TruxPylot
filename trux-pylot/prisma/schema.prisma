@@ -144,6 +144,21 @@ model Professional {
   reports ProfessionalReport[]
   wallet Wallet?
   premiumPurchases PremiumPurchase[]
+  portfolioItems PortfolioItem[]
+}
+
+model PortfolioItem {
+  id             String       @id @default(cuid())
+  professionalId String
+  title          String
+  description    String?
+  imageUrl       String?      @db.Text
+  approved       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId, approved])
 }
 
 model PremiumPurchase {
@@ -180,6 +195,11 @@ model ServiceRequest {
   additionalRequirements String?
   status ServiceRequestStatus @default(SUBMITTED)
   csdNotes String?
+  requiresProfessionalResponse Boolean @default(true)
+  responseExcluded Boolean @default(false)
+  responseExclusionReason String?
+  responseAvailableAt DateTime?
+  professionalRespondedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   customer Customer @relation(fields: [customerId], references: [id])
