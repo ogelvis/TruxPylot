@@ -1,4 +1,6 @@
 'use client';
+
+// Bank details are always loaded from the authenticated server endpoint.
 import { useEffect, useState } from 'react';
 export function DedicatedAccount() {
   const [account, setAccount] = useState<any>(null); const [message, setMessage] = useState('Loading bank details…');
