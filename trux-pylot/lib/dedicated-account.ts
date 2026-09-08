@@ -31,17 +31,27 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
       if (!(error instanceof PaystackError) || error.status !== 404) throw error;
       customer = await paystack('/customer', { method: 'POST', body: JSON.stringify({ email: professional.user.email, first_name: professional.fullName.split(' ')[0], last_name: professional.fullName.split(' ').slice(1).join(' ') || professional.fullName }) });
     }
+    const customerCode = customer?.customer_code ?? customer?.customer?.customer_code ?? customer?.data?.customer_code;
+    if (!customerCode) throw new Error('Paystack customer unavailable');
     account = await prisma.dedicatedAccount.upsert({
       where: { professionalId: professional.id },
-      create: { professionalId: professional.id, walletId: wallet.id, paystackCustomerCode: customer.customer_code },
-      update: { paystackCustomerCode: customer.customer_code, walletId: wallet.id },
+      create: { professionalId: professional.id, walletId: wallet.id, paystackCustomerCode: customerCode },
+      update: { paystackCustomerCode: customerCode, walletId: wallet.id },
     });
   }
   if (!account.accountNumber || refresh) {
-    const data = account.paystackAccountId
-      ? await paystack(`/dedicated_account/${account.paystackAccountId}`)
-      : await paystack('/dedicated_account', { method: 'POST', headers: { 'X-Idempotency-Key': `truxpylot-dva-${account.id}` }, body: JSON.stringify({ customer: account.paystackCustomerCode }) });
-    account = await prisma.dedicatedAccount.update({ where: { id: account.id }, data: { paystackAccountId: String(data.id), accountNumber: data.account_number, accountName: data.account_name, bankName: data.bank?.name ?? data.bank_name, bankSlug: data.bank?.slug, lastSyncedAt: new Date() } });
+    try {
+      await prisma.dedicatedAccount.update({ where: { id: account.id }, data: { status: 'PROVISIONING', lastSyncError: null, syncAttempts: { increment: 1 } } });
+      const data = account.paystackAccountId
+        ? await paystack(`/dedicated_account/${account.paystackAccountId}`)
+        : await paystack('/dedicated_account', { method: 'POST', headers: { 'X-Idempotency-Key': `truxpylot-dva-${account.id}` }, body: JSON.stringify({ customer: account.paystackCustomerCode }) });
+      const item = data?.dedicated_account ?? data;
+      const pending = !item?.account_number;
+      account = await prisma.dedicatedAccount.update({ where: { id: account.id }, data: { paystackAccountId: item?.id ? String(item.id) : account.paystackAccountId, accountNumber: item?.account_number ?? undefined, accountName: item?.account_name ?? undefined, bankName: item?.bank?.name ?? item?.bank_name ?? undefined, bankSlug: item?.bank?.slug ?? item?.bank_slug ?? undefined, status: pending ? 'PENDING' : 'ACTIVE', lastSyncError: null, lastSyncedAt: new Date() } });
+    } catch {
+      await prisma.dedicatedAccount.update({ where: { id: account.id }, data: { status: 'ERROR', lastSyncError: 'Provisioning failed' } });
+      if (!account.accountNumber) return prisma.dedicatedAccount.findUnique({ where: { id: account.id } });
+    }
   }
   return account;
 }

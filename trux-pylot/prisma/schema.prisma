@@ -132,6 +132,7 @@ model User {
   referralRewards Reward[]
   referralMilestoneAchievements ReferralMilestoneAchievement[]
   withdrawals Withdrawal[]
+  payoutAccount PayoutAccount?
 }
 
 enum AccountType {
@@ -481,6 +482,9 @@ model DedicatedAccount {
   bankName String?
   bankSlug String?
   active Boolean @default(true)
+  status String @default("PROVISIONING")
+  lastSyncError String?
+  syncAttempts Int @default(0)
   lastSyncedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -743,6 +747,7 @@ model Withdrawal {
   id String @id @default(cuid())
   userId String
   amount Int
+  idempotencyKey String? @unique
   status WithdrawalStatus @default(REQUESTED)
   bankName String?
   accountName String?
@@ -754,4 +759,17 @@ model Withdrawal {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([status, createdAt])
   @@index([userId, status])
+}
+
+model PayoutAccount {
+  id String @id @default(cuid())
+  userId String @unique
+  bankName String
+  accountName String
+  accountNumber String
+  bankCode String?
+  verified Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
