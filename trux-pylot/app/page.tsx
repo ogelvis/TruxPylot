@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ScrollReveal } from '@/components/scroll-reveal';
 import { Counter } from '@/components/counter';
 import { ProPhoto } from '@/components/pro-photo';
+import { getSession, dashboardPath } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ function Mark({ type }: { type: 'check' | 'shield' | 'search' | 'clock' | 'star'
 }
 
 export default async function Home() {
-  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros] = await Promise.all([
+  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, session] = await Promise.all([
     prisma.serviceCategory.findMany({ where: { active: true }, take: 12, orderBy: { name: 'asc' } }),
     prisma.professional.count({ where: { verificationStatus: 'APPROVED' } }),
     prisma.job.count({ where: { status: 'SETTLED' } }),
@@ -34,6 +35,7 @@ export default async function Home() {
       orderBy: { rating: 'desc' },
       take: 4,
     }),
+    getSession(),
   ]);
 
   return (
@@ -77,8 +79,14 @@ export default async function Home() {
             <a href="#how-it-works">How it works</a>
             <Link href="/register">Become a professional</Link>
             <Link href="/support">Contact</Link>
-            <Link href="/login" className="tp-login">Log in</Link>
-            <Link href="/register" className="tp-signup">Sign up</Link>
+            {session ? (
+              <Link href={dashboardPath(session.role)} className="tp-signup">Open dashboard</Link>
+            ) : (
+              <>
+                <Link href="/login" className="tp-login">Log in</Link>
+                <Link href="/register" className="tp-signup">Sign up</Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
