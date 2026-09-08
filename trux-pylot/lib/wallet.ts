@@ -38,6 +38,45 @@ export async function applyWalletFunding(reference: string, amount: number, prov
   return { ok: true as const, already: false };
 }
 
+export async function applyDedicatedAccountTransfer(event: any) {
+  const data = event?.data ?? {};
+  const accountNumber = data.authorization?.account_number ?? data.receiver?.account_number ?? data.metadata?.account_number;
+  const customerCode = typeof data.customer === 'object' ? data.customer?.customer_code : data.customer?.customer_code ?? data.customer;
+  const account = accountNumber ? await prisma.dedicatedAccount.findFirst({ where: { accountNumber } }) : customerCode ? await prisma.dedicatedAccount.findFirst({ where: { paystackCustomerCode: customerCode } }) : null;
+  const reference = String(data.reference ?? data.id ?? '');
+  const amount = Number(data.amount);
+  if (!reference || !Number.isSafeInteger(amount) || amount <= 0) return { matched: false };
+  try {
+    return await prisma.$transaction(async tx => {
+      const transfer = await tx.incomingTransfer.create({
+        data: {
+          dedicatedAccountId: account?.id,
+          reference,
+          amount,
+          currency: data.currency,
+          providerEventId: data.id ? String(data.id) : undefined,
+          status: account ? 'MATCHED' : 'UNMATCHED',
+          payload: data,
+          matchedAt: account ? new Date() : undefined,
+        },
+      });
+      if (!account) return { matched: false, duplicate: false };
+    const wallet = await tx.wallet.findUnique({ where: { id: account.walletId } });
+    if (!wallet) throw new Error('DVA wallet not found');
+    await tx.wallet.update({ where: { id: wallet.id }, data: { availableBalance: { increment: amount } } });
+    await tx.walletTransaction.create({ data: { walletId: wallet.id, type: 'CREDIT', source: 'DVA_TRANSFER', amount, description: 'Bank transfer funding', reference } });
+    const professional = await tx.professional.findUnique({ where: { id: account.professionalId }, select: { userId: true } });
+    if (professional) await tx.notification.create({ data: { userId: professional.userId, type: 'WALLET_DVA_CREDIT', title: 'Wallet funded by bank transfer', body: `₦${(amount / 100).toLocaleString()} has been added to your wallet.`, link: '/dashboard/professional/wallet' } });
+      return { matched: true, duplicate: false, transferId: transfer.id };
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      return { matched: Boolean(account), duplicate: true };
+    }
+    throw error;
+  }
+}
+
 /** Credits an approved referral reward exactly once. The unique reference is
  * created before the balance increment, so concurrent retries cannot double
  * credit. Customers without a professional profile retain the existing

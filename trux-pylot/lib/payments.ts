@@ -8,7 +8,7 @@ export function premiumPriceKobo() {
   if (!Number.isSafeInteger(naira) || naira <= 0) throw new Error('PREMIUM_PRICE_NAIRA must be a positive integer.');
   return naira * 100;
 }
-export function verifyPaystackSignature(rawBody: string, signature: string | null) { const key = process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY; if (!key || !signature) return false; const expected=crypto.createHmac('sha512',key).update(rawBody).digest('hex'); return signature.length===expected.length && crypto.timingSafeEqual(Buffer.from(signature),Buffer.from(expected)); }
+export function verifyPaystackSignature(rawBody: string, signature: string | null) { const key = process.env.PAYSTACK_SECRET_KEY; if (!key || !signature) return false; const expected=crypto.createHmac('sha512',key).update(rawBody).digest('hex'); return signature.length===expected.length && crypto.timingSafeEqual(Buffer.from(signature),Buffer.from(expected)); }
 
 /** Marks a payment SUCCESS, moves the job to PAID, and credits the
  *  professional's pending wallet balance — shared by the webhook (primary
