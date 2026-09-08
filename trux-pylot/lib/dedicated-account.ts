@@ -1,6 +1,7 @@
 import 'server-only';
 import { prisma } from '@/lib/prisma';
 
+// Paystack credentials and DVA mapping must never enter the client bundle.
 const endpoint = 'https://api.paystack.co';
 function headers() {
   const key = process.env.PAYSTACK_SECRET_KEY;
