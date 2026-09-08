@@ -108,6 +108,7 @@ model User {
   referralReceived Referral? @relation("ReferralReferred")
   referralAttribution ReferralAttribution?
   referralRewards Reward[]
+  referralMilestoneAchievements ReferralMilestoneAchievement[]
   withdrawals Withdrawal[]
 }
 
@@ -463,12 +464,15 @@ model ReferralCampaign {
   active Boolean @default(true)
   rewardAmount Int @default(0)
   qualificationJobs Int @default(1)
+  maxRewardCap Int?
   startsAt DateTime?
   endsAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   codes ReferralCode[]
   milestones ReferralMilestone[]
+  achievements ReferralMilestoneAchievement[]
+  rewards Reward[]
   referrals Referral[]
 }
 
@@ -478,8 +482,12 @@ model ReferralMilestone {
   name String
   threshold Int
   rewardAmount Int
+  qualifiedCountTrigger Int
+  totalMilestoneValue Int
+  incrementalAmount Int
   campaign ReferralCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   rewards Reward[]
+  achievements ReferralMilestoneAchievement[]
   @@unique([campaignId, threshold])
 }
 
@@ -536,16 +544,44 @@ model Reward {
   referralId String?
   userId String
   milestoneId String?
+  campaignId String?
+  achievementId String? @unique
+  qualifiedCountTrigger Int?
+  totalMilestoneValue Int?
+  incrementalAmount Int?
   amount Int
   status RewardStatus @default(PENDING)
   reason String
   approvedById String?
   paidAt DateTime?
+  reversedAt DateTime?
   createdAt DateTime @default(now())
   referral Referral? @relation(fields: [referralId], references: [id], onDelete: SetNull)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   milestone ReferralMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  campaign ReferralCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  achievement ReferralMilestoneAchievement?
   @@index([userId, status])
+  @@unique([userId, campaignId, milestoneId])
+}
+
+model ReferralMilestoneAchievement {
+  id String @id @default(cuid())
+  campaignId String
+  milestoneId String
+  userId String
+  qualifiedCount Int
+  totalMilestoneValue Int
+  incrementalAmount Int
+  achievedAt DateTime @default(now())
+  reversedAt DateTime?
+  rewardId String @unique
+  campaign ReferralCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  milestone ReferralMilestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+  @@unique([campaignId, userId, milestoneId])
+  @@index([userId, campaignId])
 }
 
 model Withdrawal {
