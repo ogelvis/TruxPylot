@@ -35,6 +35,11 @@ export function RegisterWizard() {
   const [otpSent, setOtpSent] = useState(false);
   const [code, setCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [referralCode, setReferralCode] = useState('');
+
+  useEffect(() => {
+    setReferralCode(new URLSearchParams(window.location.search).get('ref')?.toUpperCase() ?? '');
+  }, []);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -78,6 +83,7 @@ export function RegisterWizard() {
       area: area || undefined, street: street || undefined,
       profession: role === 'PROFESSIONAL' ? profession || undefined : undefined,
       yearsExperience: role === 'PROFESSIONAL' && yearsExperience ? Number(yearsExperience) : undefined,
+      referralCode: referralCode || undefined,
     };
     try {
       const r = await fetch('/api/auth/otp/send', {

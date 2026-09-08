@@ -9,6 +9,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'My requests',href:'/dashboard/customer/jobs',icon:'▣'},
     {label:'Service requests',href:'/dashboard/customer/service-requests',icon:'☎'},
     {label:'Messages',href:'/dashboard/customer/messages',icon:'✉'},
+    {label:'Refer & earn',href:'/dashboard/customer/referrals',icon:'↗'},
     {label:'Find a professional',href:'/marketplace',icon:'◎'},
     {label:'Manage profile',href:'/dashboard/customer/profile',icon:'◈'},
     {label:'Settings',href:'/dashboard/customer/settings',icon:'⚙'},
@@ -18,6 +19,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'My jobs',href:'/dashboard/professional/jobs',icon:'▣'},
     {label:'Messages',href:'/dashboard/professional/messages',icon:'✉'},
     {label:'Earnings',href:'/dashboard/professional/earnings',icon:'◈'},
+    {label:'Refer & earn',href:'/dashboard/professional/referrals',icon:'↗'},
     {label:'Reviews',href:'/dashboard/professional/reviews',icon:'★'},
     {label:'Verification',href:'/dashboard/professional/verification',icon:'✓'},
     {label:'Manage profile',href:'/dashboard/professional/profile',icon:'◎'},
@@ -27,6 +29,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Overview',href:'/dashboard/admin',icon:'⌂'},
     {label:'Service requests (CSD)',href:'/dashboard/admin/service-requests',icon:'☎'},
     {label:'Verifications',href:'/dashboard/admin/verifications',icon:'✓'},
+    {label:'Referrals',href:'/dashboard/admin/referrals',icon:'↗'},
     {label:'Users',href:'/dashboard/admin/users',icon:'◎'},
     {label:'Audit log',href:'/dashboard/admin/audit-log',icon:'▣'},
   ]

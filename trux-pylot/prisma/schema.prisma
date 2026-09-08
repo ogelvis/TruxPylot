@@ -58,6 +58,29 @@ enum UserStatus {
   BLOCKED
 }
 
+enum ReferralStatus {
+  PENDING
+  QUALIFIED
+  REWARDED
+  REJECTED
+  EXPIRED
+}
+
+enum RewardStatus {
+  PENDING
+  APPROVED
+  PAID
+  VOID
+}
+
+enum WithdrawalStatus {
+  REQUESTED
+  REVIEWING
+  APPROVED
+  PAID
+  REJECTED
+}
+
 // id is NOT auto-generated — it is always set explicitly to match the
 // corresponding Supabase Auth user's id, so this row and the Supabase
 // auth.users row for the same person share one id. Created only after
@@ -80,6 +103,12 @@ model User {
   sentMessages Message[]
   bookingsAsCustomer Booking[] @relation("CustomerBookings")
   bookingsAsProfessional Booking[] @relation("ProfessionalBookings")
+  referralCodes ReferralCode[]
+  referralsSent Referral[] @relation("ReferralReferrer")
+  referralReceived Referral? @relation("ReferralReferred")
+  referralAttribution ReferralAttribution?
+  referralRewards Reward[]
+  withdrawals Withdrawal[]
 }
 
 enum AccountType {
@@ -425,4 +454,113 @@ model AuditLog {
   data Json?
   createdAt DateTime @default(now())
   user User? @relation(fields: [userId], references: [id])
+}
+
+model ReferralCampaign {
+  id String @id @default(cuid())
+  name String
+  description String?
+  active Boolean @default(true)
+  rewardAmount Int @default(0)
+  qualificationJobs Int @default(1)
+  startsAt DateTime?
+  endsAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  codes ReferralCode[]
+  milestones ReferralMilestone[]
+  referrals Referral[]
+}
+
+model ReferralMilestone {
+  id String @id @default(cuid())
+  campaignId String
+  name String
+  threshold Int
+  rewardAmount Int
+  campaign ReferralCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  rewards Reward[]
+  @@unique([campaignId, threshold])
+}
+
+model ReferralCode {
+  id String @id @default(cuid())
+  code String @unique
+  ownerId String
+  campaignId String?
+  active Boolean @default(true)
+  clicks Int @default(0)
+  createdAt DateTime @default(now())
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  campaign ReferralCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  attributions ReferralAttribution[]
+  referrals Referral[]
+  @@index([ownerId, active])
+}
+
+model ReferralAttribution {
+  id String @id @default(cuid())
+  codeId String
+  referredUserId String @unique
+  source String?
+  landingPath String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  code ReferralCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  referredUser User @relation(fields: [referredUserId], references: [id], onDelete: Cascade)
+}
+
+model Referral {
+  id String @id @default(cuid())
+  codeId String
+  referrerId String
+  referredId String @unique
+  campaignId String?
+  status ReferralStatus @default(PENDING)
+  qualifiedAt DateTime?
+  rewardedAt DateTime?
+  rejectionReason String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  code ReferralCode @relation(fields: [codeId], references: [id], onDelete: Cascade)
+  referrer User @relation("ReferralReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+  referred User @relation("ReferralReferred", fields: [referredId], references: [id], onDelete: Cascade)
+  campaign ReferralCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  rewards Reward[]
+  @@index([referrerId, status])
+  @@index([status, createdAt])
+}
+
+model Reward {
+  id String @id @default(cuid())
+  referralId String?
+  userId String
+  milestoneId String?
+  amount Int
+  status RewardStatus @default(PENDING)
+  reason String
+  approvedById String?
+  paidAt DateTime?
+  createdAt DateTime @default(now())
+  referral Referral? @relation(fields: [referralId], references: [id], onDelete: SetNull)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  milestone ReferralMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+  @@index([userId, status])
+}
+
+model Withdrawal {
+  id String @id @default(cuid())
+  userId String
+  amount Int
+  status WithdrawalStatus @default(REQUESTED)
+  bankName String?
+  accountName String?
+  accountNumber String?
+  reviewedById String?
+  reviewedAt DateTime?
+  paidAt DateTime?
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([status, createdAt])
+  @@index([userId, status])
 }

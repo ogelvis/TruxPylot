@@ -10,6 +10,20 @@
 // database change that already succeeded.
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+function getAppUrl() {
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (!configured) return 'https://trux-pylot.onrender.com';
+  try {
+    const url = new URL(configured);
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') throw new Error('Unsupported URL protocol');
+    return configured.replace(/\/$/, '');
+  } catch {
+    console.error('[email] Invalid NEXT_PUBLIC_APP_URL; using Render URL instead.');
+    return 'https://trux-pylot.onrender.com';
+  }
+}
+
+const APP_URL = getAppUrl();
 
 function getConfig() {
   const apiKey = process.env.RESEND_API_KEY;
@@ -45,7 +59,7 @@ export async function sendNotificationEmail(data: {
     await sendEmail(
       data.to,
       data.subject,
-      `<h2>${data.title}</h2><p>${data.body}</p>${data.link ? `<p><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}${data.link}">Open Trux Pylot →</a></p>` : ''}`
+      `<h2>${data.title}</h2><p>${data.body}</p>${data.link ? `<p><a href="${APP_URL}${data.link}">Open Trux Pylot →</a></p>` : ''}`
     );
   }
 
@@ -122,7 +136,7 @@ export async function sendServiceRequestConnectedEmail(to: string, customerName:
     "You're connected! — Trux Pylot",
     `<h2>Good news, ${customerName}!</h2>
      <p>Truxpylot Customer Service has confirmed availability and connected you with <b>${professionalName}</b> for your request.</p>
-     <p><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/customer/service-requests/${requestId}">View your request →</a></p>`
+     <p><a href="${APP_URL}/dashboard/customer/service-requests/${requestId}">View your request →</a></p>`
   );
 }
 
@@ -132,7 +146,7 @@ export async function sendServiceRequestCompletedEmail(to: string, customerName:
     'Your service request is complete — Trux Pylot',
     `<h2>Hi ${customerName},</h2>
      <p>Your request has been marked complete. We'd love to hear how it went.</p>
-     <p><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/dashboard/customer/service-requests/${requestId}">Leave a review →</a></p>`
+     <p><a href="${APP_URL}/dashboard/customer/service-requests/${requestId}">Leave a review →</a></p>`
   );
 }
 
@@ -143,6 +157,6 @@ export async function sendServiceRequestDeclinedEmail(to: string, customerName: 
     `<h2>Hi ${customerName},</h2>
      <p>We were not able to proceed with this request.</p>
      ${notes ? `<p><b>Reason:</b> ${notes}</p>` : ''}
-     <p><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}/marketplace">Browse other professionals →</a></p>`
+     <p><a href="${APP_URL}/marketplace">Browse other professionals →</a></p>`
   );
 }
