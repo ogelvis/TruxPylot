@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { sendNotificationEmail } from '@/lib/email';
 
 const input = z.object({ startAt: z.coerce.date(), endAt: z.coerce.date() });
 
@@ -14,7 +15,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (parsed.data.endAt.getTime() - parsed.data.startAt.getTime() > 24 * 60 * 60 * 1000) return NextResponse.json({ error: 'Bookings cannot exceed 24 hours.' }, { status: 400 });
   const { id } = await params;
   const customer = await prisma.customer.findUnique({ where: { userId: session.userId } });
-  const job = await prisma.job.findUnique({ where: { id }, include: { quotes: true, professional: true } });
+  const job = await prisma.job.findUnique({ where: { id }, include: { quotes: true, professional: { include: { user: { select: { email: true } } } }, customer: { include: { user: { select: { email: true } } } } } });
   if (!customer || !job || job.customerId !== customer.id || !job.professional) return NextResponse.json({ error: 'Job not found.' }, { status: 404 });
   if (!job.quotes.some(quote => quote.status === 'ACCEPTED')) return NextResponse.json({ error: 'Accept a proposal before booking.' }, { status: 409 });
 
@@ -34,5 +35,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     { userId: job.professional.userId, type: 'booking', title: 'Booking confirmed', body: 'A customer booked a time for your accepted proposal.', link: `/dashboard/professional/jobs/${job.id}` },
     { userId: session.userId, type: 'booking', title: 'Booking confirmed', body: 'Your appointment has been scheduled.', link: `/dashboard/customer/jobs/${job.id}` },
   ] });
+  const startLabel = new Intl.DateTimeFormat('en-NG', { dateStyle: 'full', timeStyle: 'short' }).format(booking.startAt);
+  sendNotificationEmail({ to: job.professional.user.email, subject: 'Your Trux Pylot booking is confirmed', title: 'Booking confirmed', body: `Your appointment is scheduled for ${startLabel}.`, link: `/dashboard/professional/jobs/${job.id}` }).catch(error => console.error('[booking] professional email failed:', error instanceof Error ? error.message : error));
+  sendNotificationEmail({ to: job.customer.user.email, subject: 'Your Trux Pylot appointment is confirmed', title: 'Booking confirmed', body: `Your appointment is scheduled for ${startLabel}.`, link: `/dashboard/customer/jobs/${job.id}` }).catch(error => console.error('[booking] customer email failed:', error instanceof Error ? error.message : error));
   return NextResponse.json({ booking }, { status: 201 });
 }
