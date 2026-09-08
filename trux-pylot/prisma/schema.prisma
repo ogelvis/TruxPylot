@@ -78,6 +78,8 @@ model User {
   notifications Notification[]
   auditLogs AuditLog[]
   sentMessages Message[]
+  bookingsAsCustomer Booking[] @relation("CustomerBookings")
+  bookingsAsProfessional Booking[] @relation("ProfessionalBookings")
 }
 
 enum AccountType {
@@ -148,6 +150,7 @@ model Professional {
   premiumPurchases PremiumPurchase[]
   portfolioItems PortfolioItem[]
   conversationsAsProfessional Conversation[] @relation("ProfessionalConversations")
+  bookings Booking[] @relation("ProfessionalBookings")
 }
 
 model Conversation {
@@ -242,7 +245,27 @@ model ServiceRequest {
   professional Professional @relation(fields: [professionalId], references: [id])
   category ServiceCategory @relation(fields: [categoryId], references: [id])
   conversations Conversation[]
+  booking Booking?
   @@index([status, createdAt])
+}
+
+model Booking {
+  id             String   @id @default(cuid())
+  jobId          String   @unique
+  customerId     String
+  professionalId String
+  startAt        DateTime
+  endAt          DateTime
+  status         String   @default("CONFIRMED")
+  reminder24hAt  DateTime?
+  reminder1hAt   DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  job            Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  customer       User     @relation("CustomerBookings", fields: [customerId], references: [id], onDelete: Cascade)
+  professional   User     @relation("ProfessionalBookings", fields: [professionalId], references: [id], onDelete: Cascade)
+  @@index([professionalId, startAt, endAt])
+  @@index([customerId, startAt])
 }
 
 // A customer report about a professional, reviewed by CSD/admin.
