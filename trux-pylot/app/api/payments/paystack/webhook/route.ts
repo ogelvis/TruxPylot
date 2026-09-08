@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyPaystackSignature, applySuccessfulPayment } from '@/lib/payments';
-import { applyWalletFunding } from '@/lib/wallet';
+import { applyWalletFunding, applyDedicatedAccountTransfer } from '@/lib/wallet';
 export async function POST(request:Request){const raw=await request.text();if(!verifyPaystackSignature(raw,request.headers.get('x-paystack-signature')))return NextResponse.json({error:'Invalid signature'},{status:401});const event=JSON.parse(raw);if(event.event!=='charge.success')return NextResponse.json({received:true});const reference=event.data?.reference as string;const amount=event.data?.amount as number;const fundingResult=await applyWalletFunding(reference,amount,String(event.data?.id));if (fundingResult.ok || (fundingResult.reason && fundingResult.reason !== 'not_found')) return NextResponse.json(fundingResult.reason === 'amount_mismatch' ? { error: 'Amount mismatch' } : { received: true }, { status: fundingResult.reason === 'amount_mismatch' ? 400 : 200 });
-const result=await applySuccessfulPayment(reference,amount,event.data?.id);if(!result.ok&&result.reason==='amount_mismatch')return NextResponse.json({error:'Amount mismatch'},{status:400});return NextResponse.json({received:true});}
+const result=await applySuccessfulPayment(reference,amount,event.data?.id);if(!result.ok&&result.reason==='amount_mismatch')return NextResponse.json({error:'Amount mismatch'},{status:400});if(!result.ok&&result.reason==='not_found') await applyDedicatedAccountTransfer(event);return NextResponse.json({received:true});}
