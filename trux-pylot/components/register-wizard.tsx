@@ -86,20 +86,30 @@ export function RegisterWizard() {
       referralCode: referralCode || undefined,
     };
     try {
-      const r = await fetch('/api/auth/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+      let r: Response;
+      try {
+        r = await fetch('/api/auth/otp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
       const d = await r.json().catch(() => ({ error: 'The service is temporarily unavailable. Please try again.' }));
       setSubmitting(false);
       if (!r.ok) return setError(d.error || 'Something went wrong.');
       setOtpSent(true);
       setCode('');
       setResendCooldown(60);
-    } catch {
+    } catch (error) {
       setSubmitting(false);
-      setError('Could not reach the server. Check your connection and try again.');
+      setError(error instanceof DOMException && error.name === 'AbortError'
+        ? 'The verification service took too long to respond. Please try again in a moment.'
+        : 'Could not reach the server. Check your connection and try again.');
     }
   }
 
