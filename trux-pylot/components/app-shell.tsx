@@ -19,6 +19,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'My jobs',href:'/dashboard/professional/jobs',icon:'▣'},
     {label:'Messages',href:'/dashboard/professional/messages',icon:'✉'},
     {label:'Earnings',href:'/dashboard/professional/earnings',icon:'◈'},
+    {label:'Wallet',href:'/dashboard/professional/wallet',icon:'₦'},
     {label:'Refer & earn',href:'/dashboard/professional/referrals',icon:'↗'},
     {label:'Reviews',href:'/dashboard/professional/reviews',icon:'★'},
     {label:'Verification',href:'/dashboard/professional/verification',icon:'✓'},

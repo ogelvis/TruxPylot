@@ -33,10 +33,13 @@ export async function applySuccessfulPayment(reference: string, amountKobo: numb
     if (!updated.count) return;
     await tx.job.update({ where: { id: payment.jobId }, data: { status: 'PAID' } });
     if (payment.job.professional) {
-      await tx.wallet.upsert({
+    const wallet = await tx.wallet.upsert({
         where: { professionalId: payment.job.professional.id },
         create: { professionalId: payment.job.professional.id, pendingBalance: payment.amount - payment.commission },
         update: { pendingBalance: { increment: payment.amount - payment.commission } },
+      });
+      await tx.walletTransaction.create({
+        data: { walletId: wallet.id, type: 'CREDIT', source: 'JOB_EARNING', status: 'PENDING', amount: payment.amount - payment.commission, description: `Earnings for job ${payment.jobId}`, reference: `JOB-${payment.jobId}` },
       });
     }
 

@@ -81,6 +81,27 @@ enum WithdrawalStatus {
   REJECTED
 }
 
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+}
+
+enum WalletTransactionSource {
+  FUNDING
+  JOB_EARNING
+  REFERRAL_REWARD
+  PROMOTED_TOP10
+  WITHDRAWAL
+  ADJUSTMENT
+}
+
+enum WalletTransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REVERSED
+}
+
 // id is NOT auto-generated — it is always set explicitly to match the
 // corresponding Supabase Auth user's id, so this row and the Supabase
 // auth.users row for the same person share one id. Created only after
@@ -192,6 +213,7 @@ model Professional {
   serviceRequests ServiceRequest[]
   reports ProfessionalReport[]
   wallet Wallet?
+  promotedListings PromotedListing[]
   premiumPurchases PremiumPurchase[]
   portfolioItems PortfolioItem[]
   conversationsAsProfessional Conversation[] @relation("ProfessionalConversations")
@@ -441,6 +463,66 @@ model Wallet {
   availableBalance Int @default(0)
   pendingBalance Int @default(0)
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  transactions WalletTransaction[]
+  fundings WalletFunding[]
+}
+
+model WalletTransaction {
+  id String @id @default(cuid())
+  walletId String
+  type WalletTransactionType
+  source WalletTransactionSource
+  status WalletTransactionStatus @default(COMPLETED)
+  amount Int
+  description String
+  reference String? @unique
+  metadata Json?
+  createdAt DateTime @default(now())
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  promotedListing PromotedListing?
+  @@index([walletId, createdAt])
+  @@index([source, status])
+}
+
+model WalletFunding {
+  id String @id @default(cuid())
+  walletId String
+  reference String @unique
+  amount Int
+  status PaymentStatus @default(PENDING)
+  providerEventId String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  wallet Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  @@index([walletId, status])
+}
+
+model PromotedProduct {
+  id String @id @default(cuid())
+  name String
+  durationDays Int
+  price Int
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  listings PromotedListing[]
+  @@unique([durationDays])
+}
+
+model PromotedListing {
+  id String @id @default(cuid())
+  professionalId String
+  productId String
+  transactionId String? @unique
+  startsAt DateTime
+  expiresAt DateTime
+  active Boolean @default(true)
+  createdAt DateTime @default(now())
+  professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  product PromotedProduct @relation(fields: [productId], references: [id])
+  transaction WalletTransaction? @relation(fields: [transactionId], references: [id], onDelete: SetNull)
+  @@index([active, expiresAt])
+  @@index([professionalId, active])
 }
 
 model Review {
