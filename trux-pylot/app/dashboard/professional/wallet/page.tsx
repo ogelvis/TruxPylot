@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
 import { WalletActions } from '@/components/wallet-actions';
 import { DedicatedAccount } from '@/components/dedicated-account';
+import { WalletFundingStatus } from '@/components/wallet-funding-status';
+
+export const dynamic = 'force-dynamic';
 export default async function WalletPage() {
   const session = await requireRole('PROFESSIONAL');
   const professional = await prisma.professional.findUnique({ where: { userId: session.userId }, include: { wallet: { include: { transactions: { orderBy: { createdAt: 'desc' }, take: 50 } } } } });
@@ -11,7 +14,7 @@ export default async function WalletPage() {
   const [earned, withdrawn, payoutAccount] = await Promise.all([
     wallet
       ? prisma.walletTransaction.aggregate({
-          where: { walletId: wallet.id, type: 'CREDIT', status: 'COMPLETED' },
+          where: { walletId: wallet.id, type: 'CREDIT', status: 'COMPLETED', source: { in: ['JOB_EARNING', 'REFERRAL_REWARD', 'ADJUSTMENT'] } },
           _sum: { amount: true },
         })
       : Promise.resolve({ _sum: { amount: null } }),
@@ -24,6 +27,7 @@ export default async function WalletPage() {
   const money = (amount: number | null | undefined) => `₦${((amount ?? 0) / 100).toLocaleString('en-NG')}`;
   return <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus === 'APPROVED'} active="/dashboard/professional/wallet">
     <main className="dash-page wallet-dashboard">
+      <WalletFundingStatus />
       <div className="wallet-heading"><div><span className="wallet-kicker">PYLOTWALLET / FINANCE</span><h1>Your financial center.</h1><p className="subcopy">A live control room for funding, earnings and payouts.</p></div><span className="wallet-live"><i /> Ledger online</span></div>
       <section className="wallet-overview">
         <div className="wallet-balance"><span>AVAILABLE BALANCE</span><strong>{money(wallet?.availableBalance)}</strong><small>Ready for promotions and withdrawals</small><div className="wallet-gridline" /></div>
