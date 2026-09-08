@@ -67,7 +67,7 @@ export function DedicatedAccount() {
       </div>
 
       <div className="wallet-bank-actions">
-        <button type="button" className="wallet-cta secondary" onClick={() => load(true)}>Refresh account</button>
+        <button type="button" className="wallet-cta secondary" onClick={() => load(true)}>I've made a transfer — check status</button>
       </div>
 
       {message && <small className="wallet-meta-note">{message}</small>}
