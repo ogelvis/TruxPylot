@@ -14,7 +14,7 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
 
   const job = await prisma.job.findFirst({
     where: { id, professionalId: professional.id },
-    include: { customer: true, category: true, payment: true, quotes: true, review: true },
+    include: { customer: true, category: true, payment: true, quotes: true, review: true, booking: true },
   });
   if (!job) notFound();
 
@@ -36,6 +36,16 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
             <p>{job.description}</p>
           </div>
         </section>
+
+        {job.booking && (
+          <section className="panel">
+            <div className="panel-head"><h2>Confirmed appointment</h2></div>
+            <div className="job-detail-body">
+              <p><b>{new Intl.DateTimeFormat('en-NG', { dateStyle: 'full', timeStyle: 'short' }).format(job.booking.startAt)}</b></p>
+              <p>Until {new Intl.DateTimeFormat('en-NG', { timeStyle: 'short' }).format(job.booking.endAt)} · Reminders will appear in your notifications.</p>
+            </div>
+          </section>
+        )}
 
         {job.quotes.length === 0 && !['COMPLETED', 'SETTLED', 'CANCELLED', 'REJECTED'].includes(job.status) && (
           <section className="panel">

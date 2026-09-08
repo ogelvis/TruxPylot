@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { verifyEmailOtp, normalizeEmail, describeOtpError } from '@/lib/otp';
 import { createSession, dashboardPath } from '@/lib/auth';
 import type { Role } from '@prisma/client';
+import { attributeReferral } from '@/lib/referrals';
 
 const input = z.object({ email: z.string().email().transform(normalizeEmail), code: z.string().min(4).max(10) });
 
@@ -105,6 +106,11 @@ export async function POST(request: Request) {
       await prisma.auditLog.create({
         data: { userId: user.id, action: 'BOOTSTRAP_ADMIN_CREATED', entity: 'User', entityId: user.id },
       });
+    }
+    if (typeof meta.referralCode === 'string' && meta.referralCode) {
+      await attributeReferral(meta.referralCode, user.id, { role, email: verifiedEmail }).catch(error =>
+        console.error('[otp/verify] referral attribution failed:', error instanceof Error ? error.message : error),
+      );
     }
   } else {
     if (user.status === 'BLOCKED') {

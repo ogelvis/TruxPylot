@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { canTransition } from '@/lib/jobs';
 import { sendNotificationEmail } from '@/lib/email';
+import { qualifyReferral } from '@/lib/referrals';
 
 const input = z.discriminatedUnion('action', [
   z.object({ action: z.literal('quote'), amount: z.number().int().positive() }),
@@ -153,6 +154,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       }
       await tx.job.update({ where: { id: job.id }, data: { status: 'SETTLED' } });
     });
+    if (job.customer?.userId) {
+      await qualifyReferral(job.customer.userId).catch(error =>
+        console.error('[jobs] referral qualification failed:', error instanceof Error ? error.message : error),
+      );
+    }
   } else {
     await prisma.job.update({ where: { id: job.id }, data: { status: targetStatus } });
   }

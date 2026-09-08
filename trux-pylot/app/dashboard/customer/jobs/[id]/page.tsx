@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
 import { ProposalActions } from '@/components/proposal-actions';
+import { BookingForm } from '@/components/booking-form';
 
 export default async function CustomerJobDetail({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRole('CUSTOMER');
@@ -14,7 +15,7 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
 
   const job = await prisma.job.findFirst({
     where: { id, customerId: customer.id },
-    include: { professional: true, category: true, payment: true, review: true, quotes: true },
+    include: { professional: true, category: true, payment: true, review: true, quotes: true, booking: true },
   });
   if (!job) notFound();
 
@@ -86,6 +87,24 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
             </div>
           </div>
         </section>
+
+        {job.booking ? (
+          <section className="panel">
+            <div className="panel-head"><h2>Confirmed appointment</h2></div>
+            <div className="job-detail-body">
+              <p><b>{new Intl.DateTimeFormat('en-NG', { dateStyle: 'full', timeStyle: 'short' }).format(job.booking.startAt)}</b></p>
+              <p>Until {new Intl.DateTimeFormat('en-NG', { timeStyle: 'short' }).format(job.booking.endAt)} · Reminders will appear in your notifications.</p>
+            </div>
+          </section>
+        ) : job.quotes.some(quote => quote.status === 'ACCEPTED') ? (
+          <section className="panel">
+            <div className="panel-head"><h2>Choose your appointment time</h2></div>
+            <div className="job-detail-body">
+              <p>Select a start and end time. The system checks the professional&apos;s calendar before confirming.</p>
+              <BookingForm jobId={job.id} />
+            </div>
+          </section>
+        ) : null}
 
         {job.review && (
           <section className="panel">

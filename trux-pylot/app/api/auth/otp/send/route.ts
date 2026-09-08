@@ -21,6 +21,7 @@ const registerFields = z.object({
   street: z.string().max(200).optional(),
   profession: z.string().max(120).optional(),
   yearsExperience: z.coerce.number().int().min(0).max(60).optional(),
+  referralCode: z.string().max(40).optional(),
 });
 
 const loginFields = z.object({
