@@ -5,18 +5,20 @@ export const dynamic = 'force-dynamic';
 
 export default async function Marketplace({ searchParams }: { searchParams: Promise<{ category?: string; emergency?: string }> }) {
   const { category, emergency } = await searchParams;
+  await prisma.promotedListing.updateMany({ where: { active: true, expiresAt: { lte: new Date() } }, data: { active: false } });
   const [professionals, categories] = await Promise.all([
     prisma.professional.findMany({
       where: {
         verificationStatus: 'APPROVED',
         services: category ? { some: { category: { slug: category } } } : undefined,
       },
-      include: { services: { include: { category: true } }, user: true, reviews: { select: { rating: true, job: { select: { status: true } } } }, serviceRequests: { select: { status: true, requiresProfessionalResponse: true, responseExcluded: true, responseAvailableAt: true, professionalRespondedAt: true } } },
-      take: 30,
+      include: { services: { include: { category: true } }, user: true, promotedListings: { where: { active: true, expiresAt: { gt: new Date() } }, take: 1 }, reviews: { select: { rating: true, job: { select: { status: true } } } }, serviceRequests: { select: { status: true, requiresProfessionalResponse: true, responseExcluded: true, responseAvailableAt: true, professionalRespondedAt: true } } },
+      take: 100,
     }),
     prisma.serviceCategory.findMany({ where: { active: true }, orderBy: { name: 'asc' } }),
   ]);
-  const scores = Object.fromEntries(await Promise.all(professionals.map(async professional => [professional.id, await getTruxPylotScore(professional.id)] as const)));
+  professionals.sort((a, b) => Number(b.promotedListings.length > 0) - Number(a.promotedListings.length > 0));
+  const scores = Object.fromEntries(await Promise.all(professionals.slice(0, 30).map(async professional => [professional.id, await getTruxPylotScore(professional.id)] as const)));
 
   return (
     <main>
@@ -58,11 +60,12 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
         </nav>
 
         <div className="professional-grid">
-          {professionals.map(p => (
+          {professionals.slice(0, 30).map(p => (
             <Link key={p.id} href={'/marketplace/' + p.id} className="professional-card">
               <div className="professional-card-head">
                 <b>{p.fullName}</b>
                 <span className="verified-badge">✓ Verified</span>
+                {p.promotedListings.length > 0 && <span className="verified-badge">Promoted</span>}
               </div>
               {(() => {
                         const score = scores[p.id];

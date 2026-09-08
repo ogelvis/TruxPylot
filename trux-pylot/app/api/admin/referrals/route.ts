@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { creditReferralReward } from '@/lib/wallet';
 
 const actionSchema = z.object({ id: z.string().cuid(), action: z.enum(['approve', 'reject', 'pay']), reason: z.string().max(300).optional() });
 async function admin() { const s = await getSession(); return s?.role === 'ADMIN' ? s : null; }
@@ -25,7 +26,11 @@ export async function PATCH(request: Request) {
   if (action === 'pay' || action === 'approve') {
     const current = await prisma.reward.findUnique({ where: { id }, include: { achievement: true } });
     if (!current || current.status === 'VOID' || (action === 'approve' && current.status !== 'PENDING') || (action === 'pay' && current.status !== 'APPROVED')) return NextResponse.json({ error: 'Reward is not in a valid state for this action.' }, { status: 409 });
-    const reward = await prisma.reward.update({ where: { id }, data: { status: action === 'pay' ? 'PAID' : 'APPROVED', approvedById: session.userId, paidAt: action === 'pay' ? new Date() : undefined } });
+    const reward = await prisma.$transaction(async tx => {
+      const updated = await tx.reward.update({ where: { id }, data: { status: action === 'pay' ? 'PAID' : 'APPROVED', approvedById: session.userId, paidAt: action === 'pay' ? new Date() : undefined } });
+      await creditReferralReward(tx, updated.id);
+      return updated;
+    });
     await prisma.auditLog.create({ data: { userId: session.userId, action: `REFERRAL_REWARD_${action.toUpperCase()}`, entity: 'Reward', entityId: id } });
     return NextResponse.json({ ok: true, reward });
   }

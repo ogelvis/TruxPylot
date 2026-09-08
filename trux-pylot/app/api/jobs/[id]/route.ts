@@ -146,9 +146,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       const payment = await tx.payment.findUnique({ where: { jobId: job.id } });
       if (job.professionalId && payment) {
         const net = payment.amount - payment.commission;
-        await tx.wallet.update({
+        const wallet = await tx.wallet.update({
           where: { professionalId: job.professionalId },
           data: { pendingBalance: { decrement: net }, availableBalance: { increment: net } },
+        });
+        await tx.walletTransaction.updateMany({
+          where: { walletId: wallet.id, reference: `JOB-${job.id}`, status: 'PENDING' },
+          data: { status: 'COMPLETED' },
         });
         await tx.professional.update({ where: { id: job.professionalId }, data: { completedJobs: { increment: 1 } } });
       }
