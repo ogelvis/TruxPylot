@@ -33,7 +33,9 @@ async function sendEmail(to: string, subject: string, html: string) {
     throw new Error(`Resend API error (${res.status}): ${body.slice(0, 300)}`);
   }
 
-  export async function sendNotificationEmail(data: {
+}
+
+export async function sendNotificationEmail(data: {
     to: string;
     subject: string;
     title: string;
@@ -46,8 +48,6 @@ async function sendEmail(to: string, subject: string, html: string) {
       `<h2>${data.title}</h2><p>${data.body}</p>${data.link ? `<p><a href="${process.env.NEXT_PUBLIC_APP_URL ?? ''}${data.link}">Open Trux Pylot →</a></p>` : ''}`
     );
   }
-
-}
 
 export async function sendCsdContactEmail(data: {
   customerName: string;
