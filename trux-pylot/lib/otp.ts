@@ -27,7 +27,20 @@ function getClient() {
     // exact var name(s) so it shows up clearly in server logs.
     throw new Error(`Missing required environment variable(s): ${missing.join(', ')}. Set them in your deployment environment — see .env.example.`);
   }
-  client = createClient(url!, anonKey!, { auth: { persistSession: false } });
+  client = createClient(url!, anonKey!, {
+    auth: { persistSession: false },
+    global: {
+      fetch: async (input, init) => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        try {
+          return await fetch(input, { ...init, signal: controller.signal });
+        } finally {
+          clearTimeout(timeout);
+        }
+      },
+    },
+  });
   return client;
 }
 
