@@ -13,8 +13,14 @@ export async function GET() {
   const referrals = await prisma.referral.findMany({ where: { referrerId: session.userId }, include: { referred: { select: { email: true } }, rewards: true }, orderBy: { createdAt: 'desc' } });
   const rewards = await prisma.reward.findMany({ where: { userId: session.userId }, orderBy: { createdAt: 'desc' } });
   const withdrawals = await prisma.withdrawal.findMany({ where: { userId: session.userId }, orderBy: { createdAt: 'desc' } });
-  const earned = rewards.filter(r => r.status === 'APPROVED').reduce((sum, r) => sum + r.amount, 0);
+  const pending = rewards.filter(r => r.status === 'PENDING').reduce((sum, r) => sum + r.amount, 0);
+  const approved = rewards.filter(r => r.status === 'APPROVED').reduce((sum, r) => sum + r.amount, 0);
+  const paid = rewards.filter(r => r.status === 'PAID').reduce((sum, r) => sum + r.amount, 0);
+  const totalEarned = rewards.filter(r => r.status !== 'VOID').reduce((sum, r) => sum + r.amount, 0);
   const withdrawn = withdrawals.filter(w => w.status !== 'REJECTED').reduce((sum, w) => sum + w.amount, 0);
+  const qualifiedCount = referrals.filter(r => r.status === 'QUALIFIED' || r.status === 'REWARDED').length;
+  const milestones = code.campaign ? await prisma.referralMilestone.findMany({ where: { campaignId: code.campaign.id }, orderBy: { threshold: 'asc' } }) : [];
+  const nextMilestone = milestones.find(m => m.qualifiedCountTrigger > qualifiedCount);
   return NextResponse.json({
     code: code.code,
     shareUrl: `/ref/${code.code}`,
@@ -24,7 +30,13 @@ export async function GET() {
     })),
     rewards,
     withdrawals,
-    available: Math.max(0, earned - withdrawn),
+    qualifiedCount,
+    nextMilestone: nextMilestone ? { threshold: nextMilestone.qualifiedCountTrigger, incrementalAmount: nextMilestone.incrementalAmount, totalMilestoneValue: nextMilestone.totalMilestoneValue } : null,
+    pending,
+    approved,
+    paid,
+    totalEarned,
+    available: Math.max(0, approved + paid - withdrawn),
   });
 }
 
