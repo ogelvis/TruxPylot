@@ -150,7 +150,6 @@ model Professional {
   premiumPurchases PremiumPurchase[]
   portfolioItems PortfolioItem[]
   conversationsAsProfessional Conversation[] @relation("ProfessionalConversations")
-  bookings Booking[] @relation("ProfessionalBookings")
 }
 
 model Conversation {
@@ -245,7 +244,6 @@ model ServiceRequest {
   professional Professional @relation(fields: [professionalId], references: [id])
   category ServiceCategory @relation(fields: [categoryId], references: [id])
   conversations Conversation[]
-  booking Booking?
   @@index([status, createdAt])
 }
 
@@ -341,6 +339,7 @@ model Job {
   review Review?
   dispute Dispute?
   conversations Conversation[]
+  booking Booking?
   @@index([status, createdAt])
 }
 
