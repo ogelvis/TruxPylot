@@ -23,6 +23,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
         user: { select: { phone: true } },
         jobs: { select: { status: true } },
         serviceRequests: { select: { status: true, requiresProfessionalResponse: true, responseExcluded: true, responseAvailableAt: true, professionalRespondedAt: true } },
+        portfolioItems: { where: { approved: true }, orderBy: { createdAt: 'desc' } },
       },
     }),
     prisma.review.count({ where: { professionalId: id } }),
@@ -41,6 +42,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
   const displayName = professional.accountType === 'BUSINESS' ? (professional.businessName || professional.fullName) : professional.fullName;
   const score = await getTruxPylotScore(professional.id);
   const whatsappNumber = professional.user.phone?.replace(/[^\d]/g, '');
+  const upcomingBookingCount = await prisma.booking.count({ where: { professionalId: professional.userId, startAt: { gte: new Date() }, status: { not: 'CANCELLED' } } });
 
   const whyChoose = [
     'Truxpylot Verified professional',
@@ -84,6 +86,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
             {score?.eligibleForPublicScore ? <span className="pro-credential trust-score">TruxPylot Score {score.score}</span> : <span className="pro-credential">{score?.publicLabel ?? 'New Professional'}</span>}
             {score?.eligibleForPublicScore && score.level && <span className="pro-credential">★ {score.level}</span>}
             {professional.completedJobs >= 10 && <span className="pro-credential">Reliable pro</span>}
+            <span className="pro-credential availability-badge">{upcomingBookingCount > 0 ? `${upcomingBookingCount} upcoming booking${upcomingBookingCount === 1 ? '' : 's'}` : 'Available for new work'}</span>
             <span className="pro-credential">{tsid}</span>
             {approvedBatch && <span className="pro-credential">Approved {approvedBatch}</span>}
           </div>
@@ -116,6 +119,18 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
                       </span>
                     ))}
                   </div>
+                </div>
+              </section>
+            )}
+
+            {professional.portfolioItems.length > 0 && (
+              <section className="panel">
+                <div className="panel-head"><h2>Portfolio</h2><span className="profile-section-meta">{professional.portfolioItems.length} approved project{professional.portfolioItems.length === 1 ? '' : 's'}</span></div>
+                <div className="portfolio-grid">
+                  {professional.portfolioItems.map(item => <article className="portfolio-card" key={item.id}>
+                    {item.imageUrl && <img src={item.imageUrl} alt="" />}
+                    <div><h3>{item.title}</h3>{item.description && <p>{item.description}</p>}</div>
+                  </article>)}
                 </div>
               </section>
             )}
