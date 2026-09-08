@@ -117,6 +117,21 @@ enum AccountType {
   BUSINESS
 }
 
+enum BusinessTeamRole {
+  OWNER
+  ADMIN
+  MANAGER
+  STAFF
+  TECHNICIAN
+  SUPPORT
+}
+
+enum BusinessTeamStatus {
+  INVITED
+  ACTIVE
+  INACTIVE
+}
+
 enum ServiceRequestStatus {
   SUBMITTED
   CSD_REVIEWING
@@ -180,6 +195,26 @@ model Professional {
   premiumPurchases PremiumPurchase[]
   portfolioItems PortfolioItem[]
   conversationsAsProfessional Conversation[] @relation("ProfessionalConversations")
+  ownedTeamMembers TeamMember[] @relation("BusinessTeam")
+  teamMemberships TeamMember[] @relation("ProfessionalTeamMemberships")
+}
+
+model TeamMember {
+  id             String            @id @default(cuid())
+  businessId     String
+  professionalId String?
+  email          String
+  role           BusinessTeamRole  @default(STAFF)
+  status         BusinessTeamStatus @default(INVITED)
+  invitedAt      DateTime          @default(now())
+  joinedAt       DateTime?
+  deactivatedAt  DateTime?
+  business       Professional      @relation("BusinessTeam", fields: [businessId], references: [id], onDelete: Cascade)
+  professional   Professional?     @relation("ProfessionalTeamMemberships", fields: [professionalId], references: [id], onDelete: SetNull)
+
+  @@unique([businessId, email])
+  @@unique([businessId, professionalId])
+  @@index([businessId, status])
 }
 
 model Conversation {

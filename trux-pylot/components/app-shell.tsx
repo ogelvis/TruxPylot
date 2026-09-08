@@ -37,8 +37,10 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
 
 function initials(name:string){return name.split(' ').map(n=>n[0]).filter(Boolean).slice(0,2).join('').toUpperCase();}
 
-export function AppShell({role,name,avatarUrl,verified,premium,children,active}:{role:Role;name:string;avatarUrl?:string|null;verified?:boolean;premium?:boolean;children:React.ReactNode;active?:string}){
-  const items = nav[role];
+export function AppShell({role,name,avatarUrl,verified,premium,children,active,isBusiness}:{role:Role;name:string;avatarUrl?:string|null;verified?:boolean;premium?:boolean;children:React.ReactNode;active?:string;isBusiness?:boolean}){
+  const items = role === 'PROFESSIONAL' && isBusiness
+    ? [...nav[role], { label: 'Team management', href: '/dashboard/professional/team', icon: '♟' }]
+    : nav[role];
   return <div className="app-shell">
     <aside className="sidebar">
       <Link className="dash-brand" href="/"><img src="/trux-pylot-logo.png" alt="Trux Pylot"/></Link>
