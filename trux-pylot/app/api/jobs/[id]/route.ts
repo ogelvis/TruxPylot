@@ -4,6 +4,7 @@ import { JobStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { canTransition } from '@/lib/jobs';
+import { sendNotificationEmail } from '@/lib/email';
 
 const input = z.discriminatedUnion('action', [
   z.object({ action: z.literal('quote'), amount: z.number().int().positive() }),
@@ -39,8 +40,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     where: { id },
     include: {
       quotes: true,
-      customer: { select: { userId: true } },
-      professional: { select: { userId: true } },
+      customer: { select: { userId: true, user: { select: { email: true } } } },
+      professional: { select: { userId: true, user: { select: { email: true } } } },
     },
   });
   if (!job) return NextResponse.json({ error: 'Job not found.' }, { status: 404 });
@@ -84,6 +85,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           link: `/dashboard/professional/jobs/${job.id}`,
         },
       });
+      sendNotificationEmail({
+        to: job.professional.user.email,
+        subject: payload.action === 'accept_proposal' ? 'Your Trux Pylot proposal was accepted' : 'Your Trux Pylot proposal was declined',
+        title: payload.action === 'accept_proposal' ? 'Proposal accepted' : 'Proposal declined',
+        body: payload.action === 'accept_proposal' ? 'The customer accepted your proposal.' : 'The customer declined your proposal.',
+        link: `/dashboard/professional/jobs/${job.id}`,
+      }).catch(error => console.error('[jobs] proposal email failed:', error instanceof Error ? error.message : error));
     }
     return NextResponse.json({ ok: true, status: payload.action === 'accept_proposal' ? 'ACCEPTED' : job.status });
   }
@@ -119,6 +127,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
           link: `/dashboard/customer/jobs/${job.id}`,
         },
       });
+      sendNotificationEmail({
+        to: job.customer.user.email,
+        subject: 'New Trux Pylot proposal received',
+        title: 'New proposal received',
+        body: 'A professional has sent a proposal for your job.',
+        link: `/dashboard/customer/jobs/${job.id}`,
+      }).catch(error => console.error('[jobs] proposal email failed:', error instanceof Error ? error.message : error));
     }
   } else if (action === 'confirm') {
     // Confirming completion is also the moment a professional's pending
