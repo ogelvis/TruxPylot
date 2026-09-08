@@ -16,11 +16,23 @@ export async function GET() {
   if (!session || session.role !== 'PROFESSIONAL') return NextResponse.json({ error: 'Professional sign-in required.' }, { status: 401 });
   const wallet = await getProfessionalWallet(session.userId);
   if (!wallet) return NextResponse.json({ error: 'Professional profile not found.' }, { status: 404 });
-  const [withdrawals, payoutAccount] = await Promise.all([
+  const [withdrawals, payoutAccount, earned] = await Promise.all([
     prisma.withdrawal.findMany({ where: { userId: session.userId }, orderBy: { createdAt: 'desc' }, take: 100 }),
     prisma.payoutAccount.findUnique({ where: { userId: session.userId } }),
+    prisma.walletTransaction.aggregate({
+      where: { walletId: wallet.id, type: 'CREDIT', status: 'COMPLETED', source: { in: ['JOB_EARNING', 'REFERRAL_REWARD', 'ADJUSTMENT'] } },
+      _sum: { amount: true },
+    }),
   ]);
-  return NextResponse.json({ ...wallet, withdrawals, payoutAccount, minWithdrawal: MIN_WITHDRAWAL_KOBO });
+  const withdrawn = withdrawals.filter(item => item.status !== 'REJECTED').reduce((sum, item) => sum + item.amount, 0);
+  return NextResponse.json({
+    ...wallet,
+    totalEarned: earned._sum.amount ?? 0,
+    totalWithdrawn: withdrawn,
+    withdrawals,
+    payoutAccount,
+    minWithdrawal: MIN_WITHDRAWAL_KOBO,
+  }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
 
 export async function POST(request: Request) {
