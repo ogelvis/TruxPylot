@@ -1,34 +1,383 @@
-# Dependencies
-/node_modules
+# ============================================================
+# TruxPylot - Production Git Ignore
+# ============================================================
 
-# Next.js build output
-/.next
-/out
+# ------------------------------------------------------------
+# DEPENDENCIES
+# ------------------------------------------------------------
+node_modules/
+**/node_modules/
 
-# Production build
-/build
 
-# Environment variables — never commit real secrets
+# ------------------------------------------------------------
+# ENVIRONMENT VARIABLES / SECRETS
+# NEVER COMMIT REAL ENVIRONMENT FILES
+# ------------------------------------------------------------
 .env
+.env.*
+!.env.example
+!.env.template
+
+# Common secret/config files
+.env.production
+.env.development
+.env.test
+.env.staging
 .env.local
-.env.*.local
+.env.production.local
+.env.development.local
+.env.test.local
 
-# Prisma
-/prisma/dev.db
-/prisma/dev.db-journal
+# ------------------------------------------------------------
+# NEXT.JS / BUILD OUTPUT
+# ------------------------------------------------------------
+.next/
+out/
+build/
+dist/
+.vercel/
+.turbo/
+.next-cache/
 
-# Logs
+
+# ------------------------------------------------------------
+# TYPESCRIPT
+# ------------------------------------------------------------
+*.tsbuildinfo
+next-env.d.ts
+
+
+# ------------------------------------------------------------
+# PRISMA / LOCAL DATABASES
+# ------------------------------------------------------------
+prisma/dev.db
+prisma/dev.db-journal
+prisma/*.db
+prisma/*.db-journal
+
+# SQLite databases anywhere in project
+*.sqlite
+*.sqlite3
+*.db
+
+
+# ------------------------------------------------------------
+# LOGS
+# ------------------------------------------------------------
+*.log
+logs/
+log/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-*.log
+pnpm-debug.log*
+lerna-debug.log*
 
-# Editor/OS
+# Debug files
+*.trace
+*.stacktrace
+
+
+# ------------------------------------------------------------
+# TEST / COVERAGE OUTPUT
+# ------------------------------------------------------------
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+
+
+# ------------------------------------------------------------
+# CACHE / TEMPORARY FILES
+# ------------------------------------------------------------
+.cache/
+.parcel-cache/
+.eslintcache
+.stylelintcache
+.npm/
+.pnpm-store/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/install-state.gz
+
+tmp/
+temp/
+*.tmp
+*.temp
+
+
+# ------------------------------------------------------------
+# OPERATING SYSTEM FILES
+# ------------------------------------------------------------
 .DS_Store
+.DS_Store?
+.AppleDouble
+.LSOverride
+
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+
+$RECYCLE.BIN/
+
+
+# ------------------------------------------------------------
+# WINDOWS TEMPORARY FILES
+# ------------------------------------------------------------
+*.stackdump
+*.lnk
+
+
+# ------------------------------------------------------------
+# EDITORS / IDEs
+# ------------------------------------------------------------
 .vscode/*
 !.vscode/extensions.json
-*.pem
+!.vscode/settings.json
 
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
+.idea/
+*.iml
+*.iws
+*.ipr
+
+*.swp
+*.swo
+*~
+.#*
+.DS_Store
+
+
+# ------------------------------------------------------------
+# CREDENTIALS / PRIVATE KEYS / CERTIFICATES
+# ------------------------------------------------------------
+
+# Private keys
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+*.der
+
+# SSH keys
+id_rsa
+id_rsa.pub
+id_dsa
+id_dsa.pub
+id_ecdsa
+id_ecdsa.pub
+id_ed25519
+id_ed25519.pub
+
+# Cloud/service credentials
+credentials.json
+service-account.json
+serviceAccount.json
+google-credentials.json
+gcp-credentials.json
+
+# Firebase credentials
+firebase-adminsdk-*.json
+
+# AWS
+.aws/
+credentials
+
+# ------------------------------------------------------------
+# SECRET / TOKEN FILES
+# ------------------------------------------------------------
+secrets/
+secret/
+*.secret
+*.secrets
+
+tokens/
+*.token
+*.tokens
+
+*.credentials
+*.credential
+
+
+# ------------------------------------------------------------
+# CERTIFICATE / SSL MATERIAL
+# ------------------------------------------------------------
+ssl/
+certs/
+certificates/
+
+# Keep public certificate configuration if intentionally needed
+# but NEVER commit private keys.
+
+
+# ------------------------------------------------------------
+# LOCAL CONFIGURATION
+# ------------------------------------------------------------
+*.local
+config.local.*
+local.config.*
+local.settings.*
+
+
+# ------------------------------------------------------------
+# GENERATED FILES
+# ------------------------------------------------------------
+generated/
+generated-files/
+generated-types/
+
+# Do not commit generated exports/backups
+*.generated
+*.generated.*
+*.backup
+*.bak
+
+
+# ------------------------------------------------------------
+# DATABASE BACKUPS / DUMPS
+# ------------------------------------------------------------
+*.sql.gz
+*.dump
+*.backup
+*.bak
+database-backup/
+db-backup/
+backups/
+
+
+# ------------------------------------------------------------
+# UPLOADS / USER-GENERATED FILES
+# ------------------------------------------------------------
+uploads/
+storage/
+user-uploads/
+public/uploads/
+
+# Temporary uploaded files
+*.upload
+*.uploaded
+
+
+# ------------------------------------------------------------
+# ARCHIVES
+# ------------------------------------------------------------
+# Ignore local project archives so accidental ZIP uploads
+# don't end up in Git.
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+
+# ------------------------------------------------------------
+# REPORTS / EXPORTS
+# ------------------------------------------------------------
+exports/
+reports/
+*.csv
+*.xlsx
+*.xls
+
+
+# ------------------------------------------------------------
+# GENERATED DOCUMENTS
+# ------------------------------------------------------------
+*.pdf
+
+
+# ------------------------------------------------------------
+# IDE / AI TOOL LOCAL FILES
+# ------------------------------------------------------------
+.claude/
+.cursor/
+.cursorrules.local
+.windsurf/
+.codex/
+.aider*
+*.ai.local
+
+
+# ------------------------------------------------------------
+# OS / APPLICATION METADATA
+# ------------------------------------------------------------
+*.orig
+*.rej
+*.pid
+*.seed
+
+
+# ------------------------------------------------------------
+# PACKAGE MANAGER FILES THAT SHOULD NOT BE COMMITTED
+# ------------------------------------------------------------
+# IMPORTANT:
+# package-lock.json / pnpm-lock.yaml / yarn.lock SHOULD be committed.
+# Do NOT ignore them.
+
+
+# ------------------------------------------------------------
+# VERCEL / DEPLOYMENT LOCAL FILES
+# ------------------------------------------------------------
+.vercel/
+.netlify/
+.render/
+
+
+# ------------------------------------------------------------
+# SENTRY / MONITORING LOCAL FILES
+# ------------------------------------------------------------
+.sentryclirc
+.sentry/
+
+
+# ------------------------------------------------------------
+# DOCKER LOCAL OVERRIDES
+# ------------------------------------------------------------
+docker-compose.override.yml
+docker-compose.local.yml
+
+
+# ------------------------------------------------------------
+# LOCAL DEVELOPMENT CERTIFICATES
+# ------------------------------------------------------------
+mkcert/
+.local-ssl/
+
+
+# ------------------------------------------------------------
+# SECURITY / SCANNING OUTPUT
+# ------------------------------------------------------------
+security-reports/
+security-report.*
+trivy-report.*
+npm-audit.*
+audit-report.*
+
+
+# ------------------------------------------------------------
+# MAC / LINUX TEMP FILES
+# ------------------------------------------------------------
+core
+core.*
+*.core
+
+
+# ------------------------------------------------------------
+# CUSTOM TRUXPYLOT LOCAL FILES
+# ------------------------------------------------------------
+
+# Local project packages
+TruxPylot-*.zip
+trux-pylot-*.zip
+
+# Local patches
+*.patch
+*.diff
+
+# Local debugging
+debug/
+debug-output/
