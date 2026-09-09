@@ -8,20 +8,23 @@ export function DedicatedAccount() {
   const [copied, setCopied] = useState(false);
 
   async function load(refresh = false) {
-    setMessage('Preparing your wallet bank account…');
-    const response = await fetch(`/api/wallet/dedicated-account${refresh ? '?refresh=1' : ''}`, { cache: 'no-store' });
+    setMessage(refresh ? 'Checking your transfer with Paystack…' : 'Preparing your wallet bank account…');
+    const response = await fetch(`/api/wallet/dedicated-account${refresh ? '?refresh=1&check=1' : ''}`, { cache: 'no-store' });
     const body = await response.json().catch(() => ({}));
 
     if (response.ok && body.accountNumber && body.accountName && body.bankName) {
       setAccount(body);
       setMessage('');
+      if (refresh) window.setTimeout(() => window.location.reload(), 2500);
       return;
     }
 
     setAccount(null);
     setMessage(
       response.ok
-        ? `Your bank account is ${body.status === 'ERROR' ? 'temporarily unavailable' : 'still being prepared'}. Please try again shortly.`
+        ? refresh
+          ? 'Transfer check submitted. Paystack will notify TruxPylot when the transfer is confirmed; refreshing shortly.'
+          : `Your bank account is ${body.status === 'ERROR' ? 'temporarily unavailable' : 'still being prepared'}. Please try again shortly.`
         : body.error ?? 'Bank transfer details are unavailable.'
     );
   }
