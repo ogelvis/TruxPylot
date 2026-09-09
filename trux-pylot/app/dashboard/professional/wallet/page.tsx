@@ -11,7 +11,7 @@ export default async function WalletPage() {
   const professional = await prisma.professional.findUnique({ where: { userId: session.userId }, include: { wallet: { include: { transactions: { orderBy: { createdAt: 'desc' }, take: 50 } } } } });
   if (!professional) return null;
   const wallet = professional.wallet;
-  const [earned, withdrawn, payoutAccount] = await Promise.all([
+  const [earned, withdrawn, payoutAccountRaw] = await Promise.all([
     wallet
       ? prisma.walletTransaction.aggregate({
           where: { walletId: wallet.id, type: 'CREDIT', status: 'COMPLETED', source: { in: ['JOB_EARNING', 'REFERRAL_REWARD', 'ADJUSTMENT'] } },
@@ -24,6 +24,13 @@ export default async function WalletPage() {
     }),
     prisma.payoutAccount.findUnique({ where: { userId: session.userId }, select: { bankName: true, accountName: true, accountNumber: true, bankCode: true, verified: true, verifiedAt: true } }),
   ]);
+  // Prisma returns Date for verifiedAt; WalletActions receives serialized data.
+  const payoutAccount = payoutAccountRaw
+    ? {
+        ...payoutAccountRaw,
+        verifiedAt: payoutAccountRaw.verifiedAt?.toISOString() ?? null,
+      }
+    : null;
   const money = (amount: number | null | undefined) => `₦${((amount ?? 0) / 100).toLocaleString('en-NG')}`;
   return <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus === 'APPROVED'} active="/dashboard/professional/wallet">
     <main className="dash-page wallet-dashboard">
