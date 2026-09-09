@@ -4,6 +4,7 @@ import { ScrollReveal } from '@/components/scroll-reveal';
 import { Counter } from '@/components/counter';
 import { ProPhoto } from '@/components/pro-photo';
 import { getSession, dashboardPath } from '@/lib/auth';
+import { SignOutLink } from '@/components/sign-out-link';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ export default async function Home() {
         .tp-nav{background:rgba(248,251,255,.78);border-bottom:1px solid rgba(180,199,227,.5);box-shadow:0 8px 30px rgba(27,62,113,.06)}
         .tp-nav-inner{height:82px}.tp-logo{display:flex;align-items:center;gap:10px}.tp-logo:after{content:'THE TRUST LAYER';font-size:8px;letter-spacing:1.5px;color:#6680a8;border-left:1px solid #d4dfed;padding-left:10px}
         .tp-links{gap:20px}.tp-links a{padding:30px 0}.tp-links a:hover{transform:translateY(-2px)}
-        .tp-signup{border-radius:999px!important;padding:12px 20px!important;box-shadow:0 10px 22px rgba(21,94,239,.22)}
+        .tp-signup{border-radius:999px!important;padding:12px 20px!important;box-shadow:0 10px 22px rgba(21,94,239,.22)}.tp-signout{border:0;color:#fff!important;cursor:pointer;text-decoration:none!important}.tp-signout:hover{color:#fff!important}
         .tp-hero{position:relative;padding:104px 0 0;background:radial-gradient(circle at 75% 12%,rgba(79,147,255,.18),transparent 31%),linear-gradient(145deg,#f8fbff 0%,#eef5ff 100%)}
         .tp-hero:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.35;background-image:linear-gradient(rgba(21,94,239,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(21,94,239,.06) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,#000,transparent 75%)}
         .tp-hero-grid,.tp-stats{position:relative;z-index:1}.tp-kicker{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border:1px solid #bdd4fa;border-radius:999px;background:#eaf2ff;letter-spacing:1.3px}
@@ -86,11 +87,14 @@ export default async function Home() {
             <Link href="/register">Become a professional</Link>
             <Link href="/support">Contact</Link>
             {session ? (
-              <Link href={dashboardPath(session.role)} className="tp-signup">Open dashboard</Link>
+              <>
+                <Link href={dashboardPath(session.role)} className="tp-login">Dashboard</Link>
+                <SignOutLink className="tp-signup tp-signout">Sign out</SignOutLink>
+              </>
             ) : (
               <>
-                <Link href="/login" className="tp-login">Log in</Link>
-                <Link href="/register" className="tp-signup">Sign up</Link>
+                <Link href="/login" className="tp-login">Sign in</Link>
+                <Link href="/register" className="tp-signup">Get started</Link>
               </>
             )}
           </nav>
