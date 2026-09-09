@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
-export const MIN_WITHDRAWAL_KOBO = 200_000;
+export const MIN_WITHDRAWAL_KOBO = 100_000;
 
 export function walletReference(prefix = 'WALLET') {
   return `TP-${prefix}-${crypto.randomUUID().replaceAll('-', '').slice(0, 16)}`;

@@ -224,6 +224,7 @@ model Professional {
   dedicatedAccount DedicatedAccount?
   promotedListings PromotedListing[]
   premiumPurchases PremiumPurchase[]
+  instantAdvertPurchases InstantAdvertPurchase[]
   portfolioItems PortfolioItem[]
   conversationsAsProfessional Conversation[] @relation("ProfessionalConversations")
   ownedTeamMembers TeamMember[] @relation("BusinessTeam")
@@ -308,6 +309,26 @@ model PremiumPurchase {
   professional    Professional  @relation(fields: [professionalId], references: [id], onDelete: Cascade)
 
   @@index([professionalId, status])
+}
+
+model InstantAdvertPurchase {
+  id              String        @id @default(cuid())
+  professionalId  String
+  reference       String        @unique
+  durationMonths  Int
+  durationDays    Int
+  amount          Int
+  status          PaymentStatus @default(PENDING)
+  providerEventId String?       @unique
+  startsAt        DateTime?
+  expiresAt       DateTime?
+  activatedAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  professional    Professional  @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+
+  @@index([professionalId, status])
+  @@index([status, expiresAt])
 }
 
 // A "Request Service" submission from a professional's public profile.

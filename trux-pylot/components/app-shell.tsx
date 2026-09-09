@@ -20,6 +20,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Messages',href:'/dashboard/professional/messages',icon:'✉'},
     {label:'Earnings',href:'/dashboard/professional/earnings',icon:'◈'},
     {label:'Wallet',href:'/dashboard/professional/wallet',icon:'₦'},
+    {label:'Grow & promote',href:'/dashboard/professional/growth',icon:'✦'},
     {label:'Refer & earn',href:'/dashboard/professional/referrals',icon:'↗'},
     {label:'Reviews',href:'/dashboard/professional/reviews',icon:'★'},
     {label:'Verification',href:'/dashboard/professional/verification',icon:'✓'},
@@ -33,6 +34,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Referrals',href:'/dashboard/admin/referrals',icon:'↗'},
     {label:'Users',href:'/dashboard/admin/users',icon:'◎'},
     {label:'Finance & Wallet',href:'/dashboard/admin/wallet',icon:'₦'},
+    {label:'Growth requests',href:'/dashboard/admin/growth',icon:'✦'},
     {label:'Audit log',href:'/dashboard/admin/audit-log',icon:'▣'},
   ]
 };

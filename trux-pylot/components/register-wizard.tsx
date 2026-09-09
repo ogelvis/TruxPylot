@@ -136,7 +136,8 @@ export function RegisterWizard() {
         }
         return setError(d.error || 'Something went wrong.');
       }
-      router.push(d.redirect || '/dashboard');
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next && next.startsWith('/') ? next : (d.redirect || '/dashboard'));
       router.refresh();
     } catch {
       setSubmitting(false);

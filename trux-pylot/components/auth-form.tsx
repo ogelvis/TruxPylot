@@ -57,7 +57,8 @@ export function AuthForm() {
       const d = await r.json().catch(() => ({ error: 'The service is temporarily unavailable. Please try again.' }));
       setSubmitting(false);
       if (!r.ok) return setError(d.error || 'Something went wrong');
-      router.push(d.redirect || '/dashboard');
+      const next = new URLSearchParams(window.location.search).get('next');
+      router.push(next && next.startsWith('/') ? next : (d.redirect || '/dashboard'));
       router.refresh();
     } catch {
       setSubmitting(false);
@@ -95,7 +96,7 @@ export function AuthForm() {
       <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email address" required />
       <button type="submit" disabled={submitting}>{submitting ? 'Sending code…' : 'Send sign-in code →'}</button>
       {error && <p role="alert">{error}</p>}
-      <p className="auth-switch">New to Trux Pylot? <a href="/register">Create an account</a></p>
+      <p className="auth-switch">New to Trux Pylot? <a href={`/register${window.location.search || ''}`}>Create an account</a></p>
     </form>
   );
 }
