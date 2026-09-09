@@ -48,18 +48,25 @@ function normalizeAccount(item: any) {
     paystackAccountId: account.id != null ? String(account.id) : undefined,
     accountNumber: typeof account.account_number === 'string' ? account.account_number : undefined,
     accountName: typeof account.account_name === 'string' ? account.account_name : undefined,
-    bankName: typeof account.bank?.name === 'string' ? account.bank.name : typeof account.bank_name === 'string' ? account.bank_name : undefined,
-    bankSlug: typeof account.bank?.slug === 'string' ? account.bank.slug : typeof account.bank_slug === 'string' ? account.bank_slug : undefined,
+    bankName:
+      typeof account.bank?.name === 'string'
+        ? account.bank.name
+        : typeof account.bank_name === 'string'
+          ? account.bank_name
+          : undefined,
+    bankSlug:
+      typeof account.bank?.slug === 'string'
+        ? account.bank.slug
+        : typeof account.bank_slug === 'string'
+          ? account.bank_slug
+          : undefined,
     active: account.active !== false,
     assigned: account.assigned !== false,
   };
 }
 
-async function syncFromCustomerCode(accountId: string, customerCode: string) {
-  const customer = await paystack(`/customer/${encodeURIComponent(customerCode)}`);
-  const normalized = normalizeAccount(customer);
+async function saveNormalizedAccount(accountId: string, normalized: ReturnType<typeof normalizeAccount>) {
   if (!normalized?.accountNumber) return null;
-
   return prisma.dedicatedAccount.update({
     where: { id: accountId },
     data: {
@@ -76,6 +83,34 @@ async function syncFromCustomerCode(accountId: string, customerCode: string) {
   });
 }
 
+/**
+ * Paystack's customer response is not guaranteed to contain the assigned DVA
+ * in every response shape. Ask the dedicated-account endpoint directly using
+ * the Paystack customer ID. This is especially important for DVAs that already
+ * exist in Paystack (for example, accounts created from the Paystack dashboard).
+ */
+async function findPaystackDvaForCustomer(customerId: number | string) {
+  const data = await paystack(`/dedicated_account?customer=${encodeURIComponent(String(customerId))}&active=true&perPage=50`);
+  const accounts = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+  return accounts.map(normalizeAccount).find((item: any) => item?.accountNumber) ?? null;
+}
+
+async function syncFromCustomerCode(accountId: string, customerCode: string) {
+  const customer = await paystack(`/customer/${encodeURIComponent(customerCode)}`);
+  const customerId = customer?.id ?? customer?.customer?.id;
+
+  if (customerId != null) {
+    const existingDva = await findPaystackDvaForCustomer(customerId);
+    const saved = await saveNormalizedAccount(accountId, existingDva);
+    if (saved) return saved;
+  }
+
+  // Keep this fallback because some Paystack customer responses include the
+  // dedicated account directly.
+  const normalized = normalizeAccount(customer);
+  return saveNormalizedAccount(accountId, normalized);
+}
+
 export async function syncDedicatedAccountForCustomerCode(customerCode: string) {
   if (!customerCode) return null;
   const account = await prisma.dedicatedAccount.findFirst({ where: { paystackCustomerCode: customerCode } });
@@ -83,7 +118,10 @@ export async function syncDedicatedAccountForCustomerCode(customerCode: string) 
   try {
     return await syncFromCustomerCode(account.id, customerCode);
   } catch (error) {
-    console.warn('[DVA SYNC] customer lookup failed', { customerCode, error: error instanceof Error ? error.message : 'unknown' });
+    console.warn('[DVA SYNC] customer lookup failed', {
+      customerCode,
+      error: error instanceof Error ? error.message : 'unknown',
+    });
     return null;
   }
 }
@@ -111,19 +149,27 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
 
   let account = professional.dedicatedAccount;
 
-  if (!account) {
-    let customer: any;
+  // Resolve the Paystack customer first. An existing Paystack DVA must be
+  // recovered even when the local profile is missing a phone number. Phone is
+  // required only when we actually need to create a NEW DVA.
+  let customer: any = null;
+  if (account) {
+    try {
+      customer = await paystack(`/customer/${encodeURIComponent(account.paystackCustomerCode)}`);
+    } catch (error) {
+      console.warn('[DVA SYNC] customer lookup failed', {
+        customerCode: account.paystackCustomerCode,
+        error: error instanceof Error ? error.message : 'unknown',
+      });
+    }
+  } else {
     try {
       customer = await paystack(`/customer/${encodeURIComponent(professional.user.email)}`);
     } catch (error) {
       if (!(error instanceof PaystackError) || error.status !== 404) throw error;
 
-      // Paystack requires a phone number for DVA customers. Do not create a
-      // partial Paystack customer and then repeatedly retry DVA provisioning.
       const localPhone = cleanPhone(professional.user.phone);
-      if (!localPhone) {
-        throw new DvaPhoneRequiredError();
-      }
+      if (!localPhone) throw new DvaPhoneRequiredError();
 
       const names = professional.fullName.trim().split(/\s+/);
       customer = await paystack('/customer', {
@@ -140,36 +186,73 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
     const customerCode = customer?.customer_code ?? customer?.customer?.customer_code;
     if (!customerCode) throw new Error('Paystack customer unavailable');
 
-    // Use the phone already stored on the Paystack customer when available.
-    // Otherwise require the user's TruxPylot profile phone before provisioning.
+    account = await prisma.dedicatedAccount.upsert({
+      where: { professionalId: professional.id },
+      create: { professionalId: professional.id, walletId: wallet.id, paystackCustomerCode: customerCode },
+      update: { paystackCustomerCode: customerCode, walletId: wallet.id },
+    });
+  }
+
+  // FIRST: recover an already-existing DVA from Paystack. This is deliberately
+  // before phone validation. A DVA that already exists does not need to be
+  // recreated, and requiring a phone here was causing the current
+  // "Customer phone number is required" loop even though Paystack already had
+  // an active account.
+  if (account && (!account.accountNumber || refresh)) {
+    try {
+      const synced = await syncFromCustomerCode(account.id, account.paystackCustomerCode);
+      if (synced?.accountNumber) {
+        account = synced;
+      }
+    } catch (error) {
+      console.warn('[DVA SYNC] existing account lookup failed', {
+        customerCode: account.paystackCustomerCode,
+        error: error instanceof Error ? error.message : 'unknown',
+      });
+    }
+  }
+
+  // If Paystack already has the account, stop here. Do not try to create a
+  // second account and do not require a phone merely to display an existing DVA.
+  if (account?.accountNumber) {
+    if (requery && account.bankSlug) {
+      const date = new Date().toISOString().slice(0, 10);
+      try {
+        await paystack(
+          `/dedicated_account/requery?account_number=${encodeURIComponent(account.accountNumber)}&provider_slug=${encodeURIComponent(account.bankSlug)}&date=${date}`,
+        );
+      } catch (error) {
+        console.warn('[DVA REQUERY] failed', {
+          accountId: account.id,
+          error: error instanceof Error ? error.message : 'unknown',
+        });
+      }
+    }
+    return account;
+  }
+
+  // No existing DVA was found. Creating one requires a customer phone for the
+  // applicable TruxPylot/Paystack business category.
+  try {
     const paystackPhone = cleanPhone(customer?.phone ?? customer?.customer?.phone);
     const localPhone = cleanPhone(professional.user.phone);
     const customerPhone = localPhone ?? paystackPhone;
+
     if (!customerPhone) {
-      await prisma.dedicatedAccount.upsert({
-        where: { professionalId: professional.id },
-        create: {
-          professionalId: professional.id,
-          walletId: wallet.id,
-          paystackCustomerCode: customerCode,
+      account = await prisma.dedicatedAccount.update({
+        where: { id: account!.id },
+        data: {
           status: 'AWAITING_PHONE',
           lastSyncError: 'Add a phone number to your professional profile before creating a bank transfer account.',
-        },
-        update: {
-          paystackCustomerCode: customerCode,
-          walletId: wallet.id,
-          status: 'AWAITING_PHONE',
-          lastSyncError: 'Add a phone number to your professional profile before creating a bank transfer account.',
+          lastSyncedAt: new Date(),
         },
       });
       throw new DvaPhoneRequiredError();
     }
 
-    // Keep the Paystack customer complete enough for DVA assignment. If the
-    // local profile has a phone, make sure Paystack has the same current value.
     try {
       const names = professional.fullName.trim().split(/\s+/);
-      await paystack(`/customer/${encodeURIComponent(customerCode)}`, {
+      await paystack(`/customer/${encodeURIComponent(account!.paystackCustomerCode)}`, {
         method: 'PUT',
         body: JSON.stringify({
           first_name: names[0] ?? professional.fullName,
@@ -178,134 +261,63 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
         }),
       });
     } catch (error) {
-      console.warn('[DVA SYNC] customer update skipped', { customerCode, error: error instanceof Error ? error.message : 'unknown' });
+      console.warn('[DVA SYNC] customer update skipped', {
+        customerCode: account!.paystackCustomerCode,
+        error: error instanceof Error ? error.message : 'unknown',
+      });
     }
 
-    account = await prisma.dedicatedAccount.upsert({
-      where: { professionalId: professional.id },
-      create: { professionalId: professional.id, walletId: wallet.id, paystackCustomerCode: customerCode },
-      update: { paystackCustomerCode: customerCode, walletId: wallet.id },
+    await prisma.dedicatedAccount.update({
+      where: { id: account!.id },
+      data: { status: 'PROVISIONING', lastSyncError: null, syncAttempts: { increment: 1 } },
+    });
+
+    const preferredBank = process.env.PAYSTACK_DVA_PREFERRED_BANK;
+    const data = await paystack('/dedicated_account', {
+      method: 'POST',
+      headers: { 'X-Idempotency-Key': `truxpylot-dva-${account!.id}` },
+      body: JSON.stringify({
+        customer: account!.paystackCustomerCode,
+        ...(preferredBank ? { preferred_bank: preferredBank } : {}),
+      }),
+    });
+
+    const normalized = normalizeAccount(data);
+    account = await prisma.dedicatedAccount.update({
+      where: { id: account!.id },
+      data: {
+        paystackAccountId: normalized?.paystackAccountId ?? account!.paystackAccountId,
+        accountNumber: normalized?.accountNumber,
+        accountName: normalized?.accountName,
+        bankName: normalized?.bankName,
+        bankSlug: normalized?.bankSlug,
+        active: normalized?.active ?? true,
+        status: normalized?.accountNumber && normalized.assigned ? 'ACTIVE' : 'PENDING',
+        lastSyncError: null,
+        lastSyncedAt: new Date(),
+      },
+    });
+  } catch (error) {
+    if (error instanceof DvaPhoneRequiredError) throw error;
+    const reason = error instanceof Error ? error.message : 'Provisioning failed';
+    console.error('[DVA SYNC] provisioning failed', { professionalId: professional.id, error: reason });
+    account = await prisma.dedicatedAccount.update({
+      where: { id: account!.id },
+      data: { status: 'ERROR', lastSyncError: reason.slice(0, 500), lastSyncedAt: new Date() },
     });
   }
 
-  // Paystack can assign the DVA asynchronously. First ask the customer record
-  // whether an account already exists before attempting to create another one.
-  if (!account.accountNumber || refresh) {
-    try {
-      // Check the Paystack customer before creating/recreating a DVA. Existing
-      // customers may already have a phone even when the TruxPylot profile
-      // does not, and Paystack requires the customer phone for DVA creation.
-      const customer = await paystack(`/customer/${encodeURIComponent(account.paystackCustomerCode)}`);
-      const paystackPhone = cleanPhone(customer?.phone ?? customer?.customer?.phone);
-      const localPhone = cleanPhone(professional.user.phone);
-      const customerPhone = localPhone ?? paystackPhone;
-
-      if (!customerPhone) {
-        const awaiting = await prisma.dedicatedAccount.update({
-          where: { id: account.id },
-          data: {
-            status: 'AWAITING_PHONE',
-            lastSyncError: 'Add a phone number to your professional profile before creating a bank transfer account.',
-            lastSyncedAt: new Date(),
-          },
-        });
-        return awaiting;
-      }
-
-      // If the professional has supplied a phone locally, synchronize it to
-      // the Paystack customer before DVA creation.
-      if (localPhone) {
-        try {
-          const names = professional.fullName.trim().split(/\s+/);
-          await paystack(`/customer/${encodeURIComponent(account.paystackCustomerCode)}`, {
-            method: 'PUT',
-            body: JSON.stringify({
-              first_name: names[0] ?? professional.fullName,
-              last_name: names.slice(1).join(' ') || names[0] || professional.fullName,
-              phone: localPhone,
-            }),
-          });
-        } catch (error) {
-          console.warn('[DVA SYNC] customer update skipped', {
-            customerCode: account.paystackCustomerCode,
-            error: error instanceof Error ? error.message : 'unknown',
-          });
-        }
-      }
-
-      await prisma.dedicatedAccount.update({
-        where: { id: account.id },
-        data: { status: 'PROVISIONING', lastSyncError: null, syncAttempts: { increment: 1 } },
-      });
-
-      const synced = await syncFromCustomerCode(account.id, account.paystackCustomerCode);
-      if (synced?.accountNumber) {
-        account = synced;
-      } else if (account.paystackAccountId) {
-        const data = await paystack(`/dedicated_account/${encodeURIComponent(account.paystackAccountId)}`);
-        const normalized = normalizeAccount(data);
-        if (!normalized?.accountNumber) {
-          account = await prisma.dedicatedAccount.update({ where: { id: account.id }, data: { status: 'PENDING', lastSyncedAt: new Date() } });
-        } else {
-          account = await prisma.dedicatedAccount.update({
-            where: { id: account.id },
-            data: {
-              paystackAccountId: normalized.paystackAccountId ?? account.paystackAccountId,
-              accountNumber: normalized.accountNumber,
-              accountName: normalized.accountName,
-              bankName: normalized.bankName,
-              bankSlug: normalized.bankSlug,
-              active: normalized.active,
-              status: normalized.assigned ? 'ACTIVE' : 'PENDING',
-              lastSyncError: null,
-              lastSyncedAt: new Date(),
-            },
-          });
-        }
-      } else {
-        const preferredBank = process.env.PAYSTACK_DVA_PREFERRED_BANK;
-        const data = await paystack('/dedicated_account', {
-          method: 'POST',
-          headers: { 'X-Idempotency-Key': `truxpylot-dva-${account.id}` },
-          body: JSON.stringify({
-            customer: account.paystackCustomerCode,
-            ...(preferredBank ? { preferred_bank: preferredBank } : {}),
-          }),
-        });
-        const normalized = normalizeAccount(data);
-        account = await prisma.dedicatedAccount.update({
-          where: { id: account.id },
-          data: {
-            paystackAccountId: normalized?.paystackAccountId ?? account.paystackAccountId,
-            accountNumber: normalized?.accountNumber,
-            accountName: normalized?.accountName,
-            bankName: normalized?.bankName,
-            bankSlug: normalized?.bankSlug,
-            active: normalized?.active ?? true,
-            status: normalized?.accountNumber && normalized.assigned ? 'ACTIVE' : 'PENDING',
-            lastSyncError: null,
-            lastSyncedAt: new Date(),
-          },
-        });
-      }
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : 'Provisioning failed';
-      console.error('[DVA SYNC] provisioning failed', { professionalId: professional.id, error: reason });
-      account = await prisma.dedicatedAccount.update({
-        where: { id: account.id },
-        data: { status: 'ERROR', lastSyncError: reason.slice(0, 500), lastSyncedAt: new Date() },
-      });
-    }
-  }
-
-  // The user-facing "check status" action can request a Paystack requery. This
-  // is intentionally opt-in because Paystack limits DVA requery to once/10 min.
   if (requery && account.accountNumber && account.bankSlug) {
     const date = new Date().toISOString().slice(0, 10);
     try {
-      await paystack(`/dedicated_account/requery?account_number=${encodeURIComponent(account.accountNumber)}&provider_slug=${encodeURIComponent(account.bankSlug)}&date=${date}`);
+      await paystack(
+        `/dedicated_account/requery?account_number=${encodeURIComponent(account.accountNumber)}&provider_slug=${encodeURIComponent(account.bankSlug)}&date=${date}`,
+      );
     } catch (error) {
-      console.warn('[DVA REQUERY] failed', { accountId: account.id, error: error instanceof Error ? error.message : 'unknown' });
+      console.warn('[DVA REQUERY] failed', {
+        accountId: account.id,
+        error: error instanceof Error ? error.message : 'unknown',
+      });
     }
   }
 
