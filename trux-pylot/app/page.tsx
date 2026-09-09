@@ -132,6 +132,79 @@ export default async function Home() {
         </div>
       </section>
 
+      <section className="tp-growth-section" id="grow-your-visibility">
+        <div className="tp-container">
+          <div className="tp-growth-heading reveal">
+            <div>
+              <p className="tp-kicker">GROW YOUR VISIBILITY</p>
+              <h2>Grow Your Visibility &amp; Unlock More.</h2>
+              <p>Build a stronger presence on Trux Pylot with three distinct ways to upgrade, promote, or advertise your business.</p>
+            </div>
+            <span className="tp-growth-note"><span className="tp-live-dot" /> Built for professionals</span>
+          </div>
+
+          <div className="tp-growth-grid">
+            <article className="tp-growth-card reveal">
+              <div className="tp-growth-icon tp-growth-icon-upgrade" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 19V5"/><path d="m6 11 6-6 6 6"/><path d="M5 19h14"/></svg>
+              </div>
+              <div className="tp-growth-card-top"><span className="tp-growth-label">ACCOUNT ADVANCEMENT</span><span className="tp-growth-index">01</span></div>
+              <h3>Tier Upgrade</h3>
+              <p>Upgrade your professional standing and unlock additional capabilities available to your selected tier.</p>
+              <ul>
+                <li>Unlock additional profile features</li>
+                <li>Access higher-tier benefits</li>
+                <li>Increase your business visibility</li>
+                <li>Unlock additional platform capabilities</li>
+                <li>Access features available to your selected tier</li>
+              </ul>
+              <Link href="/dashboard/professional/tier" className="tp-growth-cta">View Upgrade Options <span>↗</span></Link>
+            </article>
+
+            <article className="tp-growth-card tp-growth-card-featured reveal" style={{ transitionDelay: '80ms' }}>
+              <div className="tp-growth-featured-badge">VISIBILITY BOOST</div>
+              <div className="tp-growth-icon tp-growth-icon-top10" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m4 16 5-5 4 3 7-8"/><path d="M15 6h5v5"/><path d="M4 20h16"/></svg>
+              </div>
+              <div className="tp-growth-card-top"><span className="tp-growth-label">SEARCH VISIBILITY</span><span className="tp-growth-index">02</span></div>
+              <h3>Top 10 Profile Placement</h3>
+              <p>Promote your profile for greater search visibility. Top 10 placement is separate from your account tier.</p>
+              <ul>
+                <li>Get your profile featured among the Top 10</li>
+                <li>Increase your visibility in search</li>
+                <li>Reach more potential customers</li>
+                <li>Give your business greater exposure</li>
+                <li>Improve your chances of being discovered</li>
+              </ul>
+              <Link href="/dashboard/professional/wallet?promotion=top10" className="tp-growth-cta tp-growth-cta-primary">Get Top 10 Placement <span>↗</span></Link>
+              <small className="tp-growth-footnote">Promotion is independent of Tier Upgrade, Score, Level and organic ranking.</small>
+            </article>
+
+            <article className="tp-growth-card reveal" style={{ transitionDelay: '160ms' }}>
+              <div className="tp-growth-icon tp-growth-icon-advert" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m4 11 16-6v14L4 13v-2Z"/><path d="M8 14.5 9.5 20"/><path d="M20 9v6"/></svg>
+              </div>
+              <div className="tp-growth-card-top"><span className="tp-growth-label">DIRECT ADVERTISING</span><span className="tp-growth-index">03</span></div>
+              <h3>Instant Advert</h3>
+              <p>Put your business directly in front of Trux Pylot users with a paid advertising package.</p>
+              <div className="tp-advert-prices">
+                <div><span>1 Month</span><strong>₦2,000</strong></div>
+                <div><span>2 Months</span><strong>₦3,500</strong></div>
+                <div><span>3 Months</span><strong>₦5,000</strong></div>
+              </div>
+              <ul>
+                <li>Promote your business instantly</li>
+                <li>Increase your brand visibility</li>
+                <li>Reach more potential customers</li>
+                <li>Keep your business in front of users</li>
+                <li>Choose the duration that works for you</li>
+              </ul>
+              <Link href="/dashboard/professional/wallet?promotion=advert" className="tp-growth-cta">Advertise Now <span>↗</span></Link>
+            </article>
+          </div>
+        </div>
+      </section>
+
       <section className="tp-trust-section">
         <div className="tp-container tp-trust-grid">
           <div className="tp-trust-intro reveal"><p className="tp-kicker">THE PROBLEM WITH FINDING HELP</p><h2>Good work should not feel like a gamble.</h2><p>Calling around, hoping for the best, then having no one to call when it goes wrong — that is the old way.</p></div>
