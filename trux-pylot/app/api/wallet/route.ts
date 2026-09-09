@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session || session.role !== 'PROFESSIONAL') return NextResponse.json({ error: 'Professional sign-in required.' }, { status: 401 });
   const parsed = withdrawal.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: 'Minimum withdrawal is ₦2,000.' }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: 'Minimum withdrawal is ₦1,000.' }, { status: 400 });
 
   const professional = await prisma.professional.findUnique({ where: { userId: session.userId }, select: { id: true } });
   if (!professional) return NextResponse.json({ error: 'Professional profile not found.' }, { status: 404 });

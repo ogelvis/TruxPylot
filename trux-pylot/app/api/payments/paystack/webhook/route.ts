@@ -7,6 +7,7 @@ import {
   syncDedicatedAccountForCustomerCode,
 } from '@/lib/dedicated-account';
 import { markWithdrawalFailed, markWithdrawalSuccessful } from '@/lib/withdrawals';
+import { applySuccessfulInstantAdvertPayment } from '@/lib/advertising';
 
 export const runtime = 'nodejs';
 
@@ -102,6 +103,18 @@ export async function POST(request: Request) {
   if (!reference || !Number.isSafeInteger(amount) || amount <= 0) {
     console.warn('[PAYSTACK WEBHOOK] invalid charge.success payload', { reference, amount, providerEventId });
     return NextResponse.json({ received: true });
+  }
+
+  // Direct Instant Advert payments go straight to TruxPylot through Paystack.
+  // Resolve these references before generic wallet funding/job payment logic.
+  const advertResult = await applySuccessfulInstantAdvertPayment(reference, amount, providerEventId);
+  if (advertResult.ok) {
+    console.info('[INSTANT ADVERT] processed', { reference, amount, already: advertResult.already });
+    return NextResponse.json({ received: true });
+  }
+  if (advertResult.reason === 'amount_mismatch') {
+    console.error('[INSTANT ADVERT] amount mismatch', { reference, amount, providerEventId });
+    return NextResponse.json({ received: true, reviewRequired: true });
   }
 
   // First resolve the explicit TruxPylot checkout funding reference.
