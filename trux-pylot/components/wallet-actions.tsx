@@ -1,160 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-type PayoutAccount = {
-  bankName: string;
-  accountName: string;
-  accountNumber: string;
-  verified: boolean;
-};
+type PayoutAccount = { bankName:string; accountName:string; accountNumber:string; bankCode?:string|null; verified:boolean; verifiedAt?:string|null };
+type Bank = { id:number; name:string; code:string };
+type WalletActionsProps = { availableBalance:number; payoutAccount:PayoutAccount|null; withdrawOnly?:boolean };
 
-type WalletActionsProps = {
-  availableBalance: number;
-  payoutAccount: PayoutAccount | null;
-  withdrawOnly?: boolean;
-};
-
-export function WalletActions({ availableBalance, payoutAccount, withdrawOnly = false }: WalletActionsProps) {
-  const [amount, setAmount] = useState('5000');
-  const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [payout, setPayout] = useState({ bankName: '', accountName: '', accountNumber: '' });
-  const [message, setMessage] = useState('');
-  const [withdrawError, setWithdrawError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  async function fund() {
-    setMessage('');
-    const response = await fetch('/api/wallet/fund', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount: Math.round(Number(amount) * 100) }),
-    });
-    const body = await response.json();
-    if (response.ok && body.authorizationUrl) {
-      window.location.href = body.authorizationUrl;
-      return;
-    }
-    setMessage(body.error ?? 'Unable to start funding.');
-  }
-
-  async function savePayout() {
-    const response = await fetch('/api/wallet/payout-account', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payout),
-    });
-    const body = await response.json();
-    setMessage(response.ok ? 'Payout account saved.' : body.error ?? 'Unable to save payout account.');
-  }
-
-  async function withdraw() {
-    const amountInKobo = Math.round(Number(withdrawAmount) * 100);
-    setWithdrawError('');
-    if (!Number.isFinite(amountInKobo) || amountInKobo < 200000) {
-      setWithdrawError('Minimum withdrawal is ₦2,000.');
-      return;
-    }
-    if (amountInKobo > availableBalance) {
-      setWithdrawError('Insufficient wallet balance.');
-      return;
-    }
-    if (!payoutAccount) {
-      setWithdrawError('Add a payout account before requesting a withdrawal.');
-      return;
-    }
-    setConfirmOpen(true);
-  }
-
-  async function confirmWithdrawal() {
-    const amountInKobo = Math.round(Number(withdrawAmount) * 100);
-    if (!payoutAccount) {
-      setWithdrawError('Add a payout account before requesting a withdrawal.');
-      setConfirmOpen(false);
-      return;
-    }
-    if (submitting) return;
-    setSubmitting(true);
-    const response = await fetch('/api/wallet', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID() },
-      body: JSON.stringify({
-        amount: amountInKobo,
-        bankName: payoutAccount.bankName,
-        accountName: payoutAccount.accountName,
-        accountNumber: payoutAccount.accountNumber,
-      }),
-    });
-    const body = await response.json();
-    setMessage(response.ok ? 'Withdrawal requested and queued for review.' : body.error ?? 'Unable to request withdrawal.');
-    setSubmitting(false);
-    if (response.ok) setConfirmOpen(false);
-  }
-
-  return (
-    <div className="wallet-actions">
-      {!withdrawOnly && <div className="wallet-action-panel">
-        <div className="wallet-panel-header-inline">
-          <span>Quick top-up</span>
-          <strong>Secure</strong>
-        </div>
-        <label className="wallet-field">
-          <span>Amount (₦)</span>
-          <input value={amount} onChange={e => setAmount(e.target.value)} type="number" min="100" inputMode="numeric" />
-        </label>
-        <button type="button" className="wallet-cta primary" onClick={fund}>Fund securely with Paystack</button>
-      </div>}
-
-      {!withdrawOnly && <div className="wallet-action-panel">
-        <div className="wallet-panel-header-inline">
-          <span>Payout account</span>
-          <strong>Banking</strong>
-        </div>
-        <div className="wallet-form-grid">
-          <input placeholder="Bank name" value={payout.bankName} onChange={e => setPayout({ ...payout, bankName: e.target.value })} />
-          <input placeholder="Account name" value={payout.accountName} onChange={e => setPayout({ ...payout, accountName: e.target.value })} />
-          <input placeholder="10-digit account number" inputMode="numeric" value={payout.accountNumber} onChange={e => setPayout({ ...payout, accountNumber: e.target.value })} />
-        </div>
-        <button type="button" className="wallet-cta secondary" onClick={savePayout}>Save payout account</button>
-      </div>}
-
-      <div className="wallet-action-panel">
-        <div className="wallet-panel-header-inline">
-          <span>Withdraw</span>
-          <strong>Review</strong>
-        </div>
-        <label className="wallet-field">
-          <span>Withdraw amount (₦)</span>
-          <input value={withdrawAmount} onChange={e => setWithdrawAmount(e.target.value)} type="number" min="2000" inputMode="numeric" />
-        </label>
-        <div className="wallet-withdraw-summary">
-          <span>Available balance</span>
-          <strong>₦{(availableBalance / 100).toLocaleString('en-NG')}</strong>
-        </div>
-        {!payoutAccount && <p className="wallet-message wallet-warning">No payout account added yet. Add one above before withdrawing.</p>}
-        {payoutAccount && <p className="wallet-payout-note">Payout: {payoutAccount.bankName} · {payoutAccount.accountName} · ••••{payoutAccount.accountNumber.slice(-4)} · {payoutAccount.verified ? 'Verified' : 'Pending verification'}</p>}
-        <button type="button" className="wallet-cta primary" onClick={withdraw} disabled={submitting}>{submitting ? 'Submitting…' : 'Request withdrawal'}</button>
-        {withdrawError && <p className="wallet-message wallet-error">{withdrawError}</p>}
-      </div>
-
-      {message && <p className="wallet-message">{message}</p>}
-      {confirmOpen && payoutAccount && <div className="wallet-confirm-backdrop" role="presentation" onClick={() => setConfirmOpen(false)}>
-        <div className="wallet-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="withdrawal-confirmation" onClick={event => event.stopPropagation()}>
-          <span className="wallet-kicker">FINAL CHECK</span>
-          <h3 id="withdrawal-confirmation">Confirm withdrawal</h3>
-          <p>Review the payout details before sending your request for approval.</p>
-          <div className="wallet-confirm-details">
-            <span>Amount to withdraw</span><strong>₦{Number(withdrawAmount).toLocaleString('en-NG')}</strong>
-            <span>Payout bank</span><strong>{payoutAccount.bankName}</strong>
-            <span>Account</span><strong>{payoutAccount.accountName} · ••••{payoutAccount.accountNumber.slice(-4)}</strong>
-          </div>
-          <div className="wallet-confirm-actions">
-            <button type="button" className="wallet-cta secondary" onClick={() => setConfirmOpen(false)}>Cancel</button>
-            <button type="button" className="wallet-cta primary" onClick={confirmWithdrawal} disabled={submitting}>{submitting ? 'Submitting…' : 'Confirm withdrawal'}</button>
-          </div>
-        </div>
-      </div>}
-    </div>
-  );
+export function WalletActions({ availableBalance, payoutAccount, withdrawOnly=false }:WalletActionsProps){
+  const [amount,setAmount]=useState('5000');
+  const [withdrawAmount,setWithdrawAmount]=useState('');
+  const [payout,setPayout]=useState({bankName:payoutAccount?.bankName??'',accountName:payoutAccount?.accountName??'',accountNumber:payoutAccount?.accountNumber??'',bankCode:payoutAccount?.bankCode??''});
+  const [banks,setBanks]=useState<Bank[]>([]);
+  const [message,setMessage]=useState('');
+  const [withdrawError,setWithdrawError]=useState('');
+  const [submitting,setSubmitting]=useState(false);
+  const [confirmOpen,setConfirmOpen]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [verifying,setVerifying]=useState(false);
+  useEffect(()=>{fetch('/api/wallet/payout-account/banks',{cache:'force-cache'}).then(r=>r.json()).then(b=>setBanks(b.banks??[])).catch(()=>undefined);},[]);
+  useEffect(()=>{if(payoutAccount)setPayout({bankName:payoutAccount.bankName,accountName:payoutAccount.accountName,accountNumber:payoutAccount.accountNumber,bankCode:payoutAccount.bankCode??''});},[payoutAccount]);
+  async function fund(){setMessage('');const r=await fetch('/api/wallet/fund',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({amount:Math.round(Number(amount)*100)})});const b=await r.json();if(r.ok&&b.authorizationUrl){window.location.href=b.authorizationUrl;return;}setMessage(b.error??'Unable to start funding.');}
+  async function savePayout(){setSaving(true);setMessage('');const r=await fetch('/api/wallet/payout-account',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payout)});const b=await r.json();setSaving(false);if(!r.ok){setMessage(b.error??'Unable to save payout account.');return;}setMessage('Bank details saved. Verify the account before withdrawing.');window.setTimeout(()=>window.location.reload(),700);}
+  async function verifyPayout(){setVerifying(true);setMessage('');const r=await fetch('/api/wallet/payout-account/verify',{method:'POST'});const b=await r.json();setVerifying(false);setMessage(r.ok?'Bank account verified and ready for withdrawals.':b.error??'Unable to verify bank account.');if(r.ok)window.setTimeout(()=>window.location.reload(),700);}
+  function withdraw(){const amountInKobo=Math.round(Number(withdrawAmount)*100);setWithdrawError('');if(!Number.isFinite(amountInKobo)||amountInKobo<200000){setWithdrawError('Minimum withdrawal is ₦2,000.');return;}if(amountInKobo>availableBalance){setWithdrawError('Insufficient wallet balance.');return;}if(!payoutAccount||!payoutAccount.verified){setWithdrawError('Verify your payout bank account before withdrawing.');return;}setConfirmOpen(true);}
+  async function confirmWithdrawal(){const amountInKobo=Math.round(Number(withdrawAmount)*100);if(!payoutAccount?.verified){setWithdrawError('Verify your payout bank account before withdrawing.');setConfirmOpen(false);return;}if(submitting)return;setSubmitting(true);const r=await fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify({amount:amountInKobo})});const b=await r.json();setMessage(r.ok?'Withdrawal submitted. It is now awaiting admin review.':b.error??'Unable to request withdrawal.');setSubmitting(false);if(r.ok){setConfirmOpen(false);window.setTimeout(()=>window.location.reload(),700);}}
+  return <div className="wallet-actions">
+    {!withdrawOnly&&<div className="wallet-action-panel"><div className="wallet-panel-header-inline"><span>Quick top-up</span><strong>Secure</strong></div><label className="wallet-field"><span>Amount (₦)</span><input value={amount} onChange={e=>setAmount(e.target.value)} type="number" min="100" inputMode="numeric"/></label><button type="button" className="wallet-cta primary" onClick={fund}>Fund securely with Paystack</button></div>}
+    {!withdrawOnly&&<div className="wallet-action-panel"><div className="wallet-panel-header-inline"><span>Verified payout account</span><strong>{payoutAccount?.verified?'Verified':'Required'}</strong></div><div className="wallet-form-grid"><select value={payout.bankCode} onChange={e=>{const bank=banks.find(x=>x.code===e.target.value);setPayout({...payout,bankCode:e.target.value,bankName:bank?.name??''})}}><option value="">Select bank</option>{banks.map(b=><option value={b.code} key={b.code}>{b.name}</option>)}</select><input placeholder="Account number" inputMode="numeric" maxLength={10} value={payout.accountNumber} onChange={e=>setPayout({...payout,accountNumber:e.target.value.replace(/\D/g,'').slice(0,10)})}/><input placeholder="Account name (verified from bank)" value={payout.accountName} onChange={e=>setPayout({...payout,accountName:e.target.value})}/></div><div className="wallet-inline-actions"><button type="button" className="wallet-cta secondary" onClick={savePayout} disabled={saving}>{saving?'Saving…':'Save bank details'}</button>{payoutAccount&&!payoutAccount.verified&&<button type="button" className="wallet-cta primary" onClick={verifyPayout} disabled={verifying}>{verifying?'Verifying…':'Verify account'}</button>}</div>{payoutAccount&&<p className="wallet-payout-note">{payoutAccount.bankName} · {payoutAccount.accountName} · ••••{payoutAccount.accountNumber.slice(-4)} · {payoutAccount.verified?'Verified':'Not verified'}</p>}</div>}
+    <div className="wallet-action-panel"><div className="wallet-panel-header-inline"><span>Withdraw</span><strong>{payoutAccount?.verified?'Ready':'Verify bank first'}</strong></div><label className="wallet-field"><span>Withdraw amount (₦)</span><input value={withdrawAmount} onChange={e=>setWithdrawAmount(e.target.value)} type="number" min="2000" inputMode="numeric"/></label><div className="wallet-withdraw-summary"><span>Available balance</span><strong>₦{(availableBalance/100).toLocaleString('en-NG')}</strong></div>{!payoutAccount&&<p className="wallet-message wallet-warning">Add and verify a payout account before withdrawing.</p>}{payoutAccount&&!payoutAccount.verified&&<p className="wallet-message wallet-warning">Your bank account must be verified before a withdrawal can be submitted.</p>}{payoutAccount?.verified&&<p className="wallet-payout-note">Payout: {payoutAccount.bankName} · {payoutAccount.accountName} · ••••{payoutAccount.accountNumber.slice(-4)} · Verified</p>}<button type="button" className="wallet-cta primary" onClick={withdraw} disabled={submitting}>{submitting?'Submitting…':'Request withdrawal'}</button>{withdrawError&&<p className="wallet-message wallet-error">{withdrawError}</p>}</div>
+    {message&&<p className="wallet-message">{message}</p>}
+    {confirmOpen&&payoutAccount&&<div className="wallet-confirm-backdrop" role="presentation" onClick={()=>setConfirmOpen(false)}><div className="wallet-confirm-modal" role="dialog" aria-modal="true" onClick={e=>e.stopPropagation()}><span className="wallet-kicker">FINAL CHECK</span><h3>Confirm withdrawal</h3><p>Your request will reserve the amount and enter admin review. Paystack is only called after approval.</p><div className="wallet-confirm-details"><span>Amount</span><strong>₦{Number(withdrawAmount).toLocaleString('en-NG')}</strong><span>Bank</span><strong>{payoutAccount.bankName}</strong><span>Account</span><strong>{payoutAccount.accountName} · ••••{payoutAccount.accountNumber.slice(-4)}</strong></div><div className="wallet-confirm-actions"><button type="button" className="wallet-cta secondary" onClick={()=>setConfirmOpen(false)}>Cancel</button><button type="button" className="wallet-cta primary" onClick={confirmWithdrawal} disabled={submitting}>{submitting?'Submitting…':'Confirm request'}</button></div></div></div>}
+  </div>;
 }

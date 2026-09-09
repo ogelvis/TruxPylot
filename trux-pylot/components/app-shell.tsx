@@ -32,6 +32,7 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Verifications',href:'/dashboard/admin/verifications',icon:'✓'},
     {label:'Referrals',href:'/dashboard/admin/referrals',icon:'↗'},
     {label:'Users',href:'/dashboard/admin/users',icon:'◎'},
+    {label:'Finance & Wallet',href:'/dashboard/admin/wallet',icon:'₦'},
     {label:'Audit log',href:'/dashboard/admin/audit-log',icon:'▣'},
   ]
 };

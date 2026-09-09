@@ -79,6 +79,12 @@ enum WithdrawalStatus {
   APPROVED
   PAID
   REJECTED
+  FAILED
+}
+
+enum WithdrawalSource {
+  WALLET
+  REFERRAL
 }
 
 enum WalletTransactionType {
@@ -748,6 +754,7 @@ model Withdrawal {
   userId String
   amount Int
   idempotencyKey String? @unique
+  source WithdrawalSource @default(WALLET)
   status WithdrawalStatus @default(REQUESTED)
   bankName String?
   accountName String?
@@ -755,10 +762,18 @@ model Withdrawal {
   reviewedById String?
   reviewedAt DateTime?
   paidAt DateTime?
+  rejectionReason String?
+  providerReference String? @unique
+  providerTransferId String? @unique
+  providerTransferCode String?
+  providerStatus String?
+  providerError String?
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([status, createdAt])
   @@index([userId, status])
+  @@index([source, status, createdAt])
 }
 
 model PayoutAccount {
@@ -768,7 +783,9 @@ model PayoutAccount {
   accountName String
   accountNumber String
   bankCode String?
+  paystackRecipientCode String? @unique
   verified Boolean @default(false)
+  verifiedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
