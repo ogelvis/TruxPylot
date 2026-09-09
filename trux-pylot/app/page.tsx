@@ -25,7 +25,7 @@ function Mark({ type }: { type: 'check' | 'shield' | 'search' | 'clock' | 'star'
 }
 
 export default async function Home() {
-  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, session] = await Promise.all([
+  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, activeAdverts, session] = await Promise.all([
     prisma.serviceCategory.findMany({ where: { active: true }, take: 12, orderBy: { name: 'asc' } }),
     prisma.professional.count({ where: { verificationStatus: 'APPROVED' } }),
     prisma.job.count({ where: { status: 'SETTLED' } }),
@@ -34,6 +34,12 @@ export default async function Home() {
       where: { verificationStatus: 'APPROVED' },
       orderBy: { rating: 'desc' },
       take: 4,
+    }),
+    prisma.instantAdvertPurchase.findMany({
+      where: { status: 'SUCCESS', startsAt: { lte: new Date() }, expiresAt: { gt: new Date() }, professional: { verificationStatus: 'APPROVED' } },
+      include: { professional: true },
+      orderBy: { createdAt: 'desc' },
+      take: 3,
     }),
     getSession(),
   ]);
@@ -158,7 +164,7 @@ export default async function Home() {
                 <li>Unlock additional platform capabilities</li>
                 <li>Access features available to your selected tier</li>
               </ul>
-              <Link href="/dashboard/professional/tier" className="tp-growth-cta">View Upgrade Options <span>↗</span></Link>
+              <Link href="/dashboard/professional/growth?feature=tier" className="tp-growth-cta">View Upgrade Options <span>↗</span></Link>
             </article>
 
             <article className="tp-growth-card tp-growth-card-featured reveal" style={{ transitionDelay: '80ms' }}>
@@ -176,7 +182,7 @@ export default async function Home() {
                 <li>Give your business greater exposure</li>
                 <li>Improve your chances of being discovered</li>
               </ul>
-              <Link href="/dashboard/professional/wallet?promotion=top10" className="tp-growth-cta tp-growth-cta-primary">Get Top 10 Placement <span>↗</span></Link>
+              <Link href="/dashboard/professional/growth?feature=top10" className="tp-growth-cta tp-growth-cta-primary">Get Top 10 Placement <span>↗</span></Link>
               <small className="tp-growth-footnote">Promotion is independent of Tier Upgrade, Score, Level and organic ranking.</small>
             </article>
 
@@ -199,11 +205,13 @@ export default async function Home() {
                 <li>Keep your business in front of users</li>
                 <li>Choose the duration that works for you</li>
               </ul>
-              <Link href="/dashboard/professional/wallet?promotion=advert" className="tp-growth-cta">Advertise Now <span>↗</span></Link>
+              <Link href="/dashboard/professional/growth?feature=advert" className="tp-growth-cta">Advertise Now <span>↗</span></Link>
             </article>
           </div>
         </div>
       </section>
+
+      {activeAdverts.length > 0 && <section className="tp-sponsored-section"><div className="tp-container"><div className="tp-section-heading reveal"><p className="tp-kicker">SPONSORED ON TRUX PYLOT</p><h2>Businesses ready to be discovered.</h2><p>These professionals are using Instant Advert to put their services in front of more customers.</p></div><div className="tp-sponsored-grid">{activeAdverts.map((ad,index)=><Link href={`/marketplace/${ad.professional.id}`} key={ad.id} className="tp-sponsored-card reveal" style={{transitionDelay:`${index*70}ms`}}><span className="tp-sponsored-badge">SPONSORED</span><div className="tp-sponsored-avatar">{ad.professional.avatarUrl ? <img src={ad.professional.avatarUrl} alt={ad.professional.fullName}/> : <span>{ad.professional.fullName.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</span>}</div><div><h3>{ad.professional.businessName || ad.professional.fullName}</h3><p>{ad.professional.profession || 'Verified professional'}</p><small>View profile →</small></div></Link>)}</div></div></section>}
 
       <section className="tp-trust-section">
         <div className="tp-container tp-trust-grid">
