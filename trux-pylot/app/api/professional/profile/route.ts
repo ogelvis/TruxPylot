@@ -23,22 +23,10 @@ export async function PATCH(request: Request) {
   }
   const { phone, ...profileFields } = parsed.data;
 
-  try {
-    await prisma.$transaction([
-      prisma.professional.update({ where: { userId: session.userId }, data: profileFields }),
-      ...(phone ? [prisma.user.update({ where: { id: session.userId }, data: { phone: phone.trim() } })] : []),
-    ]);
-  } catch (error) {
-    const prismaError = error as { code?: string; meta?: { target?: unknown } };
-    if (prismaError.code === 'P2002') {
-      const target = Array.isArray(prismaError.meta?.target) ? prismaError.meta?.target.join(', ') : String(prismaError.meta?.target ?? '');
-      if (target.includes('phone')) {
-        return NextResponse.json({ error: 'This phone number is already associated with another TruxPylot account. Please use a different phone number.' }, { status: 409 });
-      }
-    }
-    console.error('[professional/profile] update failed', error);
-    return NextResponse.json({ error: 'Could not update your profile. Please try again.' }, { status: 500 });
-  }
+  await prisma.$transaction([
+    prisma.professional.update({ where: { userId: session.userId }, data: profileFields }),
+    ...(phone ? [prisma.user.update({ where: { id: session.userId }, data: { phone } })] : []),
+  ]);
 
   return NextResponse.json({ ok: true });
 }

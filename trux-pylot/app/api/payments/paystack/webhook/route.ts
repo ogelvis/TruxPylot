@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { verifyPaystackSignature, applySuccessfulPayment } from '@/lib/payments';
 import { applyWalletFunding, applyDedicatedAccountTransfer } from '@/lib/wallet';
 import {
   markDedicatedAccountProvisioningFailure,
   syncDedicatedAccountForCustomerCode,
 } from '@/lib/dedicated-account';
+import { markWithdrawalFailed, markWithdrawalSuccessful } from '@/lib/withdrawals';
 
 export const runtime = 'nodejs';
 
@@ -70,6 +72,22 @@ export async function POST(request: Request) {
     const customerCode = customerCodeFromEvent(data);
     if (customerCode) {
       await markDedicatedAccountProvisioningFailure(customerCode, String(data?.reason ?? 'Paystack customer identification failed'));
+    }
+    return NextResponse.json({ received: true });
+  }
+
+  if (eventName === 'transfer.success' || eventName === 'transfer.failed' || eventName === 'transfer.reversed') {
+    const transferReference = typeof data?.reference === 'string' ? data.reference : '';
+    if (!transferReference) return NextResponse.json({ received: true });
+    const withdrawal = await prisma.withdrawal.findUnique({ where: { providerReference: transferReference } });
+    if (!withdrawal) {
+      console.warn('[WITHDRAWAL WEBHOOK] no matching withdrawal', { eventName, transferReference });
+      return NextResponse.json({ received: true });
+    }
+    if (eventName === 'transfer.success') {
+      await markWithdrawalSuccessful(withdrawal.id, data?.id, data?.transfer_code, 'success');
+    } else {
+      await markWithdrawalFailed(withdrawal.id, String(data?.failures?.message ?? data?.reason ?? `Paystack transfer ${eventName}`), undefined, eventName === 'transfer.reversed');
     }
     return NextResponse.json({ received: true });
   }

@@ -22,7 +22,7 @@ export default async function WalletPage() {
       where: { userId: session.userId, status: { not: 'REJECTED' } },
       _sum: { amount: true },
     }),
-    prisma.payoutAccount.findUnique({ where: { userId: session.userId }, select: { bankName: true, accountName: true, accountNumber: true, verified: true } }),
+    prisma.payoutAccount.findUnique({ where: { userId: session.userId }, select: { bankName: true, accountName: true, accountNumber: true, bankCode: true, verified: true, verifiedAt: true } }),
   ]);
   const money = (amount: number | null | undefined) => `₦${((amount ?? 0) / 100).toLocaleString('en-NG')}`;
   return <AppShell role="PROFESSIONAL" name={professional.fullName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus === 'APPROVED'} active="/dashboard/professional/wallet">

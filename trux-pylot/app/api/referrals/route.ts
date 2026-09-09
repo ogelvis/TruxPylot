@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   const requested = await prisma.withdrawal.aggregate({ where: { userId: session.userId, status: { not: 'REJECTED' } }, _sum: { amount: true } });
   const available = rewards.reduce((sum, r) => sum + r.amount, 0) - (requested._sum.amount ?? 0);
   if (parsed.data.amount > available) return NextResponse.json({ error: 'Withdrawal exceeds your available reward balance.' }, { status: 400 });
-  const item = await prisma.withdrawal.create({ data: { userId: session.userId, ...parsed.data } });
+  const item = await prisma.withdrawal.create({ data: { userId: session.userId, source: 'REFERRAL', ...parsed.data } });
   await prisma.auditLog.create({ data: { userId: session.userId, action: 'REFERRAL_WITHDRAWAL_REQUESTED', entity: 'Withdrawal', entityId: item.id } });
   return NextResponse.json({ ok: true, withdrawal: item }, { status: 201 });
 }
