@@ -15,6 +15,19 @@ class PaystackError extends Error {
   }
 }
 
+export class DvaPhoneRequiredError extends Error {
+  constructor() {
+    super('Customer phone number is required before a Dedicated Virtual Account can be created.');
+    this.name = 'DvaPhoneRequiredError';
+  }
+}
+
+function cleanPhone(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const phone = value.trim();
+  return phone.length >= 7 ? phone : null;
+}
+
 async function paystack(path: string, init?: RequestInit) {
   const response = await fetch(`${endpoint}${path}`, {
     ...init,
@@ -104,6 +117,14 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
       customer = await paystack(`/customer/${encodeURIComponent(professional.user.email)}`);
     } catch (error) {
       if (!(error instanceof PaystackError) || error.status !== 404) throw error;
+
+      // Paystack requires a phone number for DVA customers. Do not create a
+      // partial Paystack customer and then repeatedly retry DVA provisioning.
+      const localPhone = cleanPhone(professional.user.phone);
+      if (!localPhone) {
+        throw new DvaPhoneRequiredError();
+      }
+
       const names = professional.fullName.trim().split(/\s+/);
       customer = await paystack('/customer', {
         method: 'POST',
@@ -111,7 +132,7 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
           email: professional.user.email,
           first_name: names[0] ?? professional.fullName,
           last_name: names.slice(1).join(' ') || names[0] || professional.fullName,
-          ...(professional.user.phone ? { phone: professional.user.phone } : {}),
+          phone: localPhone,
         }),
       });
     }
@@ -119,7 +140,33 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
     const customerCode = customer?.customer_code ?? customer?.customer?.customer_code;
     if (!customerCode) throw new Error('Paystack customer unavailable');
 
-    // Keep an existing Paystack customer complete enough for DVA assignment.
+    // Use the phone already stored on the Paystack customer when available.
+    // Otherwise require the user's TruxPylot profile phone before provisioning.
+    const paystackPhone = cleanPhone(customer?.phone ?? customer?.customer?.phone);
+    const localPhone = cleanPhone(professional.user.phone);
+    const customerPhone = localPhone ?? paystackPhone;
+    if (!customerPhone) {
+      await prisma.dedicatedAccount.upsert({
+        where: { professionalId: professional.id },
+        create: {
+          professionalId: professional.id,
+          walletId: wallet.id,
+          paystackCustomerCode: customerCode,
+          status: 'AWAITING_PHONE',
+          lastSyncError: 'Add a phone number to your professional profile before creating a bank transfer account.',
+        },
+        update: {
+          paystackCustomerCode: customerCode,
+          walletId: wallet.id,
+          status: 'AWAITING_PHONE',
+          lastSyncError: 'Add a phone number to your professional profile before creating a bank transfer account.',
+        },
+      });
+      throw new DvaPhoneRequiredError();
+    }
+
+    // Keep the Paystack customer complete enough for DVA assignment. If the
+    // local profile has a phone, make sure Paystack has the same current value.
     try {
       const names = professional.fullName.trim().split(/\s+/);
       await paystack(`/customer/${encodeURIComponent(customerCode)}`, {
@@ -127,7 +174,7 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
         body: JSON.stringify({
           first_name: names[0] ?? professional.fullName,
           last_name: names.slice(1).join(' ') || names[0] || professional.fullName,
-          ...(professional.user.phone ? { phone: professional.user.phone } : {}),
+          phone: customerPhone,
         }),
       });
     } catch (error) {
@@ -145,6 +192,47 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
   // whether an account already exists before attempting to create another one.
   if (!account.accountNumber || refresh) {
     try {
+      // Check the Paystack customer before creating/recreating a DVA. Existing
+      // customers may already have a phone even when the TruxPylot profile
+      // does not, and Paystack requires the customer phone for DVA creation.
+      const customer = await paystack(`/customer/${encodeURIComponent(account.paystackCustomerCode)}`);
+      const paystackPhone = cleanPhone(customer?.phone ?? customer?.customer?.phone);
+      const localPhone = cleanPhone(professional.user.phone);
+      const customerPhone = localPhone ?? paystackPhone;
+
+      if (!customerPhone) {
+        const awaiting = await prisma.dedicatedAccount.update({
+          where: { id: account.id },
+          data: {
+            status: 'AWAITING_PHONE',
+            lastSyncError: 'Add a phone number to your professional profile before creating a bank transfer account.',
+            lastSyncedAt: new Date(),
+          },
+        });
+        return awaiting;
+      }
+
+      // If the professional has supplied a phone locally, synchronize it to
+      // the Paystack customer before DVA creation.
+      if (localPhone) {
+        try {
+          const names = professional.fullName.trim().split(/\s+/);
+          await paystack(`/customer/${encodeURIComponent(account.paystackCustomerCode)}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              first_name: names[0] ?? professional.fullName,
+              last_name: names.slice(1).join(' ') || names[0] || professional.fullName,
+              phone: localPhone,
+            }),
+          });
+        } catch (error) {
+          console.warn('[DVA SYNC] customer update skipped', {
+            customerCode: account.paystackCustomerCode,
+            error: error instanceof Error ? error.message : 'unknown',
+          });
+        }
+      }
+
       await prisma.dedicatedAccount.update({
         where: { id: account.id },
         data: { status: 'PROVISIONING', lastSyncError: null, syncAttempts: { increment: 1 } },
