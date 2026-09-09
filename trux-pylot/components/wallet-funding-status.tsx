@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
-export function WalletFundingStatus() {
+function WalletFundingStatusContent() {
   const params = useSearchParams();
   const router = useRouter();
   const reference = params.get('reference') ?? params.get('txref');
@@ -49,4 +49,8 @@ export function WalletFundingStatus() {
 
   if (!message) return null;
   return <p className="wallet-funding-status" role="status">{message}</p>;
+}
+
+export function WalletFundingStatus() {
+  return <Suspense fallback={null}><WalletFundingStatusContent /></Suspense>;
 }

@@ -1,18 +1,24 @@
 'use client';
+
 import { useRouter } from 'next/navigation';
 
 export function SignOutLink() {
   const router = useRouter();
+
+  async function handleSignOut() {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'same-origin',
+      });
+    } finally {
+      router.push('/');
+      router.refresh();
+    }
+  }
+
   return (
-    <a
-      href="/login"
-      onClick={async (e) => {
-        e.preventDefault();
-        await fetch('/api/auth/logout', { method: 'POST' });
-        router.push('/login');
-        router.refresh();
-      }}
-    >
+    <a href="/" onClick={(event) => { event.preventDefault(); void handleSignOut(); }}>
       Sign out
     </a>
   );

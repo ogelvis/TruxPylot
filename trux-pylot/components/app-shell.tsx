@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Role } from '@prisma/client';
 import { MobileTabBar } from '@/components/mobile-tab-bar';
 import { NotificationBell } from '@/components/notification-bell';
+import { SignOutLink } from '@/components/sign-out-link';
 
 const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
   CUSTOMER:[
@@ -61,7 +62,7 @@ export function AppShell({role,name,avatarUrl,verified,premium,children,active,i
       </div>
       <p className="nav-title">WORKSPACE</p>
       <nav>{items.map((item)=><Link className={(active??items[0].href)===item.href?'active':''} key={item.href} href={item.href}><span>{item.icon}</span>{item.label}</Link>)}</nav>
-      <div className="support-card"><span>◌</span><b>Need assistance?</b><p>Our support team is here to help.</p><a href="mailto:info@truxpylot.com">Contact support →</a></div>
+      <div className="sidebar-account-actions"><div className="sidebar-signout"><SignOutLink /></div></div><div className="support-card"><span>◌</span><b>Need assistance?</b><p>Our support team is here to help.</p><a href="mailto:info@truxpylot.com">Contact support →</a></div>
     </aside>
     <section className="dashboard-content">
       <header className="dash-header">
@@ -71,7 +72,7 @@ export function AppShell({role,name,avatarUrl,verified,premium,children,active,i
         </div>
         <div className="header-right">
           <NotificationBell />
-          <Link href={role==='ADMIN'?'/dashboard/admin':`/dashboard/${role.toLowerCase()}/profile`} className="user-chip">
+          <div className="header-signout"><SignOutLink /></div><Link href={role==='ADMIN'?'/dashboard/admin':`/dashboard/${role.toLowerCase()}/profile`} className="user-chip">
             <span>{avatarUrl ? <img src={avatarUrl} alt={name}/> : initials(name)}</span>
             <div><b>{name}</b><small>{role.toLowerCase()}</small></div>
           </Link>
