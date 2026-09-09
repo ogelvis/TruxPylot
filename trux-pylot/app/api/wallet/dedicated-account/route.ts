@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { DvaPhoneRequiredError, getOrCreateDedicatedAccount } from '@/lib/dedicated-account';
+import { reconcileDedicatedAccountTransfers } from '@/lib/wallet';
 export async function GET(request: Request) {
   const session = await getSession();
   if (!session || session.role !== 'PROFESSIONAL') return NextResponse.json({ error: 'Professional sign-in required.' }, { status: 401 });
@@ -12,6 +13,18 @@ export async function GET(request: Request) {
       params.get('check') === '1',
     );
     if (!account) return NextResponse.json({ error: 'Professional profile not found.' }, { status: 404 });
+    if (params.get('check') === '1' && account.id && account.accountNumber) {
+      try {
+        const reconciliation = await reconcileDedicatedAccountTransfers(account.id);
+        console.info('[DVA CHECK] reconciliation complete', {
+          accountId: account.id,
+          ...reconciliation,
+        });
+      } catch (error) {
+        console.warn('[DVA CHECK] reconciliation failed', error instanceof Error ? error.message : 'unknown');
+      }
+    }
+
     if (account.status === 'AWAITING_PHONE') {
       return NextResponse.json({
         error: 'Add your phone number to your professional profile before we can create your bank transfer account.',
