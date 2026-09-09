@@ -20,6 +20,10 @@ export function DedicatedAccount() {
     }
 
     setAccount(null);
+    if (body.code === 'DVA_PHONE_REQUIRED' || body.status === 'AWAITING_PHONE') {
+      setMessage('Add your phone number to your professional profile first. Then return here and check again.');
+      return;
+    }
     setMessage(
       response.ok
         ? refresh
@@ -45,7 +49,17 @@ export function DedicatedAccount() {
   }
 
   if (!account) {
-    return <div className="wallet-empty wallet-bank-empty">{message}</div>;
+    const phoneRequired = message.includes('Add your phone number');
+    return (
+      <div className="wallet-empty wallet-bank-empty">
+        <div>{message}</div>
+        {phoneRequired && (
+          <a className="wallet-cta secondary" href="/dashboard/professional/profile">
+            Add phone number to profile
+          </a>
+        )}
+      </div>
+    );
   }
 
   return (
