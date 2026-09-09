@@ -89,7 +89,7 @@ export default async function Home() {
             {session ? (
               <>
                 <Link href={dashboardPath(session.role)} className="tp-login">Dashboard</Link>
-                <SignOutLink className="tp-signup tp-signout">Sign out</SignOutLink>
+                <SignOutLink className="tp-signup tp-signout" />
               </>
             ) : (
               <>
