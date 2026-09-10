@@ -36,8 +36,22 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Users',href:'/dashboard/admin/users',icon:'◎'},
     {label:'Finance & Wallet',href:'/dashboard/admin/wallet',icon:'₦'},
     {label:'Growth requests',href:'/dashboard/admin/growth',icon:'✦'},
+    {label:'Staff access',href:'/dashboard/admin/staff',icon:'♟'},
     {label:'Audit log',href:'/dashboard/admin/audit-log',icon:'▣'},
-  ]
+  ],
+  EDITOR:[
+    {label:'Operations',href:'/operations',icon:'⌘'},
+    {label:'Notifications',href:'/operations#notifications',icon:'●'},
+    {label:'Assigned work',href:'/operations#tasks',icon:'▣'},
+  ],
+  OPERATOR:[
+    {label:'Operations',href:'/operations',icon:'⌘'},
+    {label:'Notifications',href:'/operations#notifications',icon:'●'},
+    {label:'Assigned work',href:'/operations#tasks',icon:'▣'},
+  ],
+  SUPER_ADMIN:[
+    {label:'Admin Control Center',href:'/dashboard/admin',icon:'⌂'},
+  ],
 };
 
 function initials(name:string){return name.split(' ').map(n=>n[0]).filter(Boolean).slice(0,2).join('').toUpperCase();}
@@ -72,7 +86,7 @@ export function AppShell({role,name,avatarUrl,verified,premium,children,active,i
         </div>
         <div className="header-right">
           <NotificationBell />
-          <div className="header-signout"><SignOutLink /></div><Link href={role==='ADMIN'?'/dashboard/admin':`/dashboard/${role.toLowerCase()}/profile`} className="user-chip">
+          <div className="header-signout"><SignOutLink /></div><Link href={role==='ADMIN'||role==='SUPER_ADMIN'?'/dashboard/admin':`/dashboard/${role.toLowerCase()}/profile`} className="user-chip">
             <span>{avatarUrl ? <img src={avatarUrl} alt={name}/> : initials(name)}</span>
             <div><b>{name}</b><small>{role.toLowerCase()}</small></div>
           </Link>

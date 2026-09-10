@@ -24,6 +24,21 @@ const TABS: Record<Role, { label: string; href: string; icon: string }[]> = {
     { label: 'Verify', href: '/dashboard/admin/verifications', icon: '✓' },
     { label: 'Users', href: '/dashboard/admin/users', icon: '◎' },
   ],
+  SUPER_ADMIN: [
+    { label: 'Admin', href: '/dashboard/admin', icon: '⌂' },
+    { label: 'Users', href: '/dashboard/admin/users', icon: '◎' },
+    { label: 'Audit', href: '/dashboard/admin/audit-log', icon: '▣' },
+  ],
+  EDITOR: [
+    { label: 'Home', href: '/operations', icon: '⌂' },
+    { label: 'Tasks', href: '/operations#tasks', icon: '▣' },
+    { label: 'Alerts', href: '/operations#notifications', icon: '●' },
+  ],
+  OPERATOR: [
+    { label: 'Home', href: '/operations', icon: '⌂' },
+    { label: 'Tasks', href: '/operations#tasks', icon: '▣' },
+    { label: 'Alerts', href: '/operations#notifications', icon: '●' },
+  ],
 };
 
 export function MobileTabBar({ role, active }: { role: Role; active?: string }) {

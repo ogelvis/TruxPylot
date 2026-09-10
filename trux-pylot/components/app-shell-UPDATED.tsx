@@ -23,7 +23,10 @@ const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
     {label:'Verifications',href:'/dashboard/admin/verifications',icon:'✓'},
     {label:'Users',href:'/dashboard/admin/users',icon:'◎'},
     {label:'Audit log',href:'/dashboard/admin/audit-log',icon:'▣'},
-  ]
+  ],
+  EDITOR:[{label:'Operations',href:'/operations',icon:'⌘'}],
+  OPERATOR:[{label:'Operations',href:'/operations',icon:'⌘'}],
+  SUPER_ADMIN:[{label:'Admin Control Center',href:'/dashboard/admin',icon:'⌂'}],
 };
 
 function initials(name:string){return name.split(' ').map(n=>n[0]).filter(Boolean).slice(0,2).join('').toUpperCase();}

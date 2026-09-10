@@ -11,6 +11,9 @@ enum Role {
   CUSTOMER
   PROFESSIONAL
   ADMIN
+  SUPER_ADMIN
+  EDITOR
+  OPERATOR
 }
 
 enum VerificationStatus {
