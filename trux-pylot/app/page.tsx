@@ -5,6 +5,7 @@ import { Counter } from '@/components/counter';
 import { ProPhoto } from '@/components/pro-photo';
 import { getSession, dashboardPath } from '@/lib/auth';
 import { SignOutLink } from '@/components/sign-out-link';
+import { SoundOut } from '@/components/sound-out';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,26 +57,29 @@ export default async function Home() {
         .tp-nav-inner{height:82px}.tp-logo{display:flex;align-items:center;gap:10px}.tp-logo:after{content:'THE TRUST LAYER';font-size:8px;letter-spacing:1.5px;color:#6680a8;border-left:1px solid #d4dfed;padding-left:10px}
         .tp-links{gap:20px}.tp-links a{padding:30px 0}.tp-links a:hover{transform:translateY(-2px)}
         .tp-signup{border-radius:999px!important;padding:12px 20px!important;box-shadow:0 10px 22px rgba(21,94,239,.22)}.tp-signout{border:0;color:#fff!important;cursor:pointer;text-decoration:none!important}.tp-signout a{display:block;color:inherit;text-decoration:none}.tp-signout:hover{color:#fff!important}
-        .tp-hero{position:relative;padding:104px 0 0;background:radial-gradient(circle at 75% 12%,rgba(79,147,255,.18),transparent 31%),linear-gradient(145deg,#f8fbff 0%,#eef5ff 100%)}
-        .tp-hero:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.35;background-image:linear-gradient(rgba(21,94,239,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(21,94,239,.06) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,#000,transparent 75%)}
+        .tp-hero{position:relative;padding:104px 0 0;background:#f8fbff}
+        .tp-hero:before{display:none}
         .tp-hero-grid,.tp-stats{position:relative;z-index:1}.tp-kicker{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border:1px solid #bdd4fa;border-radius:999px;background:#eaf2ff;letter-spacing:1.3px}
         .tp-kicker:before{content:'';width:6px;height:6px;border-radius:50%;background:#35d07f;box-shadow:0 0 0 4px #35d07f20;animation:tp-pulse 2s infinite}
         .tp-hero h1{max-width:700px;font-size:clamp(43px,6vw,76px);letter-spacing:-4px;line-height:.99}
         .tp-lede{font-size:17px;max-width:590px}.tp-actions{gap:14px}.tp-button{border-radius:999px;padding:16px 22px;box-shadow:0 14px 30px rgba(21,94,239,.28)}.tp-button:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 18px 34px rgba(21,94,239,.34)}
         .tp-text-button{padding:15px 17px;border:1px solid #cbd9ec;border-radius:999px;background:#fff}.tp-text-button:hover{border-color:#155eef;transform:translateY(-3px)}
         .tp-hero-proof{display:flex;align-items:center;gap:10px;margin-top:25px;color:#31517e;font-size:12px}.tp-hero-proof>span{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;color:#155eef;background:#dbeaff}.tp-hero-proof svg{width:17px}.tp-hero-proof strong{font-size:12px;color:#183967}.tp-hero-proof small{color:#7890b0}
-        .tp-hero-art{height:470px;border:1px solid rgba(135,181,255,.3);border-radius:34px;background:linear-gradient(145deg,#123d94,#071b49 70%);box-shadow:0 30px 70px rgba(9,35,93,.25);animation:tp-float 6s ease-in-out infinite}
-        .tp-hero-art:after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(91,160,255,.22),transparent 30%),linear-gradient(120deg,transparent 35%,rgba(255,255,255,.08),transparent 58%);animation:tp-shine 8s linear infinite}
+        .tp-hero-art{height:470px;border:1px solid rgba(135,181,255,.3);border-radius:34px;background:#0b2b70;box-shadow:0 30px 70px rgba(9,35,93,.25);animation:tp-float 6s ease-in-out infinite}
+        .tp-hero-art:after{display:none}
         .tp-art-center{z-index:1;top:143px}.tp-art-center svg{background:rgba(109,169,255,.12);box-shadow:0 0 35px rgba(93,161,255,.35);animation:tp-pulse 3s infinite}.tp-art-orbit{z-index:1;animation:tp-spin 18s linear infinite}.orbit-two{animation-direction:reverse;animation-duration:27s}
         .tp-art-tag,.tp-art-label{z-index:2;backdrop-filter:blur(12px)}.tp-art-tag{border:1px solid #dbe8ff;transition:transform .3s ease}.tp-art-tag:hover{transform:translateY(-7px) rotate(-2deg)}.tag-top{animation:tp-float 5s 1s ease-in-out infinite}.tag-bottom{animation:tp-float 5s 2s ease-in-out infinite}
         .tp-stats{margin-top:78px;border:1px solid rgba(180,199,227,.8);border-radius:20px;padding:27px 0;box-shadow:0 20px 45px rgba(27,62,113,.1)}.tp-stats strong{color:#155eef;font-size:31px}
         .tp-section{padding-top:140px}.tp-section-heading h2,.tp-trust-intro h2,.tp-final-cta h2{letter-spacing:-2.8px}.tp-service-list{gap:12px}.tp-service{min-height:76px;border:1px solid #dce5f2;border-radius:16px;background:rgba(255,255,255,.68);padding:18px 20px;box-shadow:0 8px 20px rgba(27,62,113,.04)}.tp-service:hover{border-color:#76a8f7;background:#fff;color:#155eef;transform:translateY(-5px);box-shadow:0 14px 25px rgba(21,94,239,.12)}
-        .tp-trust-section{background:linear-gradient(135deg,#e9f2ff,#f6f9ff)}.tp-problem-box,.tp-solution-box{border-radius:20px;box-shadow:0 15px 35px rgba(27,62,113,.07);transition:transform .3s ease,box-shadow .3s ease}.tp-problem-box:hover,.tp-solution-box:hover{transform:translateY(-6px);box-shadow:0 22px 40px rgba(27,62,113,.13)}.tp-solution-box{background:linear-gradient(145deg,#123d94,#071b49)}
+        .tp-trust-section{background:#eef5ff}.tp-problem-box,.tp-solution-box{border-radius:20px;box-shadow:0 15px 35px rgba(27,62,113,.07);transition:transform .3s ease,box-shadow .3s ease}.tp-problem-box:hover,.tp-solution-box:hover{transform:translateY(-6px);box-shadow:0 22px 40px rgba(27,62,113,.13)}.tp-solution-box{background:#0b2b70}
         .tp-step{position:relative;padding-top:30px}.tp-step>span{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#e9f2ff;box-shadow:inset 0 0 0 1px #bfd5f7}.tp-step h3{margin-top:27px}.tp-pros{background:#f2f6fc}.tp-pro-card{overflow:hidden;border-radius:20px;border:1px solid #dce5f2;box-shadow:0 10px 25px rgba(27,62,113,.05);transition:transform .3s ease,box-shadow .3s ease}.tp-pro-card:hover{transform:translateY(-9px);box-shadow:0 22px 40px rgba(27,62,113,.14)}.tp-pro-card .tp-pro-photo{transition:transform .5s ease}.tp-pro-card:hover .tp-pro-photo{transform:scale(1.04)}
-        .tp-final-cta{position:relative;overflow:hidden;background:linear-gradient(120deg,#155eef,#09235d)}.tp-final-cta:before{content:'';position:absolute;width:480px;height:480px;right:-120px;top:-260px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 55px #ffffff09,0 0 0 110px #ffffff06}.tp-final-cta>*{position:relative;z-index:1}
+        .tp-final-cta{position:relative;overflow:hidden;background:#155eef}.tp-final-cta:before{content:'';position:absolute;width:480px;height:480px;right:-120px;top:-260px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 55px #ffffff09,0 0 0 110px #ffffff06}.tp-final-cta>*{position:relative;z-index:1}
         .tp-footer{background:#061737}.tp-footer-bottom{border-top:1px solid #ffffff18;padding-top:20px}
         @keyframes tp-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}@keyframes tp-pulse{0%,100%{opacity:1}50%{opacity:.65}}@keyframes tp-spin{to{transform:translateX(-50%) rotate(360deg)}}@keyframes tp-shine{0%{transform:translateX(-100%)}45%,100%{transform:translateX(100%)}}@media(max-width:820px){.tp-logo:after{display:none}.tp-links{gap:10px;font-size:11px}.tp-links a:nth-child(-n+3){display:none}.tp-hero{padding-top:70px}.tp-hero-grid{grid-template-columns:1fr;gap:45px}.tp-hero-art{height:390px}.tp-stats{margin-top:45px}.tp-service-list,.tp-trust-grid,.tp-pro-grid{grid-template-columns:1fr 1fr}.tp-trust-intro{grid-column:1/-1}.tp-footer-grid{grid-template-columns:1fr 1fr}}@media(max-width:540px){.tp-container{width:min(100% - 28px,1160px)}.tp-nav-inner{height:70px}.tp-links a:nth-last-child(2){display:none}.tp-hero h1{letter-spacing:-2.5px}.tp-actions{align-items:stretch;flex-direction:column}.tp-button,.tp-text-button{justify-content:center}.tp-hero-art{height:350px}.orbit-two{width:480px;height:480px}.tp-stats{grid-template-columns:1fr;padding:0}.tp-stats div{padding:16px;border-right:0;border-bottom:1px solid var(--tp-line)}.tp-section{padding-top:95px;padding-bottom:85px}.tp-service-list,.tp-trust-grid,.tp-pro-grid,.tp-footer-grid{grid-template-columns:1fr}.tp-step{padding-left:0!important;padding-bottom:25px;border-right:0;border-bottom:1px solid var(--tp-line)}.tp-step:last-child{border-bottom:0}.tp-footer-grid{gap:28px}}
         @media(prefers-reduced-motion:reduce){.tp-home *,.tp-home *:before,.tp-home *:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+        .tp-sound-out{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:7px 11px;border:1px solid #b9cbe7;border-radius:999px;background:#fff;color:#31517e;font-size:11px;font-weight:700;box-shadow:none}
+        .tp-sound-out svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tp-sound-out.active{border-color:#155eef;background:#eaf2ff;color:#155eef}
+        .tp-hero{background:#f8fbff}.tp-hero:before{display:none}.tp-hero-art{background:#0b2b70}.tp-hero-art:after{display:none}.tp-trust-section{background:#eef5ff}.tp-solution-box{background:#0b2b70}.tp-final-cta{background:#155eef}.tp-growth-section{background:#eef5ff}
       ` }} />
       <header className="tp-nav">
         <div className="tp-container tp-nav-inner">
@@ -105,13 +109,14 @@ export default async function Home() {
         <div className="tp-container tp-hero-grid">
           <div className="reveal">
             <p className="tp-kicker">THE TRUSTED PROFESSIONAL NETWORK</p>
-            <h1>The right person for the job is closer than you think.</h1>
-            <p className="tp-lede">From a leaking tap to a full estate maintenance team, find verified people who show up and stand behind their work.</p>
+            <h1>One App. A gigantic ecosystem.</h1>
+            <p className="tp-lede">Find the right professional, compare trusted work signals, connect with confidence, and get the job done.</p>
             <div className="tp-hero-proof"><span><Mark type="shield" /></span><strong>Built for confidence</strong><small>Verified pros · secure bookings · real accountability</small></div>
             <div className="tp-actions">
               <Link href="/marketplace" className="tp-button">Find a professional <span>↗</span></Link>
               <Link href="/register" className="tp-text-button">Join the network</Link>
             </div>
+            <SoundOut text="TruxPylot. One App. A gigantic ecosystem. Find the right professional, compare trusted work signals, connect with confidence, and get the job done." />
             <p className="tp-assurance"><span><Mark type="check" /></span> Identity-checked professionals across Nigeria</p>
           </div>
           <div className="tp-hero-art reveal" style={{ transitionDelay: '120ms' }} aria-label="Trux Pylot trust and availability overview">
