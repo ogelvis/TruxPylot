@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { JobStatus } from '@prisma/client';
+import { JobStatus } from '@prisma/client';
 
 async function callAction(jobId: string, body: object) {
   const r = await fetch(`/api/jobs/${jobId}`, {
