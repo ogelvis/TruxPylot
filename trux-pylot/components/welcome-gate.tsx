@@ -15,7 +15,7 @@ export function WelcomeGate({ authenticated, children }: { authenticated: boolea
       <div className="tp-welcome-mark tp-welcome-mark-three" aria-hidden="true"><img src="/trux-pylot-logo.png" alt="" /></div>
 
       <div className="tp-welcome-content">
-        <img className="tp-welcome-logo" src="/trux-pylot-logo.png" alt="Trux Pylot" />
+        <div className="tp-welcome-logo-wrap"><img className="tp-welcome-logo" src="/trux-pylot-logo.png" alt="Trux Pylot" /></div>
         <p className="tp-welcome-kicker">THE TRUSTED PROFESSIONAL NETWORK</p>
         <h1>One App. A gigantic ecosystem.</h1>
         <p className="tp-welcome-lede">Find the right professional. Connect with confidence. Get the job done.</p>
@@ -62,7 +62,9 @@ export function WelcomeGate({ authenticated, children }: { authenticated: boolea
       <style jsx>{`
         .tp-welcome-gate{position:relative;min-height:calc(100vh - 1px);overflow:hidden;display:grid;place-items:center;background:#073fc8;color:#fff;padding:48px 20px;font-family:Arial,Helvetica,sans-serif}
         .tp-welcome-content{position:relative;z-index:2;width:min(760px,100%);text-align:center}
-        .tp-welcome-logo{width:190px;height:auto;max-height:92px;object-fit:contain;object-position:center;filter:brightness(0) invert(1);margin:0 auto 22px}
+        .tp-welcome-logo-wrap{display:inline-flex;align-items:center;justify-content:center;background:#fff;border-radius:18px;padding:10px 16px;margin:0 auto 22px;box-shadow:0 16px 36px rgba(0,0,0,.16)}
+        .tp-welcome-logo{display:block;width:190px;height:auto;max-height:82px;object-fit:contain;object-position:center;margin:0}
+
         .tp-welcome-kicker{display:inline-flex;align-items:center;border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:7px 13px;font-size:10px;font-weight:800;letter-spacing:1.5px;margin:0 0 18px;color:#fff}
         .tp-welcome-kicker:before{content:'';width:6px;height:6px;border-radius:50%;background:#fff;margin-right:8px}
         .tp-welcome-content h1{font-size:clamp(42px,7vw,76px);line-height:.98;letter-spacing:-3px;margin:0 auto 18px;max-width:720px;color:#fff}
@@ -78,10 +80,10 @@ export function WelcomeGate({ authenticated, children }: { authenticated: boolea
         .tp-welcome-info-body h2{text-transform:uppercase;font-size:11px;letter-spacing:1px;margin:14px 0 7px;color:#fff}.tp-welcome-info-body p{font-size:13px;line-height:1.65;margin:0;color:rgba(255,255,255,.84)}
         .tp-welcome-info-body ul{margin:9px 0 0;padding-left:19px;color:rgba(255,255,255,.88);font-size:13px;line-height:1.75}.tp-welcome-info-body li::marker{color:#fff}
         .tp-welcome-create{justify-self:start;background:#fff;color:#073fc8;border-radius:8px;padding:11px 15px;font-weight:800;text-decoration:none;margin-top:2px}
-        .tp-welcome-mark{position:absolute;z-index:0;opacity:.065;pointer-events:none;animation:tp-welcome-float 7s ease-in-out infinite}.tp-welcome-mark img{width:260px;height:180px;object-fit:contain;filter:brightness(0) invert(1)}
+        .tp-welcome-mark{position:absolute;z-index:0;opacity:.075;pointer-events:none;animation:tp-welcome-float 7s ease-in-out infinite}.tp-welcome-mark img{width:260px;height:180px;object-fit:contain;filter:brightness(0) invert(1)}
         .tp-welcome-mark-one{left:-35px;top:12%;transform:rotate(-14deg)}.tp-welcome-mark-two{right:-40px;top:28%;transform:rotate(13deg);animation-delay:1.5s}.tp-welcome-mark-three{left:12%;bottom:-25px;transform:rotate(8deg);animation-delay:3s}
         @keyframes tp-welcome-float{0%,100%{translate:0 0}50%{translate:0 -16px}}
-        @media(max-width:600px){.tp-welcome-gate{padding:30px 16px}.tp-welcome-logo{width:155px}.tp-welcome-content h1{letter-spacing:-2px}.tp-welcome-lede{font-size:15px}.tp-welcome-actions{flex-direction:column;align-items:stretch}.tp-welcome-actions a{text-align:center}.tp-welcome-info-body{padding-left:16px;padding-right:16px}.tp-welcome-mark img{width:190px;height:140px}}
+        @media(max-width:600px){.tp-welcome-gate{padding:30px 16px}.tp-welcome-logo-wrap{border-radius:15px;padding:8px 13px;margin-bottom:18px}.tp-welcome-logo{width:155px}.tp-welcome-content h1{letter-spacing:-2px}.tp-welcome-lede{font-size:15px}.tp-welcome-actions{flex-direction:column;align-items:stretch}.tp-welcome-actions a{text-align:center}.tp-welcome-info-body{padding-left:16px;padding-right:16px}.tp-welcome-mark img{width:190px;height:140px}}
         @media(prefers-reduced-motion:reduce){.tp-welcome-mark{animation:none}.tp-welcome-actions a{transition:none}}
       `}</style>
     </section>
