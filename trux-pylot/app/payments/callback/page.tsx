@@ -22,6 +22,8 @@ export default function PaymentCallbackPage() {
       return;
     }
 
+    const paymentReference = reference;
+
     let attempts = 0;
     let cancelled = false;
     let timeout: ReturnType<typeof setTimeout> | undefined;
@@ -33,7 +35,7 @@ export default function PaymentCallbackPage() {
 
       try {
         const response = await fetch(
-          `/api/payments/verify?reference=${encodeURIComponent(reference)}`,
+          `/api/payments/verify?reference=${encodeURIComponent(paymentReference)}`,
           {
             method: 'GET',
             credentials: 'same-origin',
@@ -100,10 +102,7 @@ export default function PaymentCallbackPage() {
       </aside>
 
       <section className="auth-main">
-        <div
-          className="auth-form-wrap"
-          style={{ textAlign: 'center' }}
-        >
+        <div className="auth-form-wrap" style={{ textAlign: 'center' }}>
           {state === 'checking' && (
             <p>Checking your payment status…</p>
           )}
@@ -153,9 +152,7 @@ export default function PaymentCallbackPage() {
               <button
                 className="primary"
                 type="button"
-                onClick={() =>
-                  router.push('/dashboard/customer/jobs')
-                }
+                onClick={() => router.push('/dashboard/customer/jobs')}
               >
                 Go to my requests →
               </button>
