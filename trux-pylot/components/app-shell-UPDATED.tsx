@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Role } from '@prisma/client';
+import type { Role } from '@prisma/client';
 
 const nav: Record<Role, {label:string; href:string; icon:string}[]> = {
   CUSTOMER:[

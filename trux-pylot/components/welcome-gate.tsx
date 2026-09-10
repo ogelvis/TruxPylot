@@ -1,6 +1,7 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 
 export function WelcomeGate({ authenticated, children }: { authenticated: boolean; children: ReactNode }) {
