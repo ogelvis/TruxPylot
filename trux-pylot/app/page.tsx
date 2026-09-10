@@ -32,9 +32,13 @@ export default async function Home({ searchParams }: { searchParams?: Promise<{ 
   const params = searchParams ? await searchParams : {};
   const explore = Array.isArray(params.explore) ? params.explore[0] : params.explore;
 
-  if (!session && explore !== '1') {
-    return <WelcomeGate />;
-  }
+if (!session && explore !== '1') {
+  return (
+    <WelcomeGate authenticated={false}>
+      {null}
+    </WelcomeGate>
+  );
+}
 
   const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, activeAdverts] = await Promise.all([
     prisma.serviceCategory.findMany({ where: { active: true }, take: 12, orderBy: { name: 'asc' } }),
