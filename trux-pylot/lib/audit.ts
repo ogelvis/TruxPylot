@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 export async function writeAuditLog(input: {
@@ -14,10 +15,15 @@ export async function writeAuditLog(input: {
         action: input.action,
         entity: input.entity,
         entityId: input.entityId ?? null,
-        data: input.data ?? undefined,
+        data: input.data
+          ? (input.data as Prisma.InputJsonValue)
+          : undefined,
       },
     });
   } catch (error) {
-    console.error('[audit] failed:', error instanceof Error ? error.message : String(error));
+    console.error(
+      '[audit] failed:',
+      error instanceof Error ? error.message : String(error)
+    );
   }
 }
