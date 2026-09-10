@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
-import { Role } from '@prisma/client';
+import type { Role } from '@prisma/client';
 
 const key = () => {
   const secret = process.env.AUTH_SECRET;
