@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
-import type { JobStatus } from '@prisma/client';
+import { JobStatus } from '@prisma/client';
 
 const TABS: { label: string; key: string; statuses?: JobStatus[] }[] = [
   { label: 'All', key: 'all' },
