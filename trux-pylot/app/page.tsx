@@ -26,8 +26,62 @@ function Mark({ type }: { type: 'check' | 'shield' | 'search' | 'clock' | 'star'
   return <svg {...common}><path d="m12 3 2.7 5.6 6.3.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.5l6.3-.9L12 3Z" /></svg>;
 }
 
-export default async function Home() {
-  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, activeAdverts, session] = await Promise.all([
+export default async function Home({ searchParams }: { searchParams?: Promise<{ explore?: string }> }) {
+  const session = await getSession();
+  const params = searchParams ? await searchParams : {};
+  const showPublicContent = Boolean(session) || params.explore === '1';
+
+  if (!showPublicContent) {
+    return (
+      <main className="tp-home tp-entry">
+        <style dangerouslySetInnerHTML={{ __html: `
+          .tp-entry{min-height:100vh;background:#f8fbff;color:#10233f;font-family:Arial,Helvetica,sans-serif;display:flex;flex-direction:column}
+          .tp-entry .tp-nav{background:#fff;border-bottom:1px solid #dce5f2;box-shadow:0 8px 30px rgba(27,62,113,.06)}
+          .tp-entry .tp-nav-inner{height:82px}
+          .tp-entry .tp-logo{display:flex;align-items:center;gap:10px}.tp-entry .tp-logo:after{content:'THE TRUST LAYER';font-size:8px;letter-spacing:1.5px;color:#6680a8;border-left:1px solid #d4dfed;padding-left:10px}
+          .tp-entry .tp-entry-nav{display:flex;align-items:center;gap:12px;margin-left:auto}.tp-entry .tp-entry-nav a{font-weight:700;text-decoration:none}
+          .tp-entry .tp-entry-login{padding:12px 17px;color:#10233f}.tp-entry .tp-entry-signup{padding:12px 20px;border-radius:999px;background:#155eef;color:#fff;box-shadow:0 10px 22px rgba(21,94,239,.22)}
+          .tp-entry .tp-entry-main{flex:1;display:grid;place-items:center;padding:70px 20px}
+          .tp-entry .tp-entry-panel{width:min(760px,100%);text-align:center;background:#fff;border:1px solid #dce5f2;border-radius:28px;padding:64px 40px;box-shadow:0 24px 70px rgba(27,62,113,.1)}
+          .tp-entry .tp-entry-kicker{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid #bdd4fa;border-radius:999px;background:#eaf2ff;color:#155eef;font-size:11px;font-weight:800;letter-spacing:1.3px}
+          .tp-entry .tp-entry-kicker:before{content:'';width:7px;height:7px;border-radius:50%;background:#35d07f}
+          .tp-entry h1{margin:24px auto 14px;max-width:680px;font-size:clamp(42px,7vw,72px);line-height:.98;letter-spacing:-3px;color:#10233f}
+          .tp-entry .tp-entry-copy{max-width:590px;margin:0 auto;color:#667895;font-size:17px;line-height:1.7}
+          .tp-entry .tp-entry-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:32px}
+          .tp-entry .tp-entry-action{display:inline-flex;align-items:center;justify-content:center;min-width:160px;padding:15px 22px;border-radius:999px;text-decoration:none;font-weight:800;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+          .tp-entry .tp-entry-action:hover{transform:translateY(-2px)}
+          .tp-entry .tp-entry-primary{background:#155eef;color:#fff;box-shadow:0 14px 30px rgba(21,94,239,.24)}
+          .tp-entry .tp-entry-secondary{border:1px solid #cbd9ec;background:#fff;color:#10233f}.tp-entry .tp-entry-secondary:hover{border-color:#155eef}
+          .tp-entry .tp-entry-footer{margin-top:32px;color:#8293ad;font-size:12px}
+          @media(max-width:600px){.tp-entry .tp-nav-inner{height:70px}.tp-entry .tp-logo:after{display:none}.tp-entry .tp-entry-nav{gap:4px}.tp-entry .tp-entry-login{padding:10px}.tp-entry .tp-entry-signup{padding:10px 14px}.tp-entry .tp-entry-main{padding:28px 14px}.tp-entry .tp-entry-panel{padding:42px 20px;border-radius:22px}.tp-entry h1{letter-spacing:-2px;font-size:clamp(38px,12vw,56px)}.tp-entry .tp-entry-copy{font-size:15px}.tp-entry .tp-entry-actions{flex-direction:column}.tp-entry .tp-entry-action{width:100%}}
+        ` }} />
+        <header className="tp-nav">
+          <div className="tp-container tp-nav-inner">
+            <Link href="/" className="tp-logo"><img src="/trux-pylot-logo.png" alt="Trux Pylot" /></Link>
+            <nav className="tp-entry-nav" aria-label="Account navigation">
+              <Link href="/login" className="tp-entry-login">Sign in</Link>
+              <Link href="/register" className="tp-entry-signup">Get started</Link>
+            </nav>
+          </div>
+        </header>
+        <section className="tp-entry-main">
+          <div className="tp-entry-panel">
+            <p className="tp-entry-kicker">THE TRUSTED PROFESSIONAL NETWORK</p>
+            <h1>One App. A gigantic ecosystem.</h1>
+            <p className="tp-entry-copy">Find the right professional, compare trusted work signals, connect with confidence, and get the job done.</p>
+            <div className="tp-entry-actions">
+              <Link href="/login" className="tp-entry-action tp-entry-primary">Log In</Link>
+              <Link href="/register" className="tp-entry-action tp-entry-secondary">Sign Up</Link>
+              <Link href="/?explore=1" className="tp-entry-action tp-entry-secondary">Explore TruxPylot</Link>
+            </div>
+            <p className="tp-entry-footer">A trusted place to discover skilled professionals and get work done.</p>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, activeAdverts] = await Promise.all([
     prisma.serviceCategory.findMany({ where: { active: true }, take: 12, orderBy: { name: 'asc' } }),
     prisma.professional.count({ where: { verificationStatus: 'APPROVED' } }),
     prisma.job.count({ where: { status: 'SETTLED' } }),
@@ -43,7 +97,6 @@ export default async function Home() {
       orderBy: { createdAt: 'desc' },
       take: 3,
     }),
-    getSession(),
   ]);
 
   return (
@@ -51,7 +104,7 @@ export default async function Home() {
       <ScrollReveal />
       <style dangerouslySetInnerHTML={{ __html: `
         .tp-home{--tp-ink:#10233f;--tp-blue:#155eef;--tp-navy:#071b49;--tp-muted:#667895;--tp-line:#dce5f2;background:#f8fbff}
-        .tp-home{font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+        .tp-home{font-family:Arial,Helvetica,sans-serif}
         .tp-home a{transition:color .25s ease,transform .25s ease,box-shadow .25s ease,border-color .25s ease,background .25s ease}
         .tp-nav{background:rgba(248,251,255,.78);border-bottom:1px solid rgba(180,199,227,.5);box-shadow:0 8px 30px rgba(27,62,113,.06)}
         .tp-nav-inner{height:82px}.tp-logo{display:flex;align-items:center;gap:10px}.tp-logo:after{content:'THE TRUST LAYER';font-size:8px;letter-spacing:1.5px;color:#6680a8;border-left:1px solid #d4dfed;padding-left:10px}
