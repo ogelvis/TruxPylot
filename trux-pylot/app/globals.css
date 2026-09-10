@@ -218,7 +218,35 @@
 .wizard-step-dot.done span{background:var(--green);color:#fff}
 .wizard-question{font-weight:700;font-size:15px;margin-bottom:14px}
 .role-picker{display:grid;gap:12px}
-.register-wizard .role-card{text-align:left;width:auto;margin:0;border:1.5px solid var(--line);border-radius:12px;padding:18px;background:#fff;display:grid;gap:4px;transition:.2s}
+.wizard-question{font-weight:700;font-size:15px;margin-bottom:14px}
+.role-picker{display:grid;gap:12px}
+
+.register-wizard .role-card{
+  text-align:left;
+  width:auto;
+  margin:0;
+  border:1.5px solid var(--line);
+  border-radius:12px;
+  padding:18px;
+  background:#fff;
+  color:var(--ink);
+  display:grid;
+  gap:4px;
+  transition:.2s;
+}
+
+.role-card:hover{border-color:#86a9ff}
+.role-card.selected{border-color:var(--blue);background:var(--soft)}
+
+.register-wizard .role-card b{
+  color:var(--ink);
+  font-size:14px;
+}
+
+.register-wizard .role-card span{
+  color:var(--muted);
+  font-size:12px;
+}
 .role-card:hover{border-color:#86a9ff}
 .role-card.selected{border-color:var(--blue);background:var(--soft)}
 .role-card b{font-size:14px}
