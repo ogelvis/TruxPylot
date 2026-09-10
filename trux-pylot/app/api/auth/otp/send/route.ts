@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import type { User } from '@prisma/client';
 import { sendEmailOtp, normalizeEmail, describeOtpError } from '@/lib/otp';
 
 const emailField = z.string().email().transform(normalizeEmail);
@@ -31,6 +32,8 @@ const loginFields = z.object({
 
 const input = z.discriminatedUnion('mode', [registerFields, loginFields]);
 
+export const runtime = 'nodejs';
+
 /** Maps a failed sendEmailOtp() call to an HTTP status + user-facing message,
  *  while logging the real cause (env misconfig, Supabase SMTP/Resend
  *  failure, rate limit, etc.) server-side for diagnosis. */
@@ -50,11 +53,26 @@ function otpSendFailureResponse(err: unknown, context: 'register' | 'login' | 'a
 }
 
 export async function POST(request: Request) {
-  const parsed = input.safeParse(await request.json());
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Please check your details and try again.' }, { status: 400 });
+  }
+  const parsed = input.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Please check your details and try again.' }, { status: 400 });
   const d = parsed.data;
 
-  const existing = await prisma.user.findUnique({ where: { email: d.email } });
+  let existing: User | null;
+  try {
+    existing = await Promise.race([
+      prisma.user.findUnique({ where: { email: d.email } }),
+      new Promise<null>((_, reject) => setTimeout(() => reject(new Error('Database lookup timed out')), 8000)),
+    ]);
+  } catch (err) {
+    console.error('[otp/send] registration lookup failed:', err instanceof Error ? err.message : err);
+    return NextResponse.json({ error: 'We could not check your registration right now. Please try again shortly.' }, { status: 503 });
+  }
 
   if (d.mode === 'register') {
     if (existing) return NextResponse.json({ error: 'That email is already registered. Try signing in instead.' }, { status: 409 });
