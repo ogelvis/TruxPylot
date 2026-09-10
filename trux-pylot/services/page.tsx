@@ -52,11 +52,11 @@ export default async function ServicesPage() {
         .tp-services-back:hover{background:#fff;color:#155eef;transform:translateY(-2px)}
         .tp-services-hero{padding:55px 0 88px;color:#fff;max-width:800px}
         .tp-services-kicker{margin:0 0 14px;color:#73d9ff;font-size:11px;font-weight:900;letter-spacing:1.7px;text-transform:uppercase}
-        .tp-services-hero h1{margin:0;font:800 clamp(40px,6vw,70px)/1.02 Manrope,Inter,system-ui,sans-serif;letter-spacing:-3.2px}
+        .tp-services-hero h1{margin:0;font:800 clamp(40px,6vw,70px)/1.02 Arial, Helvetica, sans-serif,Inter,system-ui,sans-serif;letter-spacing:-3.2px}
         .tp-services-hero p{max-width:680px;margin:20px 0 0;color:#c9d9f7;font-size:17px;line-height:1.7}
         .tp-all-services{margin-top:-32px;position:relative}
         .tp-all-services-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin-bottom:22px}
-        .tp-all-services-head h2{margin:0;font:800 28px/1.1 Manrope,Inter,system-ui,sans-serif;letter-spacing:-1.2px;color:#10233f}
+        .tp-all-services-head h2{margin:0;font:800 28px/1.1 Arial, Helvetica, sans-serif,Inter,system-ui,sans-serif;letter-spacing:-1.2px;color:#10233f}
         .tp-all-services-head span{color:#71809a;font-size:13px}
         .tp-all-service-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
         .tp-all-service{position:relative;display:flex;flex-direction:column;min-width:0;min-height:190px;padding:24px;background:#fff;border:1px solid #dfe7f3;border-radius:20px;text-decoration:none;color:#10233f;overflow:hidden;box-shadow:0 14px 35px rgba(13,42,104,.06);transition:transform .25s ease,box-shadow .25s ease,border-color .25s ease}
@@ -75,7 +75,7 @@ export default async function ServicesPage() {
         .tp-request-cta{margin-top:38px;padding:45px 48px;border-radius:24px;background:linear-gradient(135deg,#1769ff,#0b2d78);color:#fff;display:flex;align-items:center;justify-content:space-between;gap:25px;box-shadow:0 25px 55px rgba(13,42,104,.18);overflow:hidden;position:relative}
         .tp-request-cta:after{content:"";position:absolute;width:300px;height:300px;right:-120px;top:-170px;border:1px solid rgba(255,255,255,.14);border-radius:50%;box-shadow:0 0 0 55px rgba(255,255,255,.03),0 0 0 110px rgba(255,255,255,.02)}
         .tp-request-cta>*{position:relative;z-index:1}
-        .tp-request-cta h2{margin:0;font:800 30px/1.15 Manrope,Inter,system-ui,sans-serif;letter-spacing:-1.2px}
+        .tp-request-cta h2{margin:0;font:800 30px/1.15 Arial, Helvetica, sans-serif,Inter,system-ui,sans-serif;letter-spacing:-1.2px}
         .tp-request-cta p{margin:9px 0 0;color:#cbdcff;font-size:13px;line-height:1.6}
         .tp-request-button{display:inline-flex;align-items:center;justify-content:center;gap:12px;min-height:48px;padding:14px 20px;background:#fff;color:#155eef;border-radius:12px;font-size:13px;font-weight:900;text-decoration:none;white-space:nowrap;transition:.2s ease;box-shadow:0 10px 25px rgba(6,27,80,.19)}
         .tp-request-button:hover{transform:translateY(-3px);box-shadow:0 16px 30px rgba(6,27,80,.25)}
