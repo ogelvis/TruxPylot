@@ -36,10 +36,38 @@ export function RegisterWizard() {
   const [code, setCode] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [referralCode, setReferralCode] = useState('');
+  const [restoringDraft, setRestoringDraft] = useState(true);
 
   useEffect(() => {
     setReferralCode(new URLSearchParams(window.location.search).get('ref')?.toUpperCase() ?? '');
+    try {
+      const raw = sessionStorage.getItem('truxpylot_registration_draft');
+      if (raw) {
+        const draft = JSON.parse(raw) as Record<string, unknown>;
+        if (draft.role === 'CUSTOMER' || draft.role === 'PROFESSIONAL') setRole(draft.role);
+        if (draft.accountType === 'INDIVIDUAL' || draft.accountType === 'BUSINESS') setAccountType(draft.accountType);
+        for (const [key, setter] of Object.entries({
+          fullName: setFullName, businessName: setBusinessName, registrationNumber: setRegistrationNumber,
+          email: setEmail, phone: setPhone, country: setCountry, state: setState, city: setCity,
+          area: setArea, street: setStreet, profession: setProfession, yearsExperience: setYearsExperience,
+        })) {
+          const value = draft[key];
+          if (typeof value === 'string') setter(value);
+        }
+      }
+    } catch {}
+    setRestoringDraft(false);
   }, []);
+
+  useEffect(() => {
+    if (restoringDraft) return;
+    try {
+      sessionStorage.setItem('truxpylot_registration_draft', JSON.stringify({
+        role, accountType, fullName, businessName, registrationNumber, email, phone, country,
+        state, city, area, street, profession, yearsExperience, referralCode,
+      }));
+    } catch {}
+  }, [restoringDraft, role, accountType, fullName, businessName, registrationNumber, email, phone, country, state, city, area, street, profession, yearsExperience, referralCode]);
 
   useEffect(() => {
     if (resendCooldown <= 0) return;
@@ -62,6 +90,11 @@ export function RegisterWizard() {
       }
       if (accountType === 'INDIVIDUAL' && (!fullName.trim() || !email.trim())) {
         return setError('Full name and email are required.');
+      }
+    }
+    if (step === 3 && accountType === 'BUSINESS') {
+      if (!state.trim() || !city.trim() || !street.trim()) {
+        return setError('Business accounts need a state, city and street/address before continuing.');
       }
     }
     setStep(s => Math.min(lastStep, s + 1));
@@ -137,6 +170,7 @@ export function RegisterWizard() {
         return setError(d.error || 'Something went wrong.');
       }
       const next = new URLSearchParams(window.location.search).get('next');
+      try { sessionStorage.removeItem('truxpylot_registration_draft'); } catch {}
       router.push(next && next.startsWith('/') ? next : (d.redirect || '/dashboard'));
       router.refresh();
     } catch {
@@ -146,7 +180,7 @@ export function RegisterWizard() {
   }
 
   return (
-    <div className="auth-form register-wizard">
+    <div className="auth-form register-wizard" aria-busy={restoringDraft || submitting}>
       <p className="eyebrow">JOIN TRUX PYLOT</p>
       <h1>Create your account</h1>
       <p>Find work or trusted help. It only takes a minute to begin.</p>
