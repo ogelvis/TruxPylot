@@ -1,34 +1,83 @@
-export default function Loading() {
+'use client';
+
+import Link from 'next/link';
+import { useState } from 'react';
+
+export function WelcomeGate() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <main className="tp-app-loading" aria-label="Loading TruxPylot" role="status">
-      <div className="tp-loading-orbit tp-loading-orbit-one" />
-      <div className="tp-loading-orbit tp-loading-orbit-two" />
-      <div className="tp-loading-glow" />
-      <div className="tp-loading-content">
-        <div className="tp-loading-logo-wrap">
-          <img src="/trux-pylot-logo.png" alt="Trux Pylot" className="tp-loading-logo" />
-        </div>
-        <div className="tp-loading-bar" aria-hidden="true"><span /></div>
-        <p>Preparing your TruxPylot experience</p>
+    <main className="tp-welcome" aria-labelledby="tp-welcome-title">
+      <div className="tp-welcome-mark tp-welcome-mark-one" aria-hidden="true">
+        <img src="/icon-192.png" alt="" />
       </div>
-      <style jsx>{`
-        .tp-app-loading{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;overflow:hidden;background:#073fc8;color:#fff;font-family:Arial,Helvetica,sans-serif}
-        .tp-loading-content{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;text-align:center;padding:24px}
-        .tp-loading-logo-wrap{display:flex;align-items:center;justify-content:center;width:min(260px,70vw);min-height:92px;padding:12px 18px;background:#fff;border-radius:20px;box-shadow:0 22px 55px rgba(0,0,0,.2);animation:tp-logo-in .55s ease-out both}
-        .tp-loading-logo{display:block;width:100%;max-width:220px;height:auto;max-height:90px;object-fit:contain}
-        .tp-loading-bar{width:170px;height:4px;margin-top:25px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.2)}
-        .tp-loading-bar span{display:block;width:45%;height:100%;border-radius:inherit;background:#fff;animation:tp-loading-progress 1.15s ease-in-out infinite}
-        .tp-loading-content p{margin:12px 0 0;color:rgba(255,255,255,.78);font-size:12px;letter-spacing:.3px}
-        .tp-loading-orbit{position:absolute;border:1px solid rgba(255,255,255,.13);border-radius:50%;animation:tp-orbit 8s linear infinite}
-        .tp-loading-orbit-one{width:520px;height:520px}.tp-loading-orbit-two{width:760px;height:760px;animation-duration:13s;animation-direction:reverse}
-        .tp-loading-glow{position:absolute;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.08);filter:blur(30px);animation:tp-glow 2.4s ease-in-out infinite}
-        @keyframes tp-logo-in{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
-        @keyframes tp-loading-progress{0%{transform:translateX(-120%)}50%{transform:translateX(130%)}100%{transform:translateX(300%)}}
-        @keyframes tp-orbit{to{transform:rotate(360deg)}}
-        @keyframes tp-glow{0%,100%{transform:scale(.85);opacity:.5}50%{transform:scale(1.1);opacity:1}}
-        @media(max-width:600px){.tp-loading-logo-wrap{width:210px;min-height:76px;border-radius:16px;padding:9px 14px}.tp-loading-logo{max-width:180px}.tp-loading-orbit-one{width:380px;height:380px}.tp-loading-orbit-two{width:570px;height:570px}}
-        @media(prefers-reduced-motion:reduce){.tp-loading-logo-wrap,.tp-loading-bar span,.tp-loading-orbit,.tp-loading-glow{animation:none}}
-      `}</style>
+      <div className="tp-welcome-mark tp-welcome-mark-two" aria-hidden="true">
+        <img src="/icon-192.png" alt="" />
+      </div>
+      <div className="tp-welcome-mark tp-welcome-mark-three" aria-hidden="true">
+        <img src="/icon-192.png" alt="" />
+      </div>
+
+      <section className="tp-welcome-content">
+        <div className="tp-welcome-logo-shell">
+          <img
+            className="tp-welcome-logo"
+            src="/trux-pylot-logo.png"
+            alt="Trux Pylot"
+            width={260}
+            height={173}
+          />
+        </div>
+
+        <p className="tp-welcome-kicker"><span /> THE TRUSTED PROFESSIONAL NETWORK</p>
+        <h1 id="tp-welcome-title">One App. A gigantic ecosystem.</h1>
+        <p className="tp-welcome-lede">Find the right professional. Connect with confidence. Get the job done.</p>
+
+        <div className="tp-welcome-actions">
+          <Link href="/register" className="tp-welcome-primary">Sign Up <span>→</span></Link>
+          <Link href="/login" className="tp-welcome-secondary">Log In <span>→</span></Link>
+        </div>
+
+        <div className={`tp-welcome-info ${open ? 'is-open' : ''}`}>
+          <button
+            type="button"
+            className="tp-welcome-info-trigger"
+            onClick={() => setOpen(value => !value)}
+            aria-expanded={open}
+            aria-controls="tp-welcome-info-panel"
+          >
+            <span>What is TruxPylot?</span>
+            <span className="tp-welcome-chevron" aria-hidden="true">⌄</span>
+          </button>
+
+          {open && (
+            <div id="tp-welcome-info-panel" className="tp-welcome-info-panel">
+              <div>
+                <p className="tp-welcome-label">THE PROBLEM</p>
+                <h2>Finding reliable help should not be a guessing game.</h2>
+                <p>People often depend on random searches, social media posts, recommendations and repeated phone calls without knowing who they can actually trust.</p>
+              </div>
+
+              <div>
+                <p className="tp-welcome-label">THE TRUXPYLOT SOLUTION</p>
+                <h2>One trusted place to find the right professional.</h2>
+                <ul>
+                  <li>Find professionals for the service you need.</li>
+                  <li>Compare real profiles, reviews and trust signals.</li>
+                  <li>Discover professionals based on your needs.</li>
+                  <li>Connect with the right person for the job.</li>
+                  <li>Post a job when you need professionals to come to you.</li>
+                </ul>
+              </div>
+
+              <div className="tp-welcome-pro-note">
+                <p className="tp-welcome-label">FOR PROFESSIONALS</p>
+                <p>Get discovered, build your reputation, showcase your work and connect with people who need your services.</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
     </main>
   );
 }
