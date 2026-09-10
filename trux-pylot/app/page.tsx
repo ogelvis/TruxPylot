@@ -27,8 +27,16 @@ function Mark({ type }: { type: 'check' | 'shield' | 'search' | 'clock' | 'star'
   return <svg {...common}><path d="m12 3 2.7 5.6 6.3.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.5l6.3-.9L12 3Z" /></svg>;
 }
 
-export default async function Home() {
-  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, activeAdverts, session] = await Promise.all([
+export default async function Home({ searchParams }: { searchParams?: Promise<{ explore?: string | string[] }> }) {
+  const session = await getSession();
+  const params = searchParams ? await searchParams : {};
+  const explore = Array.isArray(params.explore) ? params.explore[0] : params.explore;
+
+  if (!session && explore !== '1') {
+    return <WelcomeGate />;
+  }
+
+  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, activeAdverts] = await Promise.all([
     prisma.serviceCategory.findMany({ where: { active: true }, take: 12, orderBy: { name: 'asc' } }),
     prisma.professional.count({ where: { verificationStatus: 'APPROVED' } }),
     prisma.job.count({ where: { status: 'SETTLED' } }),
@@ -44,13 +52,11 @@ export default async function Home() {
       orderBy: { createdAt: 'desc' },
       take: 3,
     }),
-    getSession(),
   ]);
 
   return (
     <main className="tp-home">
       <ScrollReveal />
-      <WelcomeGate authenticated={Boolean(session)}>
       <style dangerouslySetInnerHTML={{ __html: `
         .tp-home{--tp-ink:#10233f;--tp-blue:#155eef;--tp-navy:#071b49;--tp-muted:#667895;--tp-line:#dce5f2;background:#f8fbff}
         .tp-home{font-family:Arial,Helvetica,sans-serif}
@@ -58,7 +64,7 @@ export default async function Home() {
         .tp-nav{background:rgba(248,251,255,.78);border-bottom:1px solid rgba(180,199,227,.5);box-shadow:0 8px 30px rgba(27,62,113,.06)}
         .tp-nav-inner{height:82px}.tp-logo{display:flex;align-items:center;gap:10px}.tp-logo:after{content:'THE TRUST LAYER';font-size:8px;letter-spacing:1.5px;color:#6680a8;border-left:1px solid #d4dfed;padding-left:10px}
         .tp-links{gap:20px}.tp-links a{padding:30px 0}.tp-links a:hover{transform:translateY(-2px)}
-        .tp-signup{border-radius:999px!important;padding:12px 20px!important;box-shadow:0 10px 22px rgba(21,94,239,.22)}.tp-signout{border:1px solid #cbd9ec!important;border-radius:8px!important;padding:9px 14px!important;background:#fff!important;color:#24456f!important;box-shadow:none!important;cursor:pointer;text-decoration:none!important}.tp-signout a{display:block;color:inherit;text-decoration:none}.tp-signout:hover{border-color:#155eef!important;color:#155eef!important;background:#f5f9ff!important;transform:none!important;box-shadow:none!important}
+        .tp-signup{border-radius:999px!important;padding:12px 20px!important;box-shadow:0 10px 22px rgba(21,94,239,.22)}.tp-signout{border:1px solid #cbd9ec!important;border-radius:10px!important;padding:9px 14px!important;background:#fff!important;color:#173b70!important;cursor:pointer;text-decoration:none!important;box-shadow:none!important}.tp-signout a{display:block;color:inherit;text-decoration:none}.tp-signout:hover{color:#155eef!important;border-color:#9db9e8!important;background:#f6f9ff!important;transform:translateY(-1px)}
         .tp-hero{position:relative;padding:104px 0 0;background:#f8fbff}
         .tp-hero:before{display:none}
         .tp-hero-grid,.tp-stats{position:relative;z-index:1}.tp-kicker{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border:1px solid #bdd4fa;border-radius:999px;background:#eaf2ff;letter-spacing:1.3px}
@@ -95,7 +101,7 @@ export default async function Home() {
             {session ? (
               <>
                 <Link href={dashboardPath(session.role)} className="tp-login">Dashboard</Link>
-                <span className="tp-signout"><SignOutLink /></span>
+                <span className="tp-signup tp-signout"><SignOutLink /></span>
               </>
             ) : (
               <>
@@ -260,7 +266,6 @@ export default async function Home() {
       <section className="tp-final-cta reveal"><div className="tp-container"><p className="tp-kicker">YOUR NEXT JOB STARTS HERE</p><h2>Stop guessing. Start with someone you can trust.</h2><Link href="/marketplace" className="tp-button light">Find a professional <span>↗</span></Link></div></section>
 
       <footer className="tp-footer"><div className="tp-container tp-footer-grid"><div><Link href="/" className="tp-logo"><img src="/trux-pylot-logo.png" alt="Trux Pylot" /></Link><p>Trusted professionals, connected to the people who need them.</p></div><div><strong>Explore</strong><Link href="/marketplace">Find a professional</Link><a href="#services">Services</a><a href="#how-it-works">How it works</a></div><div><strong>Join Trux Pylot</strong><Link href="/register">Become a professional</Link><Link href="/login">Log in</Link><Link href="/register">Sign up</Link></div><div><strong>Support</strong><Link href="/support">Talk to an agent</Link><Link href="/privacy">Privacy policy</Link><a href="mailto:info@truxpylot.com">info@truxpylot.com</a><a href="tel:+2348054306905">+234 805 430 6905</a><Link href="/support">Contact & complaints</Link></div></div><div className="tp-container tp-footer-bottom"><span>© {new Date().getFullYear()} Trux Pylot</span><span>Built for reliable work across Nigeria.</span></div></footer>
-      </WelcomeGate>
     </main>
   );
 }
