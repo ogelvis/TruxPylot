@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
-import { Role, UserStatus } from '@prisma/client';
+import type { Role, UserStatus } from '@prisma/client';
 
 export default async function AdminUsers({ searchParams }: { searchParams: Promise<{ q?: string; role?: string; status?: string }> }) {
   await requireRole('ADMIN');
