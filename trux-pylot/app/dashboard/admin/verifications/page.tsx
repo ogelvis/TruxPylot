@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
-import { VerificationStatus } from '@prisma/client';
+import type { VerificationStatus } from '@prisma/client';
 
 const STATUSES: VerificationStatus[] = ['SUBMITTED', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'MORE_INFO_REQUIRED'];
 const STATUS_LABEL: Record<VerificationStatus, string> = {

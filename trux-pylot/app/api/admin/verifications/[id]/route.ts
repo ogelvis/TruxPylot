@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdminSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-import { VerificationStatus } from '@prisma/client';
+import type { VerificationStatus } from '@prisma/client';
 import { sendVerificationApprovedEmail, sendVerificationRejectedEmail, sendVerificationMoreInfoEmail } from '@/lib/email';
 import { notifyUser } from '@/lib/notify';
 

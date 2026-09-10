@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { getSession, isAdminRole } from '@/lib/auth';
-import { ServiceRequestStatus } from '@prisma/client';
+import type { ServiceRequestStatus } from '@prisma/client';
 import { notifyUser } from '@/lib/notify';
 import { sendServiceRequestConnectedEmail, sendServiceRequestCompletedEmail, sendServiceRequestDeclinedEmail } from '@/lib/email';
 

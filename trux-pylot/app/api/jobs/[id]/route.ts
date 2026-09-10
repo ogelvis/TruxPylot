@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { JobStatus } from '@prisma/client';
+import type { JobStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { canTransition } from '@/lib/jobs';
