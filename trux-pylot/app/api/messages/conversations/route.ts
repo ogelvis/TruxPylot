@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSession } from '@/lib/auth';
+import { getSession, isAdminRole } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 const createInput = z.object({
@@ -23,7 +23,7 @@ async function participant(session: NonNullable<Awaited<ReturnType<typeof getSes
 
 export async function GET() {
   const session = await getSession();
-  if (!session || session.role === 'ADMIN') return NextResponse.json({ error: 'Messaging is available to customers and professionals.' }, { status: 403 });
+  if (!session || isAdminRole(session.role)) return NextResponse.json({ error: 'Messaging is available to customers and professionals.' }, { status: 403 });
   const identity = await participant(session);
   if (!identity) return NextResponse.json({ error: 'Profile not found.' }, { status: 403 });
 

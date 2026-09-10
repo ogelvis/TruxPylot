@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSession } from '@/lib/auth';
+import { requireAdminSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { creditReferralReward } from '@/lib/wallet';
 
 const actionSchema = z.object({ id: z.string().cuid(), action: z.enum(['approve', 'reject', 'pay']), reason: z.string().max(300).optional() });
-async function admin() { const s = await getSession(); return s?.role === 'ADMIN' ? s : null; }
+async function admin() { return requireAdminSession(); }
 
 export async function GET() {
   if (!await admin()) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });

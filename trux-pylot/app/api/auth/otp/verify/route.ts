@@ -5,6 +5,8 @@ import { verifyEmailOtp, normalizeEmail, describeOtpError } from '@/lib/otp';
 import { createSession, dashboardPath } from '@/lib/auth';
 import type { Role } from '@prisma/client';
 import { attributeReferral } from '@/lib/referrals';
+import { rateLimit } from '@/lib/rate-limit';
+import { writeAuditLog } from '@/lib/audit';
 
 const input = z.object({ email: z.string().email().transform(normalizeEmail), code: z.string().min(4).max(10) });
 
@@ -12,6 +14,14 @@ export async function POST(request: Request) {
   const parsed = input.safeParse(await request.json());
   if (!parsed.success) return NextResponse.json({ error: 'Enter the code we sent you.' }, { status: 400 });
   const { email, code } = parsed.data;
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+  const limiter = rateLimit(`otp-verify:${email}:${ip}`, 8, 15 * 60 * 1000);
+  if (!limiter.allowed) {
+    return NextResponse.json({ error: 'Too many verification attempts. Please wait and request a new code.' }, {
+      status: 429,
+      headers: { 'Retry-After': String(limiter.retryAfter) },
+    });
+  }
 
   let authUser;
   try {
@@ -123,7 +133,12 @@ export async function POST(request: Request) {
     }
   }
 
+  if (user.status === 'BLOCKED' || (user.status === 'SUSPENDED' && (!user.suspendedUntil || user.suspendedUntil > new Date()))) {
+    return NextResponse.json({ error: 'This account is not currently allowed to sign in.' }, { status: 403 });
+  }
+
   const token = await createSession({ userId: user.id, role: user.role, email: user.email });
+  await writeAuditLog({ userId: user.id, action: 'LOGIN', entity: 'Session', data: { role: user.role } });
   const response = NextResponse.json({ redirect: dashboardPath(user.role) });
   response.cookies.set('tp_session', token, {
     httpOnly: true,

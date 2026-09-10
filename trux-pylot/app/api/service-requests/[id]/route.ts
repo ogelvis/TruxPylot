@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { getSession, isAdminRole } from '@/lib/auth';
 import { ServiceRequestStatus } from '@prisma/client';
 import { notifyUser } from '@/lib/notify';
 import { sendServiceRequestConnectedEmail, sendServiceRequestCompletedEmail, sendServiceRequestDeclinedEmail } from '@/lib/email';
@@ -63,7 +63,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!serviceRequest) return NextResponse.json({ error: 'Request not found.' }, { status: 404 });
 
   if (CSD_ACTIONS.has(action)) {
-    if (session.role !== 'ADMIN') return NextResponse.json({ error: 'Only Truxpylot Customer Service can do this.' }, { status: 403 });
+    if (!isAdminRole(session.role)) return NextResponse.json({ error: 'Only Truxpylot Customer Service can do this.' }, { status: 403 });
   } else {
     // CANCEL — customer-only, and only their own request.
     if (session.role !== 'CUSTOMER') return NextResponse.json({ error: 'Only the customer who made this request can cancel it.' }, { status: 403 });

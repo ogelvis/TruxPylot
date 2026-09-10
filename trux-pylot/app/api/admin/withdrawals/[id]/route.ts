@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { requireAdminSession } from '@/lib/auth';
 import { processWalletWithdrawal, rejectWalletWithdrawal, finalizeWalletWithdrawal } from '@/lib/withdrawals';
 
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session || session.role !== 'ADMIN') return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
+  const session = await requireAdminSession();
+  if (!session) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
   const { id } = await context.params;
   const body = await request.json().catch(() => ({}));
   const action = String(body?.action ?? '');

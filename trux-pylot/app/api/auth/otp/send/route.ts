@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-import type { User } from '@prisma/client';
+import { rateLimit } from '@/lib/rate-limit';
 import { sendEmailOtp, normalizeEmail, describeOtpError } from '@/lib/otp';
+
+export const runtime = 'nodejs';
 
 const emailField = z.string().email().transform(normalizeEmail);
 
@@ -30,9 +32,12 @@ const loginFields = z.object({
   email: emailField,
 });
 
-const input = z.discriminatedUnion('mode', [registerFields, loginFields]);
+const adminLoginFields = z.object({
+  mode: z.literal('admin-login'),
+  email: emailField,
+});
 
-export const runtime = 'nodejs';
+const input = z.discriminatedUnion('mode', [registerFields, loginFields, adminLoginFields]);
 
 /** Maps a failed sendEmailOtp() call to an HTTP status + user-facing message,
  *  while logging the real cause (env misconfig, Supabase SMTP/Resend
@@ -62,8 +67,16 @@ export async function POST(request: Request) {
   const parsed = input.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: 'Please check your details and try again.' }, { status: 400 });
   const d = parsed.data;
+  const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'unknown';
+  const limiter = rateLimit(`otp:${d.email}:${ip}`, d.mode === 'admin-login' ? 5 : 8, 15 * 60 * 1000);
+  if (!limiter.allowed) {
+    return NextResponse.json({ error: 'Too many code requests. Please wait and try again.' }, {
+      status: 429,
+      headers: { 'Retry-After': String(limiter.retryAfter) },
+    });
+  }
 
-  let existing: User | null;
+  let existing;
   try {
     existing = await Promise.race([
       prisma.user.findUnique({ where: { email: d.email } }),
@@ -72,6 +85,21 @@ export async function POST(request: Request) {
   } catch (err) {
     console.error('[otp/send] registration lookup failed:', err instanceof Error ? err.message : err);
     return NextResponse.json({ error: 'We could not check your registration right now. Please try again shortly.' }, { status: 503 });
+  }
+
+  if (d.mode === 'admin-login') {
+    if (!existing || !['ADMIN', 'SUPER_ADMIN'].includes(existing.role)) {
+      return NextResponse.json({ error: 'Administrative access is not available for this account.' }, { status: 403 });
+    }
+    if (existing.status !== 'ACTIVE') {
+      return NextResponse.json({ error: 'This administrative account is not active.' }, { status: 403 });
+    }
+    try {
+      await sendEmailOtp(d.email, { shouldCreateUser: false });
+    } catch (err) {
+      return otpSendFailureResponse(err, 'admin-bootstrap');
+    }
+    return NextResponse.json({ ok: true });
   }
 
   if (d.mode === 'register') {

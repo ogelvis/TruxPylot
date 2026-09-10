@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { requireAdminSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: Request) {
-  const session = await getSession();
-  if (!session || session.role !== 'ADMIN') return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
+  const session = await requireAdminSession();
+  if (!session) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
   const url = new URL(request.url);
   const search = url.searchParams.get('search')?.trim() || '';
   const status = url.searchParams.get('status')?.trim() || '';

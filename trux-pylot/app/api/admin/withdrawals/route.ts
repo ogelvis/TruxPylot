@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { requireAdminSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
-async function admin() { const s = await getSession(); return s?.role === 'ADMIN' ? s : null; }
+async function admin() { return requireAdminSession(); }
 
 export async function GET(request: Request) {
   const session = await admin();

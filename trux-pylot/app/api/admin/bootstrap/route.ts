@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Invalid secret.' }, { status: 403 });
   }
 
-  const existingAdmin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+  const existingAdmin = await prisma.user.findFirst({ where: { role: { in: ['ADMIN', 'SUPER_ADMIN'] } } });
   if (existingAdmin) {
     return NextResponse.json({ error: 'An admin account already exists. This endpoint is now permanently disabled.' }, { status: 409 });
   }
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   try {
     await sendEmailOtp(parsed.data.email, {
       shouldCreateUser: true,
-      data: { role: 'ADMIN', fullName: parsed.data.fullName || 'Admin' },
+      data: { role: 'SUPER_ADMIN', fullName: parsed.data.fullName || 'Admin' },
     });
   } catch (err) {
     const details = describeOtpError(err);

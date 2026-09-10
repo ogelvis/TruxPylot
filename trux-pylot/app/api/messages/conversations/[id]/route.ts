@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getSession } from '@/lib/auth';
+import { getSession, isAdminRole } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 const input = z.object({ body: z.string().trim().min(1).max(3000) });
@@ -26,7 +26,7 @@ async function getConversationForUser(id: string, session: NonNullable<Awaited<R
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || session.role === 'ADMIN') return NextResponse.json({ error: 'Not permitted.' }, { status: 403 });
+  if (!session || isAdminRole(session.role)) return NextResponse.json({ error: 'Not permitted.' }, { status: 403 });
   const conversation = await getConversationForUser((await params).id, session);
   if (!conversation) return NextResponse.json({ error: 'Conversation not found.' }, { status: 404 });
   await prisma.message.updateMany({ where: { conversationId: conversation.id, senderId: { not: session.userId }, readAt: null }, data: { readAt: new Date() } });
@@ -35,7 +35,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await getSession();
-  if (!session || session.role === 'ADMIN') return NextResponse.json({ error: 'Not permitted.' }, { status: 403 });
+  if (!session || isAdminRole(session.role)) return NextResponse.json({ error: 'Not permitted.' }, { status: 403 });
   const parsed = input.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Message cannot be empty.' }, { status: 400 });
   const conversation = await getConversationForUser((await params).id, session);

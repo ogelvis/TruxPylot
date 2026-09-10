@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAdminSession } from '@/lib/auth';
 import { missingOtpEnvVars } from '@/lib/otp';
 
 // Read-only, presence-only config check for the auth/email flow. Gated
@@ -10,20 +11,8 @@ import { missingOtpEnvVars } from '@/lib/otp';
 //
 // Usage: POST { "secret": "<ADMIN_BOOTSTRAP_SECRET>" } to /api/admin/diagnostics
 export async function POST(request: Request) {
-  const configuredSecret = process.env.ADMIN_BOOTSTRAP_SECRET;
-  if (!configuredSecret) {
-    return NextResponse.json({ error: 'Diagnostics are not configured on this server.' }, { status: 503 });
-  }
-
-  let body: { secret?: string };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Send { "secret": "..." } as JSON.' }, { status: 400 });
-  }
-  if (body.secret !== configuredSecret) {
-    return NextResponse.json({ error: 'Invalid secret.' }, { status: 403 });
-  }
+  const session = await requireAdminSession();
+  if (!session) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
 
   const missingOtp = missingOtpEnvVars();
   const missingAuthSecret = !process.env.AUTH_SECRET;

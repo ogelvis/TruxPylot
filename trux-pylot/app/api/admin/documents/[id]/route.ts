@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { requireAdminSession } from '@/lib/auth';
 import { getVerificationDocumentUrl } from '@/lib/storage';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getSession();
-  if (!session || session.role !== 'ADMIN') {
+  const session = await requireAdminSession();
+  if (!session) {
     return NextResponse.json({ error: 'Admin permission required.' }, { status: 403 });
   }
 

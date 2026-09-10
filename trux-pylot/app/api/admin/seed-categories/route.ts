@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requireAdminSession } from '@/lib/auth';
 
 const DEFAULT_CATEGORIES = ['Electrical', 'Plumbing', 'AC & Cooling', 'Cleaning', 'Carpentry', 'Solar & Generator'];
 
@@ -14,20 +15,11 @@ function slugify(name: string) {
  *  /api/admin/bootstrap since there's no full admin-auth session flow for
  *  one-off setup tasks like this. */
 export async function POST(request: Request) {
-  const configuredSecret = process.env.ADMIN_BOOTSTRAP_SECRET;
-  if (!configuredSecret) {
-    return NextResponse.json({ error: 'Not configured on this server.' }, { status: 503 });
-  }
-  let body: { secret?: string; names?: string[] };
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: 'Send { "secret": "..." } as JSON.' }, { status: 400 });
-  }
-  if (body.secret !== configuredSecret) {
-    return NextResponse.json({ error: 'Invalid secret.' }, { status: 403 });
-  }
+  const session = await requireAdminSession();
+  if (!session) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
 
+  let body: { names?: string[] };
+  try { body = await request.json(); } catch { body = {}; }
   const names = body.names?.length ? body.names : DEFAULT_CATEGORIES;
   const created: string[] = [];
   for (const name of names) {
