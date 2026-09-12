@@ -107,13 +107,6 @@ export async function applyDedicatedAccountTransfer(event: any) {
     ? await prisma.dedicatedAccount.findFirst({ where: { paystackCustomerCode: customerCode } })
     : null);
 
-  // If neither the receiver account number nor customer code belongs to a
-  // TruxPylot Dedicated Virtual Account, this is a normal Paystack charge,
-  // not wallet bank-transfer funding. Return without creating ledger noise.
-  if (!mappedAccount) {
-    return { matched: false as const, reason: 'not_dva' as const };
-  }
-
   try {
     return await prisma.$transaction(async tx => {
       const existingTransfer = await tx.incomingTransfer.findUnique({ where: { reference } });
