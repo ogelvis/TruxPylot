@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { uploadVerificationDocument } from '@/lib/storage';
+import { recordLoginAttempt, maybeSuspendAfterUploadFailures } from '@/lib/security';
 
 const RESUBMITTABLE = new Set(['DRAFT', 'REJECTED', 'MORE_INFO_REQUIRED']);
 
@@ -40,6 +41,8 @@ export async function POST(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not upload your documents. Please try again.';
     console.error('[professional/verification] upload failed:', message);
+    await recordLoginAttempt({ userId: session.userId, action: 'UPLOAD_REJECTED', success: false, riskLevel: 'HIGH', failureReason: message.slice(0,120), request });
+    await maybeSuspendAfterUploadFailures(session.userId, session.email, request).catch(() => {});
     return NextResponse.json({ error: message }, { status: 400 });
   }
 

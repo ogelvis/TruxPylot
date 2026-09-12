@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { uploadAvatar } from '@/lib/storage';
+import { recordLoginAttempt, maybeSuspendAfterUploadFailures } from '@/lib/security';
 
 export async function POST(request: Request) {
   const session = await getSession();
@@ -26,6 +27,8 @@ export async function POST(request: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Could not upload your photo. Please try again.';
     console.error('[profile/avatar] upload failed:', message);
+    await recordLoginAttempt({ userId: session.userId, action: 'UPLOAD_REJECTED', success: false, riskLevel: 'HIGH', failureReason: message.slice(0,120), request });
+    await maybeSuspendAfterUploadFailures(session.userId, session.email, request).catch(() => {});
     // Validation errors (bad type/too large) are safe to show verbatim —
     // uploadAvatar() throws those with a user-facing message already.
     return NextResponse.json({ error: message }, { status: 400 });

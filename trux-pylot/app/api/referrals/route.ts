@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { ensureReferralCode } from '@/lib/referrals';
+import { notifyUser } from '@/lib/notify';
+import { sendFinancialTransactionEmail } from '@/lib/email';
 
 const withdrawal = z.object({ amount: z.number().int().positive(), bankName: z.string().max(120).optional(), accountName: z.string().max(120).optional(), accountNumber: z.string().max(40).optional() });
 
@@ -51,5 +53,11 @@ export async function POST(request: Request) {
   if (parsed.data.amount > available) return NextResponse.json({ error: 'Withdrawal exceeds your available reward balance.' }, { status: 400 });
   const item = await prisma.withdrawal.create({ data: { userId: session.userId, source: 'REFERRAL', ...parsed.data } });
   await prisma.auditLog.create({ data: { userId: session.userId, action: 'REFERRAL_WITHDRAWAL_REQUESTED', entity: 'Withdrawal', entityId: item.id } });
+  const user = await prisma.user.findUnique({ where: { id: session.userId }, include: { professional: true, customer: true } });
+  if (user) {
+    const name = user.professional?.fullName ?? user.customer?.fullName ?? 'TruxPylot user';
+    await notifyUser({ userId: session.userId, type: 'referral_withdrawal', title: 'Referral withdrawal requested', body: `Your ₦${(item.amount / 100).toLocaleString('en-NG')} referral withdrawal request has been recorded.`, link: user.professional ? '/dashboard/professional/referrals' : '/dashboard/customer/referrals' }).catch(() => {});
+    await sendFinancialTransactionEmail({ to: user.email, fullName: name, title: 'Referral withdrawal requested', body: 'Your referral reward withdrawal request has been recorded and is subject to processing and verification.', amountKobo: item.amount, reference: item.providerReference, status: 'Requested' }).catch(() => {});
+  }
   return NextResponse.json({ ok: true, withdrawal: item }, { status: 201 });
 }

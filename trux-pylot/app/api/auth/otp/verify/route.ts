@@ -2,11 +2,14 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { verifyEmailOtp, normalizeEmail, describeOtpError } from '@/lib/otp';
-import { createSession, dashboardPath } from '@/lib/auth';
+import { createSession, createAuthChallenge, dashboardPath } from '@/lib/auth';
+import { createDeviceToken, ensureDevice, deviceHash, getClientMeta, maybeSuspendAfterFailures, recordLoginAttempt, decryptSecret, hashPassword, hashSecurityAnswer } from '@/lib/security';
 import type { Role } from '@prisma/client';
 import { attributeReferral } from '@/lib/referrals';
 import { rateLimit } from '@/lib/rate-limit';
 import { writeAuditLog } from '@/lib/audit';
+import { notifyUser } from '@/lib/notify';
+import { sendNotificationEmail } from '@/lib/email';
 
 const input = z.object({ email: z.string().email().transform(normalizeEmail), code: z.string().min(4).max(10) });
 
@@ -27,6 +30,9 @@ export async function POST(request: Request) {
   try {
     authUser = await verifyEmailOtp(email, code.trim());
   } catch (err) {
+    const existingUser = await prisma.user.findUnique({ where: { email }, select: { id: true, email: true } }).catch(() => null);
+    await recordLoginAttempt({ userId: existingUser?.id, email, action: 'LOGIN_OTP_VERIFY', success: false, riskLevel: 'MEDIUM', failureReason: 'INVALID_OR_EXPIRED_CODE', request });
+    if (existingUser) await maybeSuspendAfterFailures(existingUser.id, existingUser.email, request).catch(error => console.error('[security] suspension check failed', error));
     console.error('[otp/verify] failed:', describeOtpError(err));
     return NextResponse.json({ error: 'That code is invalid or has expired. Request a new one.' }, { status: 400 });
   }
@@ -58,6 +64,8 @@ export async function POST(request: Request) {
           id: authUser.id,
           email: verifiedEmail,
           role,
+          privacyPolicyVersion: typeof meta.privacyPolicyVersion === 'string' ? meta.privacyPolicyVersion : null,
+          privacyAcceptedAt: typeof meta.privacyAcceptedAt === 'string' ? new Date(meta.privacyAcceptedAt) : null,
           phone: (meta.phone as string | undefined) || undefined,
           customer: role === 'CUSTOMER' ? {
             create: {
@@ -91,6 +99,13 @@ export async function POST(request: Request) {
           } : undefined,
         },
       });
+      const encryptedPassword = typeof meta.passwordEncrypted === 'string' ? meta.passwordEncrypted : null;
+      const encryptedAnswer = typeof meta.securityAnswerEncrypted === 'string' ? meta.securityAnswerEncrypted : null;
+      if (encryptedPassword && encryptedAnswer) {
+        await prisma.securityProfile.create({ data: { userId: user.id, passwordHash: hashPassword(decryptSecret(encryptedPassword)), securityReminderSeenAt: null } });
+        await prisma.securityQuestion.create({ data: { userId: user.id, question: String(meta.securityQuestion || 'What was the name of your first pet?'), answerHash: hashSecurityAnswer(decryptSecret(encryptedAnswer)) } });
+        await writeAuditLog({ userId: user.id, action: 'PRIVACY_POLICY_ACCEPTED', entity: 'PrivacyPolicy', entityId: user.id, data: { version: String(meta.privacyPolicyVersion || 'unknown'), acceptedAt: String(meta.privacyAcceptedAt || '') } });
+      }
     } catch (err) {
       // Prisma unique-constraint violation (P2002) — most commonly the
       // phone number (or, less likely, the email/id) already belongs to
@@ -137,15 +152,26 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'This account is not currently allowed to sign in.' }, { status: 403 });
   }
 
-  const token = await createSession({ userId: user.id, role: user.role, email: user.email });
-  await writeAuditLog({ userId: user.id, action: 'LOGIN', entity: 'Session', data: { role: user.role } });
-  const response = NextResponse.json({ redirect: dashboardPath(user.role) });
-  response.cookies.set('tp_session', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 604800,
-  });
+  const meta = getClientMeta(request);
+  let deviceToken = request.headers.get('x-truxpylot-device') || null;
+  const deviceCookie = request.headers.get('cookie')?.match(/(?:^|;\s*)tp_device=([^;]+)/)?.[1] || null;
+  deviceToken = deviceToken || deviceCookie;
+  if (!deviceToken) deviceToken = createDeviceToken();
+  const device = await ensureDevice(user.id, deviceToken, request);
+  await recordLoginAttempt({ userId: user.id, email: user.email, action: 'LOGIN_SUCCESS', success: true, riskLevel: device.isNew ? 'MEDIUM' : 'NORMAL', request, deviceFingerprint: deviceHash(deviceToken), metadata: { deviceId: device.id, isNewDevice: device.isNew } });
+  if (device.isNew) { await notifyUser({ userId: user.id, type: 'SECURITY_NEW_DEVICE', title: 'New device signed in', body: 'A new device was used to sign in to your TruxPylot account. If this was not you, secure your account immediately.', link: '/dashboard/' + (user.role === 'PROFESSIONAL' ? 'professional/settings' : user.role === 'CUSTOMER' ? 'customer/settings' : 'admin/security') }).catch(()=>{}); try { await sendNotificationEmail({ to: user.email, subject: 'New TruxPylot sign-in', title: 'New device signed in', body: 'A new device was used to sign in to your TruxPylot account. If this was not you, review your account security immediately.' }); } catch {} }
+  const security = await prisma.securityProfile.findUnique({ where: { userId: user.id }, select: { twoFactorEnabled: true } });
+  if (security?.twoFactorEnabled) {
+    const challenge = await createAuthChallenge({ userId: user.id, role: user.role, email: user.email, purpose: 'LOGIN_2FA' });
+    const response = NextResponse.json({ requires2FA: true, reason: '2FA', redirect: dashboardPath(user.role) });
+    response.cookies.set('tp_auth_challenge', challenge, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 600 });
+    response.cookies.set('tp_device', deviceToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 31536000 });
+    return response;
+  }
+  const token = await createSession({ userId: user.id, role: user.role, email: user.email, deviceId: device.id, twoFactorVerified: false });
+  await writeAuditLog({ userId: user.id, action: 'LOGIN', entity: 'Session', data: { role: user.role, newDevice: device.isNew } });
+  const response = NextResponse.json({ redirect: (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? '/dashboard/admin/security?required=1' : dashboardPath(user.role), newDevice: device.isNew });
+  response.cookies.set('tp_session', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 604800 });
+  response.cookies.set('tp_device', deviceToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 31536000 });
   return response;
 }

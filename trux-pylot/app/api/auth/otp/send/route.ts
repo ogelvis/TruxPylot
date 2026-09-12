@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { sendEmailOtp, normalizeEmail, describeOtpError } from '@/lib/otp';
+import { encryptSecret, recordLoginAttempt } from '@/lib/security';
 
 export const runtime = 'nodejs';
 
@@ -25,6 +26,11 @@ const registerFields = z.object({
   profession: z.string().max(120).optional(),
   yearsExperience: z.coerce.number().int().min(0).max(60).optional(),
   referralCode: z.string().max(40).optional(),
+  password: z.string().min(12).max(200).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/),
+  securityQuestion: z.string().min(5).max(200),
+  securityAnswer: z.string().min(2).max(200),
+  privacyAccepted: z.literal(true),
+  privacyPolicyVersion: z.string().max(40),
 });
 
 const loginFields = z.object({
@@ -89,6 +95,7 @@ export async function POST(request: Request) {
 
   if (d.mode === 'admin-login') {
     if (!existing || !['ADMIN', 'SUPER_ADMIN'].includes(existing.role)) {
+      await recordLoginAttempt({ userId: existing?.id, email: d.email, action: 'ADMIN_LOGIN_REQUEST', success: false, riskLevel: 'HIGH', failureReason: 'UNAUTHORIZED_ADMIN_ACCESS', request }).catch(()=>{});
       return NextResponse.json({ error: 'Administrative access is not available for this account.' }, { status: 403 });
     }
     if (existing.status !== 'ACTIVE') {
@@ -107,9 +114,10 @@ export async function POST(request: Request) {
     if (d.accountType === 'BUSINESS' && (!d.businessName?.trim() || !d.registrationNumber?.trim())) {
       return NextResponse.json({ error: 'Business name and registration number are required for a business account.' }, { status: 400 });
     }
-    const { mode: _mode, email, ...profile } = d;
+    const { mode: _mode, email, password, securityAnswer, privacyAccepted: _privacyAccepted, ...profile } = d;
+    const secureProfile = { ...profile, passwordEncrypted: encryptSecret(password), securityAnswerEncrypted: encryptSecret(securityAnswer), privacyPolicyVersion: d.privacyPolicyVersion, privacyAcceptedAt: new Date().toISOString() };
     try {
-      await sendEmailOtp(email, { shouldCreateUser: true, data: profile });
+      await sendEmailOtp(email, { shouldCreateUser: true, data: secureProfile });
     } catch (err) {
       return otpSendFailureResponse(err, 'register');
     }
@@ -117,7 +125,7 @@ export async function POST(request: Request) {
   }
 
   // mode === 'login'
-  if (!existing) return NextResponse.json({ error: 'No account found with that email.' }, { status: 404 });
+  if (!existing) { await recordLoginAttempt({ email: d.email, action: 'LOGIN_REQUEST', success: false, riskLevel: 'MEDIUM', failureReason: 'UNKNOWN_ACCOUNT', request }).catch(()=>{}); return NextResponse.json({ error: 'No account found with that email.' }, { status: 404 }); }
   if (existing.status === 'BLOCKED') {
     return NextResponse.json({ error: 'This account has been blocked. Contact support if you believe this is a mistake.' }, { status: 403 });
   }

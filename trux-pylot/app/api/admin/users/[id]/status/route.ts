@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { requireAdminSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { notifyUser } from '@/lib/notify';
+import { sendNotificationEmail } from '@/lib/email';
 
 const DURATION_DAYS: Record<string, number | null> = {
   '24h': 1,
@@ -30,7 +32,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   const target = await prisma.user.findUnique({ where: { id } });
   if (!target) return NextResponse.json({ error: 'User not found' }, { status: 404 });
-  if (target.role === 'ADMIN') return NextResponse.json({ error: 'Cannot modify another admin from this panel.' }, { status: 403 });
+  if (target.role === 'ADMIN' || target.role === 'SUPER_ADMIN') return NextResponse.json({ error: 'Cannot modify another admin from this panel.' }, { status: 403 });
 
   let data: { status: 'ACTIVE' | 'SUSPENDED' | 'BLOCKED'; suspendedUntil: Date | null; suspensionReason: string | null };
 
@@ -47,18 +49,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     };
   }
 
-  await prisma.$transaction([
-    prisma.user.update({ where: { id }, data }),
-    prisma.auditLog.create({
-      data: {
-        userId: session.userId,
-        action: parsed.data.action,
-        entity: 'User',
-        entityId: id,
-        data: { reason: parsed.data.reason ?? null, duration: parsed.data.duration ?? null },
-      },
-    }),
-  ]);
+  await prisma.$transaction(async tx => {
+    await tx.user.update({ where: { id }, data });
+    if (parsed.data.action === 'REACTIVATE') {
+      await tx.accountSuspension.updateMany({ where: { userId: id, status: { in: ['PENDING_REVIEW','ACTIVE'] } }, data: { status: 'RESTORED', reviewedAt: new Date(), reviewedById: session.userId, restoredAt: new Date(), restoredById: session.userId, reviewNote: parsed.data.reason ?? 'Restored by administrator' } });
+    } else {
+      await tx.accountSuspension.create({ data: { userId: id, status: 'ACTIVE', reason: parsed.data.reason ?? 'Administrative suspension', source: 'ADMIN', reviewedAt: new Date(), reviewedById: session.userId, reviewNote: parsed.data.reason ?? null } });
+    }
+    await tx.auditLog.create({ data: { userId: session.userId, action: parsed.data.action, entity: 'User', entityId: id, data: { reason: parsed.data.reason ?? null, duration: parsed.data.duration ?? null } } });
+  });
 
+  if (parsed.data.action === 'REACTIVATE') { await notifyUser({ userId: id, type: 'SECURITY_ACCOUNT_RESTORED', title: 'Your TruxPylot account was restored', body: 'An administrator reviewed your account and restored access.', link: '/login' }).catch(()=>{}); try { await sendNotificationEmail({ to: target.email, subject: 'TruxPylot account restored', title: 'Your account was restored', body: 'An administrator reviewed your account and restored access. You can sign in again.' }); } catch {} }
   return NextResponse.json({ ok: true, status: data.status });
 }

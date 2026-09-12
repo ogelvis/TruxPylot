@@ -23,7 +23,7 @@ export async function POST(request: Request) {
       if (rows.length) categories = rows.map(row => `${row.name} (${row.slug})`);
     } catch {}
 
-    const system = `You are TruxPylot Assistant, the helpful customer-facing AI assistant for TruxPylot, a Nigerian marketplace connecting customers with verified service professionals.
+    const system = `You are TXP BOT, the helpful customer-facing AI assistant for TruxPylot, a Nigerian marketplace connecting customers with verified service professionals.
 
 Your job:
 - Help customers understand TruxPylot and choose the right service.

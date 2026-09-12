@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { sendFinancialTransactionEmail } from '@/lib/email';
+import { notifyUser } from '@/lib/notify';
 
 async function products() {
   const existing = await prisma.promotedProduct.count();
@@ -39,5 +41,10 @@ export async function POST(request: Request) {
     return listing;
   }).catch(error => error instanceof Error && error.message === 'INSUFFICIENT_BALANCE' ? null : Promise.reject(error));
   if (!result) return NextResponse.json({ error: 'Insufficient available wallet balance.' }, { status: 400 });
+  const recipient = await prisma.professional.findUnique({ where: { id: professional.id }, include: { user: true } });
+  if (recipient) {
+    await notifyUser({ userId: session.userId, type: 'wallet_promotion', title: 'MVault payment completed', body: `${product.name} was activated successfully using your MVault.`, link: '/dashboard/professional/growth' }).catch(() => {});
+    await sendFinancialTransactionEmail({ to: recipient.user.email, fullName: recipient.fullName, title: 'MVault payment completed', body: `${product.name} was activated successfully using your MVault.`, amountKobo: product.price, status: 'Completed' }).catch(() => {});
+  }
   return NextResponse.json({ ok: true, listing: result }, { status: 201 });
 }
