@@ -2,6 +2,7 @@ import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, 
 import { prisma } from '@/lib/prisma';
 import { notifyAllAdmins, notifyUser } from '@/lib/notify';
 import { sendNotificationEmail } from '@/lib/email';
+import { writeAuditLog } from '@/lib/audit';
 
 const PASSWORD_COST = 64 * 1024;
 const PASSWORD_BLOCK_SIZE = 8;
@@ -146,6 +147,132 @@ export async function maybeSuspendAfterFailures(userId: string, email: string, r
   await notifyAllAdmins({ type: 'SECURITY_REVIEW', title: 'Security review required', body: `A ${user.role.toLowerCase()} account was automatically suspended after repeated failed authentication attempts.`, link: '/dashboard/admin/security' });
   try { await sendNotificationEmail({ to: email, subject: 'TruxPylot security alert', title: 'Account temporarily suspended', body: 'We detected repeated unsuccessful sign-in attempts. Your account has been temporarily suspended for protection.' }); } catch (error) { console.error('[security] suspension email failed', error instanceof Error ? error.message : error); }
   await recordLoginAttempt({ userId, email, action: 'ACCOUNT_AUTO_SUSPENDED', success: true, riskLevel: 'HIGH', request, metadata: { failures } });
+  return true;
+}
+
+/**
+ * Lightweight server-side upload inspection. This is intentionally conservative:
+ * storage routes already enforce MIME, size, and magic-byte checks; this catches
+ * obvious script/polyglot payloads before they reach Supabase Storage.
+ */
+export function scanUploadBuffer(buffer: Buffer, mimeType: string): { safe: boolean; reason: string } {
+  const sample = buffer.subarray(0, Math.min(buffer.length, 2 * 1024 * 1024)).toString('latin1');
+  const normalized = sample.toLowerCase();
+
+  const suspiciousPatterns: Array<[RegExp, string]> = [
+    [/<script\b/i, 'The uploaded file contains executable script content.'],
+    [/<iframe\b/i, 'The uploaded file contains embedded frame content.'],
+    [/<object\b/i, 'The uploaded file contains embedded object content.'],
+    [/<embed\b/i, 'The uploaded file contains embedded executable content.'],
+    [/javascript\s*:/i, 'The uploaded file contains a JavaScript URL.'],
+    [/vbscript\s*:/i, 'The uploaded file contains a script URL.'],
+    [/on(?:error|load|click|mouseover|focus|animationstart)\s*=/i, 'The uploaded file contains an executable event handler.'],
+    [/data\s*:\s*text\/html/i, 'The uploaded file contains embedded HTML content.'],
+  ];
+
+  for (const [pattern, reason] of suspiciousPatterns) {
+    if (pattern.test(normalized)) return { safe: false, reason };
+  }
+
+  if (mimeType === 'application/pdf') {
+    // PDFs can carry actions/attachments/remote URLs. Reject obvious active
+    // content and non-TruxPylot external URLs from the scanned text.
+    if (/\/(?:javascript|launch|submitform|gotor|gotor\b|openaction)\b/i.test(sample)) {
+      return { safe: false, reason: 'The PDF contains active or executable content.' };
+    }
+    const urls = sample.match(/https?:\/\/[^\s<>()"']+/gi) ?? [];
+    for (const url of urls) {
+      try {
+        const host = new URL(url).hostname.toLowerCase();
+        if (!host.endsWith('truxpylot.com')) {
+          return { safe: false, reason: 'The PDF contains an external embedded link.' };
+        }
+      } catch {
+        return { safe: false, reason: 'The PDF contains an invalid embedded URL.' };
+      }
+    }
+  }
+
+  return { safe: true, reason: '' };
+}
+
+/** Suspend an account after repeated rejected upload-security events. */
+export async function maybeSuspendAfterUploadFailures(userId: string, email: string, request: Request) {
+  const since = new Date(Date.now() - 30 * 60 * 1000);
+  const failures = await prisma.loginAttempt.count({
+    where: {
+      userId,
+      success: false,
+      createdAt: { gte: since },
+      action: 'UPLOAD_REJECTED',
+    },
+  });
+  if (failures < 3) return false;
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { status: true, role: true } });
+  if (!user || user.status === 'BLOCKED') return false;
+
+  const existing = await prisma.accountSuspension.findFirst({
+    where: { userId, status: 'PENDING_REVIEW', requestedAt: { gte: since } },
+    orderBy: { requestedAt: 'desc' },
+  });
+  if (existing) return true;
+
+  const until = new Date(Date.now() + 60 * 60 * 1000);
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: userId },
+      data: {
+        status: 'SUSPENDED',
+        suspendedUntil: until,
+        suspensionReason: 'Repeated upload security rejections',
+      },
+    }),
+    prisma.accountSuspension.create({
+      data: {
+        userId,
+        status: 'PENDING_REVIEW',
+        reason: 'Repeated upload security rejections',
+        source: 'AUTOMATIC_UPLOAD_SECURITY',
+        riskScore: Math.min(100, failures * 20),
+      },
+    }),
+  ]);
+
+  await notifyUser({
+    userId,
+    type: 'SECURITY_SUSPENSION',
+    title: 'Account temporarily suspended',
+    body: 'Repeated unsafe upload attempts triggered a temporary security suspension. Your account is under review.',
+    link: user.role === 'PROFESSIONAL' ? '/dashboard/professional/settings' : '/dashboard/customer/settings',
+  }).catch(() => {});
+
+  await notifyAllAdmins({
+    type: 'SECURITY_REVIEW',
+    title: 'Upload security review required',
+    body: `A ${user.role.toLowerCase()} account was automatically suspended after repeated rejected uploads.`,
+    link: '/dashboard/admin/security',
+  });
+
+  try {
+    await sendNotificationEmail({
+      to: email,
+      subject: 'TruxPylot security alert',
+      title: 'Account temporarily suspended',
+      body: 'Repeated unsafe upload attempts triggered a temporary security suspension. Your account is under review.',
+    });
+  } catch (error) {
+    console.error('[security] upload suspension email failed', error instanceof Error ? error.message : error);
+  }
+
+  await writeAuditLog({
+    userId,
+    action: 'ACCOUNT_AUTO_SUSPENDED_UPLOAD_SECURITY',
+    entity: 'User',
+    entityId: userId,
+    data: { failures, windowMinutes: 30 },
+  });
+
   return true;
 }
 
