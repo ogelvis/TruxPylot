@@ -1,102 +1,17 @@
 'use client';
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export function AuthForm() {
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [resendCooldown, setResendCooldown] = useState(0);
-
-  useEffect(() => {
-    if (resendCooldown <= 0) return;
-    const t = setTimeout(() => setResendCooldown(c => c - 1), 1000);
-    return () => clearTimeout(t);
-  }, [resendCooldown]);
-
-  async function requestCode() {
-    if (resendCooldown > 0) return;
-    setError('');
-    setSubmitting(true);
-    try {
-      const r = await fetch('/api/auth/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'login', email }),
-      });
-      const d = await r.json().catch(() => ({ error: 'The service is temporarily unavailable. Please try again.' }));
-      setSubmitting(false);
-      if (!r.ok) return setError(d.error || 'Something went wrong');
-      setSent(true);
-      setCode('');
-      setResendCooldown(60);
-    } catch {
-      setSubmitting(false);
-      setError('Could not reach the server. Check your connection and try again.');
-    }
-  }
-
-  function sendCode(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    requestCode();
-  }
-
-  async function verifyCode(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError('');
-    setSubmitting(true);
-    try {
-      const r = await fetch('/api/auth/otp/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
-      });
-      const d = await r.json().catch(() => ({ error: 'The service is temporarily unavailable. Please try again.' }));
-      setSubmitting(false);
-      if (!r.ok) return setError(d.error || 'Something went wrong');
-      const next = new URLSearchParams(window.location.search).get('next');
-      router.push(next && next.startsWith('/') ? next : (d.redirect || '/dashboard'));
-      router.refresh();
-    } catch {
-      setSubmitting(false);
-      setError('Could not reach the server. Check your connection and try again.');
-    }
-  }
-
-  if (sent) {
-    return (
-      <form className="auth-form" onSubmit={verifyCode}>
-        <p className="eyebrow">CHECK YOUR EMAIL</p>
-        <h1>Enter your code</h1>
-        <p>We sent a 6-digit code to <b>{email}</b>.</p>
-        <input value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" placeholder="6-digit code" required />
-        <button type="submit" disabled={submitting}>{submitting ? 'Verifying…' : 'Verify & sign in →'}</button>
-        {error && <p role="alert">{error}</p>}
-        <p className="auth-switch">
-          <button type="button" onClick={requestCode} disabled={submitting || resendCooldown > 0}>
-            {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : "Didn't get a code? Resend"}
-          </button>
-          {' · '}
-          <button type="button" onClick={() => { setSent(false); setCode(''); setError(''); setResendCooldown(0); }}>
-            Use a different email
-          </button>
-        </p>
-      </form>
-    );
-  }
-
-  return (
-    <form className="auth-form" onSubmit={sendCode}>
-      <p className="eyebrow">WELCOME BACK</p>
-      <h1>Sign in to your account</h1>
-      <p>Manage jobs, messages and payments in one secure place.</p>
-      <input value={email} onChange={e => setEmail(e.target.value)} type="email" placeholder="Email address" required />
-      <button type="submit" disabled={submitting}>{submitting ? 'Sending code…' : 'Send sign-in code →'}</button>
-      {error && <p role="alert">{error}</p>}
-      <p className="auth-switch">New to Trux Pylot? <a href={`/register${window.location.search || ''}`}>Create an account</a></p>
-    </form>
-  );
+  const router=useRouter(); const [method,setMethod]=useState<'code'|'password'>('code'); const [email,setEmail]=useState(''); const [emailReverify,setEmailReverify]=useState(false); const [password,setPassword]=useState(''); const [code,setCode]=useState(''); const [sent,setSent]=useState(false); const [twoFA,setTwoFA]=useState(false); const [error,setError]=useState(''); const [submitting,setSubmitting]=useState(false); const [cooldown,setCooldown]=useState(0);
+  useEffect(()=>{if(cooldown<=0)return;const t=setTimeout(()=>setCooldown(c=>c-1),1000);return()=>clearTimeout(t)},[cooldown]);
+  async function requestCode(){if(cooldown>0)return;setError('');setSubmitting(true);try{const r=await fetch('/api/auth/otp/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:'login',email})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Could not send a verification code.');setSent(true);setCode('');setCooldown(60)}catch(e){setError(e instanceof Error?e.message:'Could not reach the server.')}finally{setSubmitting(false)}}
+  async function verifyCode(e:FormEvent){e.preventDefault();setSubmitting(true);setError('');try{const r=await fetch('/api/auth/otp/verify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Invalid or expired code.');if(d.requiresEmailVerification){setEmailReverify(true);setCode('');return}if(d.requires2FA){setTwoFA(true);return}router.push(new URLSearchParams(window.location.search).get('next')||d.redirect||'/dashboard');router.refresh()}catch(e){setError(e instanceof Error?e.message:'Could not verify the code.')}finally{setSubmitting(false)}}
+  async function passwordLogin(e:FormEvent){e.preventDefault();setSubmitting(true);setError('');try{const r=await fetch('/api/auth/password/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Unable to sign in.');if(d.requiresEmailVerification){setEmailReverify(true);setCode('');return}if(d.requires2FA){setTwoFA(true);return}router.push(new URLSearchParams(window.location.search).get('next')||d.redirect||'/dashboard');router.refresh()}catch(e){setError(e instanceof Error?e.message:'Could not reach the server.')}finally{setSubmitting(false)}}
+  async function verifyDeviceEmail(e:FormEvent){e.preventDefault();setSubmitting(true);setError('');try{const r=await fetch('/api/auth/device/reverify',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Verification failed.');if(d.requires2FA){setEmailReverify(false);setTwoFA(true);return}router.push(d.redirect||'/dashboard');router.refresh()}catch(e){setError(e instanceof Error?e.message:'Could not verify your email.')}finally{setSubmitting(false)}}
+  async function verify2FA(e:FormEvent){e.preventDefault();setSubmitting(true);setError('');try{const r=await fetch('/api/auth/2fa/verify-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Invalid authenticator code.');router.push(new URLSearchParams(window.location.search).get('next')||d.redirect||'/dashboard');router.refresh()}catch(e){setError(e instanceof Error?e.message:'Could not verify two-step authentication.')}finally{setSubmitting(false)}}
+  if(emailReverify)return <form className="auth-form" onSubmit={verifyDeviceEmail}><p className="eyebrow">DEVICE REVALIDATION</p><h1>Confirm your email</h1><p>For your protection, we sent a fresh verification code to <b>{email}</b>.</p><input value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} inputMode="numeric" maxLength={6} placeholder="6-digit code" required/><button disabled={submitting}>{submitting?'Checking…':'Confirm & continue →'}</button>{error&&<p role="alert">{error}</p>}</form>;
+  if(twoFA)return <form className="auth-form" onSubmit={verify2FA}><p className="eyebrow">TWO-STEP VERIFICATION</p><h1>Confirm it&apos;s you</h1><p>Enter the 6-digit code from your authenticator app.</p><input value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} inputMode="numeric" maxLength={6} placeholder="6-digit code" autoComplete="one-time-code" required/><button disabled={submitting}>{submitting?'Checking…':'Verify & continue →'}</button>{error&&<p role="alert">{error}</p>}</form>;
+  if(sent)return <form className="auth-form" onSubmit={verifyCode}><p className="eyebrow">CHECK YOUR EMAIL</p><h1>Enter your code</h1><p>We sent a 6-digit code to <b>{email}</b>.</p><input value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} inputMode="numeric" maxLength={6} placeholder="6-digit code" required/><button disabled={submitting}>{submitting?'Verifying…':'Verify & sign in →'}</button>{error&&<p role="alert">{error}</p>}<p className="auth-switch"><button type="button" onClick={requestCode} disabled={submitting||cooldown>0}>{cooldown>0?`Resend code (${cooldown}s)`:'Resend code'}</button> · <button type="button" onClick={()=>{setSent(false);setCode('');setError('')}}>Use another email</button></p></form>;
+  return <form className="auth-form" onSubmit={method==='password'?passwordLogin:(e)=>{e.preventDefault();requestCode()}}><p className="eyebrow">WELCOME BACK</p><h1>Sign in securely</h1><p>Manage jobs, messages and payments in one secure place.</p><div className="auth-methods"><button type="button" className={method==='code'?'active':''} onClick={()=>setMethod('code')}>Email code</button><button type="button" className={method==='password'?'active':''} onClick={()=>setMethod('password')}>Password</button></div><input value={email} onChange={e=>setEmail(e.target.value)} type="email" placeholder="Email address" required autoComplete="username"/>{method==='password'&&<input value={password} onChange={e=>setPassword(e.target.value)} type="password" placeholder="Password" required autoComplete="current-password"/>}<button type="submit" disabled={submitting}>{submitting?(method==='password'?'Signing in…':'Sending code…'):(method==='password'?'Sign in →':'Send sign-in code →')}</button>{error&&<p role="alert">{error}</p>}<p className="auth-switch"><a href="/login/forgot-password">Forgot your password?</a> · <a href="/login/recover-account">Account suspended?</a></p><p className="auth-switch">New to Trux Pylot? <a href={`/register${window.location.search||''}`}>Create an account</a></p></form>;
 }

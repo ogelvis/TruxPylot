@@ -26,16 +26,16 @@ function WalletFundingStatusContent() {
         if (cancelled) return;
 
         if (response.ok && body.status === 'SUCCESS') {
-          setMessage('Payment confirmed. Wallet balance refreshed.');
+          setMessage('Payment confirmed. MVault balance refreshed.');
           router.refresh();
           return;
         }
 
-        setMessage('Payment received. Your wallet is being updated.');
+        setMessage('Payment received. Your MVault is being updated.');
         if (attempts < 6) window.setTimeout(verify, 2500);
       } catch {
         if (!cancelled && attempts < 6) {
-          setMessage('Payment received. Checking your wallet update…');
+          setMessage('Payment received. Checking your MVault update…');
           window.setTimeout(verify, 2500);
         }
       }

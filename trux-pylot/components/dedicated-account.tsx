@@ -6,6 +6,7 @@ export function DedicatedAccount() {
   const [account, setAccount] = useState<{ accountNumber?: string; accountName?: string; bankName?: string; status?: string } | null>(null);
   const [message, setMessage] = useState('Preparing your wallet bank account…');
   const [copied, setCopied] = useState(false);
+  const [copiedDetails, setCopiedDetails] = useState(false);
 
   async function load(refresh = false) {
     setMessage(refresh ? 'Checking your transfer with Paystack…' : 'Preparing your wallet bank account…');
@@ -48,6 +49,18 @@ export function DedicatedAccount() {
     }
   }
 
+  async function copyDetails() {
+    if (!account?.accountNumber) return;
+    const text = `Bank: ${account.bankName ?? ''}\nAccount name: ${account.accountName ?? ''}\nAccount number: ${account.accountNumber}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedDetails(true);
+      setTimeout(() => setCopiedDetails(false), 1500);
+    } catch {
+      setMessage('Copy failed. You can still copy the details manually.');
+    }
+  }
+
   if (!account) {
     const phoneRequired = message.includes('Add your phone number');
     return (
@@ -64,7 +77,7 @@ export function DedicatedAccount() {
 
   return (
     <div className="wallet-bank-shell">
-      <p className="wallet-bank-note">Transfer to this account to fund your wallet. Your balance updates after Paystack confirms the transfer.</p>
+      <p className="wallet-bank-note">Transfer directly to this dedicated account from your bank app. You do not need to open Paystack checkout. Your MVault updates after Paystack confirms the transfer.</p>
       <div className="wallet-bank-card">
         <div>
           <span className="wallet-bank-label">Bank</span>
@@ -78,9 +91,7 @@ export function DedicatedAccount() {
           <span className="wallet-bank-label">Account number</span>
           <strong>{account.accountNumber}</strong>
         </div>
-        <button type="button" className="wallet-copy-button" onClick={copyAccount}>
-          {copied ? 'Copied' : 'Copy'}
-        </button>
+        <div className="wallet-bank-copy-actions"><button type="button" className="wallet-copy-button" onClick={copyAccount}>{copied ? 'Copied' : 'Copy number'}</button><button type="button" className="wallet-copy-button wallet-copy-details" onClick={copyDetails}>{copiedDetails ? 'Copied' : 'Copy details'}</button></div>
       </div>
 
       <div className="wallet-bank-actions">

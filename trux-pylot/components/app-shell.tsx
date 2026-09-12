@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { MobileTabBar } from '@/components/mobile-tab-bar';
 import { NotificationBell } from '@/components/notification-bell';
 import { SignOutLink } from '@/components/sign-out-link';
+import { SecurityReminder } from '@/components/security-reminder';
+import TruxPylotChat from '@/components/truxpylot-chat';
 
 const nav: Record<Role, { label: string; href: string; icon: string }[]> = {
   CUSTOMER: [
@@ -22,7 +24,7 @@ const nav: Record<Role, { label: string; href: string; icon: string }[]> = {
     { label: 'My jobs', href: '/dashboard/professional/jobs', icon: '▣' },
     { label: 'Messages', href: '/dashboard/professional/messages', icon: '✉' },
     { label: 'Earnings', href: '/dashboard/professional/earnings', icon: '◈' },
-    { label: 'Wallet', href: '/dashboard/professional/wallet', icon: '₦' },
+    { label: 'MVault', href: '/dashboard/professional/wallet', icon: '₦' },
     { label: 'Grow & promote', href: '/dashboard/professional/growth', icon: '✦' },
     { label: 'Refer & earn', href: '/dashboard/professional/referrals', icon: '↗' },
     { label: 'Reviews', href: '/dashboard/professional/reviews', icon: '★' },
@@ -37,9 +39,11 @@ const nav: Record<Role, { label: string; href: string; icon: string }[]> = {
     { label: 'Verifications', href: '/dashboard/admin/verifications', icon: '✓' },
     { label: 'Referrals', href: '/dashboard/admin/referrals', icon: '↗' },
     { label: 'Users', href: '/dashboard/admin/users', icon: '◎' },
-    { label: 'Finance & Wallet', href: '/dashboard/admin/wallet', icon: '₦' },
+    { label: 'PYLOTVAULT Finance', href: '/dashboard/admin/wallet', icon: '₦' },
     { label: 'Growth requests', href: '/dashboard/admin/growth', icon: '✦' },
     { label: 'Staff access', href: '/dashboard/admin/staff', icon: '♟' },
+    { label: 'Security Center', href: '/dashboard/admin/security', icon: '⌁' },
+    { label: 'Announcements', href: '/dashboard/admin/announcements', icon: '●' },
     { label: 'Audit log', href: '/dashboard/admin/audit-log', icon: '▣' },
   ],
 
@@ -186,7 +190,7 @@ export function AppShell({
             <Link
               href={
                 role === 'ADMIN' || role === 'SUPER_ADMIN'
-                  ? '/dashboard/admin'
+                  ? '/dashboard/NgNji'
                   : `/dashboard/${role.toLowerCase()}/profile`
               }
               className="user-chip"
@@ -208,6 +212,9 @@ export function AppShell({
         </header>
 
         {children}
+
+        <SecurityReminder role={role} />
+        <TruxPylotChat />
 
         <MobileTabBar
           role={role}

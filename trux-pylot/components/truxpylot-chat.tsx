@@ -14,7 +14,7 @@ type Message = { role: 'user' | 'assistant'; content: string };
 const initialMessages: Message[] = [
   {
     role: 'assistant',
-    content: 'Hi 👋 I’m TruxPylot Assistant. I can help you find the right service, understand how TruxPylot works, or guide you to the right place. What do you need today?',
+    content: 'Hi 👋 I’m TXP BOT. I can help you find the right service, understand how TruxPylot works, or guide you to the right place. What do you need today?',
   },
 ];
 
@@ -83,12 +83,12 @@ export default function TruxPylotChat() {
   return (
     <div className="tp-chat-root">
       {open && (
-        <section className="tp-chat-panel" aria-label="TruxPylot Assistant">
+        <section className="tp-chat-panel" aria-label="TXP BOT">
           <header className="tp-chat-header">
             <div className="tp-chat-brand">
               <div className="tp-chat-avatar"><span>TP</span><i /></div>
               <div>
-                <strong>TruxPylot Assistant</strong>
+                <strong>TXP BOT</strong>
                 <small><b /> Online now</small>
               </div>
             </div>
@@ -135,18 +135,18 @@ export default function TruxPylotChat() {
           </div>
 
           <form className="tp-chat-form" onSubmit={submit}>
-            <input value={input} onChange={event => setInput(event.target.value)} placeholder="Type your message..." aria-label="Message TruxPylot Assistant" disabled={loading} />
+            <input value={input} onChange={event => setInput(event.target.value)} placeholder="Type your message..." aria-label="Message TXP BOT" disabled={loading} />
             <button type="submit" disabled={!input.trim() || loading} aria-label="Send message">↑</button>
           </form>
-          <p className="tp-chat-note">TruxPylot Assistant can make mistakes. Verify important details before acting.</p>
+          <p className="tp-chat-note">TXP BOT can make mistakes. Verify important details before acting.</p>
         </section>
       )}
 
       {!open && (
-        <button type="button" className="tp-chat-launcher" onClick={() => setOpen(true)} aria-label="Open TruxPylot Assistant">
+        <button type="button" className="tp-chat-launcher" onClick={() => setOpen(true)} aria-label="Open TXP BOT">
           <span className="tp-chat-launcher-pulse" />
           <span className="tp-chat-launcher-icon">✦</span>
-          <span className="tp-chat-launcher-copy"><b>Talk to TruxPylot</b><small>Ask us anything</small></span>
+          <span className="tp-chat-launcher-copy"><b>TXP BOT</b><small>Live help</small></span>
         </button>
       )}
     </div>
