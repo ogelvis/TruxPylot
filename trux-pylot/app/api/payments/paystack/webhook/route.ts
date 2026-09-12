@@ -141,13 +141,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, reviewRequired: true });
   }
 
-  // DVA transfers are identified by Paystack's dedicated_nuban channel or the
-  // receiver bank account field. They do not have a WalletFunding reference.
-  const receiverAccount = data?.authorization?.receiver_bank_account_number;
-  const isDvaTransfer = data?.authorization?.channel === 'dedicated_nuban' || /^\d{10}$/.test(String(receiverAccount ?? ''));
-  if (isDvaTransfer) {
-    const result = await applyDedicatedAccountTransfer(event);
-    console.info('[DVA TRANSFER] processed', { reference, providerEventId, matched: result.matched, duplicate: result.duplicate });
+  // DVA transfers can arrive as charge.success without a consistent
+  // authorization.channel shape. Resolve them by receiver account number OR
+  // Paystack customer code instead of depending on one webhook field.
+  // applyDedicatedAccountTransfer safely ignores ordinary charges that do not
+  // belong to a TruxPylot Dedicated Virtual Account.
+  const result = await applyDedicatedAccountTransfer(event);
+  if (result.matched || result.reason !== 'not_dva') {
+    console.info('[DVA TRANSFER] processed', {
+      reference,
+      providerEventId,
+      matched: result.matched,
+      duplicate: 'duplicate' in result ? result.duplicate : false,
+    });
   }
 
   return NextResponse.json({ received: true });

@@ -84,7 +84,7 @@ export default async function WalletPage() {
             <WalletActions availableBalance={wallet?.availableBalance ?? 0} payoutAccount={payoutAccount} section="payout" />
           </section>
           <section className="wallet-panel wallet-panel-modern">
-            <div className="wallet-panel-head"><div><span className="wallet-step">04</span><div><h2>Withdraw funds</h2><p>Request a payout from your available balance.</p></div></div><span className="wallet-secure">MIN ₦1,000</span></div>
+            <div className="wallet-panel-head"><div><span className="wallet-step">04</span><div><h2>Withdraw funds</h2><p>Request a payout from your available balance.</p></div></div><span className="wallet-secure">MIN ₦200</span></div>
             <WalletActions availableBalance={wallet?.availableBalance ?? 0} payoutAccount={payoutAccount} section="withdraw" />
           </section>
         </div>

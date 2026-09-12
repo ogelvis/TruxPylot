@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getSession } from '@/lib/auth';
 import { getProfessionalWallet, MIN_WITHDRAWAL_KOBO } from '@/lib/wallet';
 import { prisma } from '@/lib/prisma';
+import { processWalletWithdrawal } from '@/lib/withdrawals';
 
 const withdrawal = z.object({ amount: z.number().int().min(MIN_WITHDRAWAL_KOBO) });
 
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   const session = await getSession();
   if (!session || session.role !== 'PROFESSIONAL') return NextResponse.json({ error: 'Professional sign-in required.' }, { status: 401 });
   const parsed = withdrawal.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: 'Minimum withdrawal is ₦1,000.' }, { status: 400 });
+  if (!parsed.success) return NextResponse.json({ error: 'Minimum withdrawal is ₦200.' }, { status: 400 });
 
   const professional = await prisma.professional.findUnique({ where: { userId: session.userId }, select: { id: true } });
   if (!professional) return NextResponse.json({ error: 'Professional profile not found.' }, { status: 404 });
@@ -58,11 +59,21 @@ export async function POST(request: Request) {
         },
       });
       await tx.wallet.update({ where: { id: wallet.id }, data: { availableBalance: { decrement: parsed.data.amount } } });
-      await tx.walletTransaction.create({ data: { walletId: wallet.id, type: 'DEBIT', source: 'WITHDRAWAL', amount: parsed.data.amount, status: 'PENDING', description: 'Withdrawal requested — awaiting admin review', reference: `WD-${withdrawal.id}`, metadata: { withdrawalId: withdrawal.id, source: 'WALLET' } } });
+      await tx.walletTransaction.create({ data: { walletId: wallet.id, type: 'DEBIT', source: 'WITHDRAWAL', amount: parsed.data.amount, status: 'PENDING', description: 'Withdrawal requested — sent to Paystack for processing', reference: `WD-${withdrawal.id}`, metadata: { withdrawalId: withdrawal.id, source: 'WALLET' } } });
       return withdrawal;
     });
-    await prisma.auditLog.create({ data: { userId: session.userId, action: 'WALLET_WITHDRAWAL_REQUESTED', entity: 'Withdrawal', entityId: item.id, data: { amount: item.amount, status: item.status } } });
-    return NextResponse.json({ ok: true, withdrawal: item }, { status: 201 });
+    await prisma.auditLog.create({ data: { userId: session.userId, action: 'WALLET_WITHDRAWAL_REQUESTED', entity: 'Withdrawal', entityId: item.id, data: { amount: item.amount, status: item.status, automaticProcessing: true } } });
+
+    // Automatically send the payout to Paystack after the wallet reservation
+    // succeeds. The server remains the source of truth and Paystack webhooks
+    // finalize the final status. If Paystack requires OTP, the withdrawal is
+    // kept in APPROVED/otp instead of being lost.
+    try {
+      const result = await processWalletWithdrawal(item.id, session.userId);
+      return NextResponse.json({ ok: true, withdrawal: result }, { status: 201 });
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : 'Withdrawal could not be sent to Paystack.' }, { status: 502 });
+    }
   } catch (error) {
     if (error instanceof Error && error.message === 'INSUFFICIENT_BALANCE') return NextResponse.json({ error: 'Insufficient available balance.' }, { status: 400 });
     throw error;
