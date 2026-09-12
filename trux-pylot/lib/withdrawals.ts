@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
-import { initiateTransfer, finalizeTransfer, withdrawalProviderReference } from '@/lib/paystack-transfers';
+import { initiateTransfer, finalizeTransfer, verifyTransfer, withdrawalProviderReference } from '@/lib/paystack-transfers';
 
-export async function processWalletWithdrawal(withdrawalId: string, adminUserId: string) {
+export async function processWalletWithdrawal(withdrawalId: string, actorUserId: string) {
   const withdrawal = await prisma.withdrawal.findUnique({ where: { id: withdrawalId }, include: { user: { select: { id: true, email: true } } } });
   if (!withdrawal || withdrawal.source !== 'WALLET') throw new Error('Wallet withdrawal not found.');
   if (withdrawal.status !== 'REQUESTED') throw new Error('Withdrawal is not awaiting review.');
@@ -11,8 +11,8 @@ export async function processWalletWithdrawal(withdrawalId: string, adminUserId:
   if (!payout || !payout.verified || !payout.paystackRecipientCode) throw new Error('User payout account is not verified.');
 
   const providerReference = withdrawal.providerReference ?? withdrawalProviderReference(withdrawal.id);
-  await prisma.withdrawal.update({ where: { id: withdrawal.id }, data: { status: 'REVIEWING', reviewedById: adminUserId, reviewedAt: new Date(), providerReference, providerStatus: 'reviewing' } });
-  await prisma.auditLog.create({ data: { userId: adminUserId, action: 'WALLET_WITHDRAWAL_APPROVED_FOR_PROCESSING', entity: 'Withdrawal', entityId: withdrawal.id, data: { amount: withdrawal.amount, providerReference } } });
+  await prisma.withdrawal.update({ where: { id: withdrawal.id }, data: { status: 'REVIEWING', reviewedById: actorUserId, reviewedAt: new Date(), providerReference, providerStatus: 'reviewing' } });
+  await prisma.auditLog.create({ data: { userId: actorUserId, action: 'WALLET_WITHDRAWAL_APPROVED_FOR_PROCESSING', entity: 'Withdrawal', entityId: withdrawal.id, data: { amount: withdrawal.amount, providerReference } } });
 
   try {
     const transfer = await initiateTransfer({ amount: withdrawal.amount, recipientCode: payout.paystackRecipientCode, reference: providerReference, reason: `TruxPylot wallet withdrawal ${withdrawal.id}` });
@@ -22,11 +22,40 @@ export async function processWalletWithdrawal(withdrawalId: string, adminUserId:
       return { status: 'PAID' as const, transfer };
     }
     await prisma.withdrawal.update({ where: { id: withdrawal.id }, data: { status: 'APPROVED', providerTransferId: String(transfer.id), providerTransferCode: transfer.transfer_code ?? null, providerStatus: status || 'pending', providerError: null } });
-    await prisma.auditLog.create({ data: { userId: adminUserId, action: 'WALLET_WITHDRAWAL_SENT_TO_PAYSTACK', entity: 'Withdrawal', entityId: withdrawal.id, data: { providerReference, providerTransferId: transfer.id, providerStatus: status } } });
+    await prisma.auditLog.create({ data: { userId: actorUserId, action: 'WALLET_WITHDRAWAL_SENT_TO_PAYSTACK', entity: 'Withdrawal', entityId: withdrawal.id, data: { providerReference, providerTransferId: transfer.id, providerStatus: status } } });
     return { status: 'APPROVED' as const, transfer, needsOtp: status === 'otp' };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Paystack transfer failed.';
-    await markWithdrawalFailed(withdrawal.id, message, adminUserId);
+
+    // A network timeout can happen after Paystack has already accepted the
+    // transfer. Verify the same reference before reversing the user's wallet
+    // balance; never create a second transfer for an ambiguous request.
+    try {
+      const verified = await verifyTransfer(providerReference);
+      const verifiedStatus = String(verified.status ?? '').toLowerCase();
+      if (verifiedStatus === 'success') {
+        await markWithdrawalSuccessful(withdrawal.id, verified.id, verified.transfer_code, verifiedStatus);
+        return { status: 'PAID' as const, transfer: verified, recovered: true };
+      }
+      if (['pending', 'otp', 'processing'].includes(verifiedStatus)) {
+        await prisma.withdrawal.update({
+          where: { id: withdrawal.id },
+          data: {
+            status: 'APPROVED',
+            providerTransferId: String(verified.id),
+            providerTransferCode: verified.transfer_code ?? null,
+            providerStatus: verifiedStatus,
+            providerError: null,
+          },
+        });
+        return { status: 'APPROVED' as const, transfer: verified, needsOtp: verifiedStatus === 'otp', recovered: true };
+      }
+    } catch {
+      // Transfer reference was not confirmed. It is safe to reverse the wallet
+      // reservation and expose the provider error for retry/support.
+    }
+
+    await markWithdrawalFailed(withdrawal.id, message, actorUserId);
     throw new Error(message);
   }
 }

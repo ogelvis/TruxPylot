@@ -79,6 +79,12 @@ export async function finalizeTransfer(transferCode: string, otp: string) {
   return body.data;
 }
 
+
+export async function verifyTransfer(reference: string) {
+  const body = await paystackRequest<{ data: { id: number; reference: string; status: string; transfer_code?: string; failures?: unknown } }>(`/transfer/verify/${encodeURIComponent(reference)}`);
+  return body.data;
+}
+
 export function withdrawalProviderReference(withdrawalId: string) {
   const safe = withdrawalId.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 28);
   const random = crypto.randomUUID().replaceAll('-', '').slice(0, 8);
