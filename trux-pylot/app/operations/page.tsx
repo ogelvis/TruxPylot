@@ -12,7 +12,7 @@ export default async function OperationsPage() {
     prisma.serviceRequest.count({ where: { status: { in: ['SUBMITTED', 'CSD_REVIEWING', 'AVAILABILITY_CONFIRMATION'] } } }),
   ]);
   return <main className="ops-page">
-    <header className="ops-header"><div><p className="eyebrow">TRUXPYLOT OPERATIONS</p><h1>Operations Workspace</h1><p>Restricted workspace for assigned operational duties.</p></div><div className="ops-user">{session.email}<span className="ops-role">{session.role}</span><SignOutLink /></div></header>
+    <header className="ops-header"><div><p className="eyebrow">TRUXPYLOT OPERATIONS</p><h1>Operations Workspace</h1><p>Restricted workspace for assigned operational duties.</p></div><div className="ops-user">{session.email}<span className="ops-role">{session.role}</span><a href="/operations/security">Account security →</a><SignOutLink /></div></header>
     <section className="ops-grid" id="tasks">
       <article><span>◷</span><strong>{pendingVerifications}</strong><small>Verification items</small></article>
       <article><span>▣</span><strong>{serviceRequests}</strong><small>Service requests</small></article>
