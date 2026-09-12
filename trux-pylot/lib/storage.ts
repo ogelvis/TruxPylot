@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { scanUploadBuffer } from '@/lib/security';
 
 // Server-only client, separate from lib/otp.ts's anon-key client. Avatar
 // uploads need to write to a bucket regardless of which browser session
@@ -48,9 +49,14 @@ export async function uploadAvatar(userId: string, file: File): Promise<string> 
   if (file.size > MAX_AVATAR_BYTES) {
     throw new Error('Image must be smaller than 5MB.');
   }
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const signature = buffer.subarray(0, 12);
+  const validSignature = file.type === 'image/jpeg' ? signature[0] === 0xff && signature[1] === 0xd8 && signature[2] === 0xff : file.type === 'image/png' ? signature.toString('hex') === '89504e470d0a1a0a' : signature.toString('ascii', 0, 4) === 'RIFF' && signature.toString('ascii', 8, 12) === 'WEBP';
+  if (!validSignature) throw new Error('The file content does not match the selected image type.');
+  const scan = scanUploadBuffer(buffer, file.type);
+  if (!scan.safe) throw new Error(scan.reason);
   const path = `${userId}/${Date.now()}.${ext}`;
   const supabase = getServiceClient();
-  const buffer = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from(AVATAR_BUCKET).upload(path, buffer, {
     contentType: file.type,
     upsert: true,
@@ -81,9 +87,14 @@ export async function uploadVerificationDocument(professionalId: string, file: F
   if (file.size > MAX_DOC_BYTES) {
     throw new Error('Each file must be smaller than 10MB.');
   }
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const sig = buffer.subarray(0, 12);
+  const validSignature = file.type === 'image/jpeg' ? sig[0] === 0xff && sig[1] === 0xd8 && sig[2] === 0xff : file.type === 'image/png' ? sig.toString('hex') === '89504e470d0a1a0a' : sig.toString('ascii',0,5) === '%PDF-';
+  if (!validSignature) throw new Error('The file content does not match the selected file type.');
+  const scan = scanUploadBuffer(buffer, file.type);
+  if (!scan.safe) throw new Error(scan.reason);
   const path = `${professionalId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
   const supabase = getServiceClient();
-  const buffer = Buffer.from(await file.arrayBuffer());
   const { error } = await supabase.storage.from(VERIFICATION_BUCKET).upload(path, buffer, {
     contentType: file.type,
     upsert: false,

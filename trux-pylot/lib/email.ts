@@ -160,3 +160,27 @@ export async function sendServiceRequestDeclinedEmail(to: string, customerName: 
      <p><a href="${APP_URL}/marketplace">Browse other professionals →</a></p>`
   );
 }
+
+export async function sendFinancialTransactionEmail(data: {
+  to: string;
+  fullName: string;
+  title: string;
+  body: string;
+  amountKobo?: number;
+  reference?: string | null;
+  status?: string;
+}) {
+  const amount = data.amountKobo != null ? `₦${(data.amountKobo / 100).toLocaleString('en-NG')}` : null;
+  await sendEmail(
+    data.to,
+    `${data.title} — TruxPylot`,
+    `<h2>${data.title}</h2>
+     <p>Hi ${data.fullName},</p>
+     <p>${data.body}</p>
+     ${amount ? `<p><b>Amount:</b> ${amount}</p>` : ''}
+     ${data.status ? `<p><b>Status:</b> ${data.status}</p>` : ''}
+     ${data.reference ? `<p><b>Reference:</b> ${data.reference}</p>` : ''}
+     <p>This email is your TruxPylot transaction record. Keep it for your records.</p>
+     <p><a href="${APP_URL}/dashboard/notifications">View notifications →</a></p>`
+  );
+}

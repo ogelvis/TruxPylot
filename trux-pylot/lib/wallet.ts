@@ -1,6 +1,8 @@
 import crypto from 'node:crypto';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
+import { notifyUser } from '@/lib/notify';
+import { sendFinancialTransactionEmail } from '@/lib/email';
 
 export const MIN_WITHDRAWAL_KOBO = 20_000;
 
@@ -29,12 +31,12 @@ export async function applyWalletFunding(reference: string, amount: number, prov
   if (funding.status === 'SUCCESS') return { ok: true as const, already: true };
   if (funding.amount !== amount) return { ok: false as const, reason: 'amount_mismatch' as const };
 
-  await prisma.$transaction(async tx => {
+  const applied = await prisma.$transaction(async tx => {
     const updated = await tx.walletFunding.updateMany({
       where: { id: funding.id, status: 'PENDING' },
       data: { status: 'SUCCESS', providerEventId },
     });
-    if (!updated.count) return;
+    if (!updated.count) return false;
 
     await tx.wallet.update({
       where: { id: funding.walletId },
@@ -48,12 +50,21 @@ export async function applyWalletFunding(reference: string, amount: number, prov
         source: 'FUNDING',
         amount,
         status: 'COMPLETED',
-        description: 'Wallet funding',
+        description: 'MVault funding',
         reference,
         metadata: providerEventId ? { providerEventId } : undefined,
       },
     });
+    return true;
   });
+
+  if (!applied) return { ok: true as const, already: true };
+
+  const recipient = await prisma.wallet.findUnique({ where: { id: funding.walletId }, include: { professional: { include: { user: true } } } });
+  if (recipient?.professional?.user) {
+    await notifyUser({ userId: recipient.professional.userId, type: 'wallet_funding', title: 'MVault funded', body: `₦${(amount / 100).toLocaleString('en-NG')} was added to your MVault.`, link: '/dashboard/professional/wallet' }).catch(() => {});
+    await sendFinancialTransactionEmail({ to: recipient.professional.user.email, fullName: recipient.professional.fullName, title: 'MVault funded', body: 'Your TruxPylot MVault was funded successfully.', amountKobo: amount, reference, status: 'Completed' }).catch(() => {});
+  }
 
   return { ok: true as const, already: false };
 }
@@ -108,7 +119,7 @@ export async function applyDedicatedAccountTransfer(event: any) {
     : null);
 
   try {
-    return await prisma.$transaction(async tx => {
+    const result = await prisma.$transaction(async tx => {
       const existingTransfer = await tx.incomingTransfer.findUnique({ where: { reference } });
       const existingCredit = await tx.walletTransaction.findUnique({ where: { reference } });
 
@@ -202,16 +213,6 @@ export async function applyDedicatedAccountTransfer(event: any) {
         data: { status: 'COMPLETED', dedicatedAccountId: mappedAccount.id, matchedAt: transfer.matchedAt ?? new Date() },
       });
 
-      await tx.notification.create({
-        data: {
-          userId: professional.userId,
-          type: 'WALLET_DVA_CREDIT',
-          title: 'Wallet funded by bank transfer',
-          body: `₦${(amount / 100).toLocaleString()} has been added to your wallet.`,
-          link: '/dashboard/professional/wallet',
-        },
-      });
-
       console.info('[DVA TRANSFER] wallet credited', {
         reference,
         providerEventId,
@@ -223,6 +224,17 @@ export async function applyDedicatedAccountTransfer(event: any) {
 
       return { matched: true as const, duplicate: false as const, transferId: transfer.id, walletId: wallet.id };
     });
+
+    if (result.matched && !result.duplicate && mappedAccount) {
+      const recipient = await prisma.professional.findUnique({ where: { id: mappedAccount.professionalId }, include: { user: true } });
+      if (recipient) {
+        await notifyUser({ userId: recipient.userId, type: 'wallet_dva_credit', title: 'MVault funded by bank transfer', body: `₦${(amount / 100).toLocaleString('en-NG')} was added to your MVault.`, link: '/dashboard/professional/wallet' }).catch(() => {});
+        await sendFinancialTransactionEmail({ to: recipient.user.email, fullName: recipient.fullName, title: 'MVault funded by bank transfer', body: 'Your TruxPylot MVault received a confirmed bank transfer.', amountKobo: amount, reference, status: 'Completed' }).catch(() => {});
+      }
+    }
+
+    return result;
+
   } catch (error) {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       const existing = await prisma.walletTransaction.findUnique({ where: { reference } });

@@ -127,6 +127,8 @@ model User {
   suspensionReason String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  privacyPolicyVersion String?
+  privacyAcceptedAt DateTime?
   customer Customer?
   professional Professional?
   notifications Notification[]
@@ -142,6 +144,13 @@ model User {
   referralMilestoneAchievements ReferralMilestoneAchievement[]
   withdrawals Withdrawal[]
   payoutAccount PayoutAccount?
+  notificationPreferences NotificationPreference?
+  securityProfile SecurityProfile?
+  securityQuestions SecurityQuestion[]
+  loginAttempts LoginAttempt[]
+  recognizedDevices RecognizedDevice[]
+  suspensions AccountSuspension[]
+  announcementReads AnnouncementRead[]
 }
 
 enum AccountType {
@@ -173,6 +182,130 @@ enum ServiceRequestStatus {
   COMPLETED
   DECLINED
   CANCELLED
+}
+
+
+
+
+model SecurityProfile {
+  id String @id @default(cuid())
+  userId String @unique
+  passwordHash String?
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecretEncrypted String? @db.Text
+  recoveryCodesHash String? @db.Text
+  securityReminderSeenAt DateTime?
+  lastTwoFactorVerifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model SecurityQuestion {
+  id String @id @default(cuid())
+  userId String
+  question String
+  answerHash String @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
+}
+
+model LoginAttempt {
+  id String @id @default(cuid())
+  userId String?
+  email String?
+  action String
+  success Boolean @default(false)
+  riskLevel String @default("NORMAL")
+  failureReason String?
+  ipAddress String?
+  userAgent String? @db.Text
+  deviceFingerprint String?
+  metadata Json?
+  createdAt DateTime @default(now())
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  @@index([userId, createdAt])
+  @@index([email, createdAt])
+  @@index([success, createdAt])
+}
+
+model RecognizedDevice {
+  id String @id @default(cuid())
+  userId String
+  tokenHash String @unique
+  label String
+  userAgent String? @db.Text
+  ipAddress String?
+  firstSeenAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  revokedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, revokedAt])
+}
+
+model AccountSuspension {
+  id String @id @default(cuid())
+  userId String
+  status String @default("ACTIVE")
+  reason String
+  source String
+  riskScore Int @default(0)
+  requestedAt DateTime @default(now())
+  reviewedAt DateTime?
+  reviewedById String?
+  restoredAt DateTime?
+  restoredById String?
+  reviewNote String? @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, status])
+  @@index([status, requestedAt])
+}
+
+model SystemAnnouncement {
+  id String @id @default(cuid())
+  title String
+  body String @db.Text
+  audience String @default("ALL")
+  priority String @default("NORMAL")
+  status String @default("DRAFT")
+  publishAt DateTime?
+  expiresAt DateTime?
+  createdById String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  reads AnnouncementRead[]
+  @@index([status, publishAt, expiresAt])
+}
+
+model AnnouncementRead {
+  id String @id @default(cuid())
+  announcementId String
+  userId String
+  readAt DateTime @default(now())
+  announcement SystemAnnouncement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([announcementId, userId])
+  @@index([userId, readAt])
+}
+
+model NotificationPreference {
+  id String @id @default(cuid())
+  userId String @unique
+  jobs Boolean @default(true)
+  messages Boolean @default(true)
+  payments Boolean @default(true)
+  announcements Boolean @default(true)
+  profileVisibility String @default("PUBLIC")
+  communicationAllowed Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Customer {
