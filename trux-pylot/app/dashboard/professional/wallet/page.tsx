@@ -44,9 +44,9 @@ export default async function WalletPage() {
 
       <div className="wallet-heading">
         <div>
-          <span className="wallet-kicker">PYLOTWALLET / FINANCE</span>
+          <span className="wallet-kicker">PYLOTVAULT</span>
           <h1>Your financial center.</h1>
-          <p className="subcopy">One place to fund your wallet, manage payouts and track every naira.</p>
+          <p className="subcopy">One place to fund your MVault, manage payouts and track every naira.</p>
         </div>
         <span className="wallet-live"><i /> Ledger online</span>
       </div>
@@ -55,7 +55,7 @@ export default async function WalletPage() {
         <div className="wallet-balance"><span>AVAILABLE BALANCE</span><strong>{money(wallet?.availableBalance)}</strong><small>Ready for eligible spending and withdrawals</small><div className="wallet-gridline" /></div>
         <div className="wallet-mini"><span>PENDING</span><strong>{money(wallet?.pendingBalance)}</strong><small>Awaiting settlement</small></div>
         <div className="wallet-mini"><span>TOTAL EARNED</span><strong>{money(earned._sum.amount)}</strong><small>Completed earnings & rewards</small></div>
-        <div className="wallet-mini"><span>TOTAL WITHDRAWN</span><strong>{money(withdrawn._sum.amount)}</strong><small>Wallet withdrawal activity</small></div>
+        <div className="wallet-mini"><span>TOTAL WITHDRAWN</span><strong>{money(withdrawn._sum.amount)}</strong><small>MVault withdrawal activity</small></div>
       </section>
 
       <div className="wallet-primary-actions">
@@ -66,9 +66,9 @@ export default async function WalletPage() {
 
       <section className="wallet-command-grid">
         <div className="wallet-stack" id="wallet-money-in">
-          <div className="wallet-section-label"><span>MONEY IN</span><small>Fund your PylotWallet</small></div>
+          <div className="wallet-section-label"><span>MONEY IN</span><small>Fund your MVault</small></div>
           <section className="wallet-panel wallet-panel-modern">
-            <div className="wallet-panel-head"><div><span className="wallet-step">01</span><div><h2>Fund wallet</h2><p>Instant card or bank-based funding options.</p></div></div><span className="wallet-secure">SECURE</span></div>
+            <div className="wallet-panel-head"><div><span className="wallet-step">01</span><div><h2>Fund MVault</h2><p>Instant card or bank-based funding options.</p></div></div><span className="wallet-secure">SECURE</span></div>
             <WalletActions availableBalance={wallet?.availableBalance ?? 0} payoutAccount={payoutAccount} section="fund" />
           </section>
           <section className="wallet-panel wallet-panel-modern">
@@ -84,20 +84,20 @@ export default async function WalletPage() {
             <WalletActions availableBalance={wallet?.availableBalance ?? 0} payoutAccount={payoutAccount} section="payout" />
           </section>
           <section className="wallet-panel wallet-panel-modern">
-            <div className="wallet-panel-head"><div><span className="wallet-step">04</span><div><h2>Withdraw funds</h2><p>Request a payout from your available balance.</p></div></div><span className="wallet-secure">MIN ₦1,000</span></div>
+            <div className="wallet-panel-head"><div><span className="wallet-step">04</span><div><h2>Withdraw funds</h2><p>Request a payout from your available balance.</p></div></div><span className="wallet-secure">MIN ₦200</span></div>
             <WalletActions availableBalance={wallet?.availableBalance ?? 0} payoutAccount={payoutAccount} section="withdraw" />
           </section>
         </div>
       </section>
 
       <section className="wallet-panel wallet-history wallet-history-modern" id="wallet-history">
-        <div className="wallet-panel-head"><div><div><h2>Transaction activity</h2><p>Every wallet movement, directly from the ledger.</p></div></div><span className="wallet-count">{wallet?.transactions.length ?? 0}</span></div>
+        <div className="wallet-panel-head"><div><div><h2>Transaction activity</h2><p>Every MVault movement, directly from the ledger.</p></div></div><span className="wallet-count">{wallet?.transactions.length ?? 0}</span></div>
         <div className="wallet-history-header"><span>ACTIVITY</span><span>AMOUNT</span></div>
         {wallet?.transactions.length ? wallet.transactions.map(t => <div className="wallet-transaction" key={t.id}>
           <span className={`wallet-transaction-icon ${t.type === 'CREDIT' ? 'in' : 'out'}`}>{t.type === 'CREDIT' ? '↓' : '↑'}</span>
           <div><b>{t.description}</b><small>{t.source.replaceAll('_', ' ')} · {new Intl.DateTimeFormat('en-NG', { dateStyle: 'medium', timeStyle: 'short' }).format(t.createdAt)}{t.reference ? ` · ${t.reference}` : ''}</small></div>
           <strong className={t.type === 'CREDIT' ? 'credit' : 'debit'}>{t.type === 'CREDIT' ? '+' : '-'}₦{(t.amount / 100).toLocaleString('en-NG')}<em>{t.status}</em></strong>
-        </div>) : <div className="wallet-empty">No wallet activity yet.<span>Your confirmed funding and earnings will appear here.</span></div>}
+        </div>) : <div className="wallet-empty">No MVault activity yet.<span>Your confirmed funding and earnings will appear here.</span></div>}
       </section>
     </main>
   </AppShell>;

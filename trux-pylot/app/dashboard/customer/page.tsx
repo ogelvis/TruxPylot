@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
+import { DailyThought } from '@/components/daily-thought';
+import { SystemUpdates } from '@/components/system-updates';
 
 export default async function CustomerDashboard() {
   const session = await requireRole('CUSTOMER');
@@ -29,6 +31,8 @@ export default async function CustomerDashboard() {
           <a className="primary" href="/marketplace">Request a professional →</a>
         </div>
 
+        <DailyThought />
+        <SystemUpdates />
         <section className="metrics">
           <div className="metric"><span>Active requests</span><b>{activeCount}</b><small>In progress</small></div>
           <div className="metric"><span>Pending requests</span><b>{pendingCount}</b><small>Awaiting a quote</small></div>

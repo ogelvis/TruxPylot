@@ -30,7 +30,7 @@ export default async function GrowthCenter() {
     <main className="dash-page growth-dashboard">
       <div className="growth-hero">
         <div><span className="wallet-kicker">GROW / PROMOTE / ADVANCE</span><h1>Put your business in front of more people.</h1><p className="subcopy">Three separate ways to strengthen your presence on Trux Pylot. Choose one, or use the combination that fits your goals.</p></div>
-        <div className="growth-hero-balance"><span>Wallet available</span><strong>₦{((professional.wallet?.availableBalance ?? 0)/100).toLocaleString('en-NG')}</strong><a href="/dashboard/professional/wallet">Manage wallet →</a></div>
+        <div className="growth-hero-balance"><span>MVault available</span><strong>₦{((professional.wallet?.availableBalance ?? 0)/100).toLocaleString('en-NG')}</strong><a href="/dashboard/professional/wallet">Manage MVault →</a></div>
       </div>
 
       <section className="growth-dashboard-grid">

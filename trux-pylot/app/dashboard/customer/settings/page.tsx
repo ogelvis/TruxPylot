@@ -1,6 +1,8 @@
 import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
+import { NotificationSettings } from '@/components/notification-settings';
+import { SecurityCenter } from '@/components/security-center';
 
 export default async function CustomerSettings() {
   const session = await requireRole('CUSTOMER');
@@ -24,19 +26,9 @@ export default async function CustomerSettings() {
 
         </div>
 
-        <section className="panel">
-          <div className="panel-head"><h2>Coming soon</h2></div>
-          <div className="job-detail-body">
-            <p className="subcopy" style={{ marginBottom: 12 }}>
-              These need a small database update before they can store real data, so they&apos;re not shown as live controls yet:
-            </p>
-            <ul className="coming-soon-list">
-              <li>Notification preferences</li>
-              <li>Saved / favourite professionals</li>
-              <li>Active sessions / device management</li>
-            </ul>
-          </div>
-        </section>
+        <SecurityCenter />
+
+        <NotificationSettings />
       </main>
     </AppShell>
   );

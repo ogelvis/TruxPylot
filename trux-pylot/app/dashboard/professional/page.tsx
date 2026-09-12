@@ -1,6 +1,8 @@
 import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
+import { DailyThought } from '@/components/daily-thought';
+import { SystemUpdates } from '@/components/system-updates';
 import { getTruxPylotScore } from '@/lib/truxpylot-score';
 
 export default async function ProfessionalDashboard() {
@@ -39,6 +41,8 @@ export default async function ProfessionalDashboard() {
   const displayName = professional.accountType === 'BUSINESS' ? (professional.businessName || professional.fullName) : professional.fullName;
   return <AppShell role="PROFESSIONAL" name={displayName} avatarUrl={professional.avatarUrl} verified={professional.verificationStatus === 'APPROVED'} active="/dashboard/professional" isBusiness={professional.accountType === 'BUSINESS' || Boolean(teamMembership)}>
     <main className="dash-page"><div className="overview-top"><div><h1>Business Command Center</h1><p className="subcopy">A live view of your business activity and next best actions.</p></div><a className="primary" href={`/marketplace/${professional.id}`}>View public profile →</a></div>
+      <DailyThought />
+      <SystemUpdates />
       <section className="metrics">
         <div className="metric"><span>Payments received</span><b>₦{((successfulPayments._sum.amount ?? 0) / 100).toLocaleString()}</b><small>{successfulPayments._count._all} successful payment{successfulPayments._count._all === 1 ? '' : 's'}</small></div>
         <div className="metric"><span>New enquiries today</span><b>{enquiriesToday}</b><small>{unansweredEnquiries} awaiting your response</small></div>
