@@ -60,6 +60,14 @@ if (!session && explore !== '1') {
 
   return (
     <main className="tp-home">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({
+        '@context':'https://schema.org', '@type':'WebSite', name:'TruxPylot', url:'https://truxpylot.com',
+        description:'Find trusted professionals for services and everyday jobs.',
+        potentialAction:{'@type':'SearchAction',target:'https://truxpylot.com/marketplace?query={search_term_string}','query-input':'required name=search_term_string'}
+      })}} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({
+        '@context':'https://schema.org','@type':'Organization',name:'TruxPylot',url:'https://truxpylot.com',logo:'https://truxpylot.com/trux-pylot-logo.png',sameAs:[]
+      })}} />
       <ScrollReveal />
       <style dangerouslySetInnerHTML={{ __html: `
         .tp-home{--tp-ink:#10233f;--tp-blue:#155eef;--tp-navy:#071b49;--tp-muted:#667895;--tp-line:#dce5f2;background:#f8fbff}
