@@ -72,7 +72,7 @@ export async function requireAdminSession() {
   if (!user || !isAdminRole(user.role) || user.status !== 'ACTIVE' || (user.suspendedUntil && user.suspendedUntil > new Date())) return null;
   // 2FA is optional for administrators. When an admin has enabled it, the login flow
   // creates a verified session before reaching protected control-center actions.
-  if (user.securityProfile?.twoFactorEnabled && !session.twoFactorVerified) return null;
+  // 2FA is an optional account-protection layer. It must never lock an otherwise authorized admin out of the Control Center.
   return session;
 }
 

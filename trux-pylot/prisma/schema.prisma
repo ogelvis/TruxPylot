@@ -229,6 +229,8 @@ model LoginAttempt {
   @@index([userId, createdAt])
   @@index([email, createdAt])
   @@index([success, createdAt])
+  @@index([role, status, createdAt])
+  @@index([createdAt])
 }
 
 model RecognizedDevice {
@@ -383,6 +385,8 @@ model TeamMember {
   @@unique([businessId, email])
   @@unique([businessId, professionalId])
   @@index([businessId, status])
+  @@index([verificationStatus, createdAt])
+  @@index([state, city])
 }
 
 model Conversation {
@@ -498,6 +502,8 @@ model ServiceRequest {
   category ServiceCategory @relation(fields: [categoryId], references: [id])
   conversations Conversation[]
   @@index([status, createdAt])
+  @@index([customerId, createdAt])
+  @@index([professionalId, createdAt])
 }
 
 model Booking {
@@ -550,6 +556,7 @@ model ProfessionalService {
   professional Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
   category ServiceCategory @relation(fields: [categoryId], references: [id])
   @@unique([professionalId, categoryId])
+  @@index([categoryId, professionalId])
 }
 
 model VerificationRequest {
@@ -777,6 +784,8 @@ model AuditLog {
   data Json?
   createdAt DateTime @default(now())
   user User? @relation(fields: [userId], references: [id])
+  @@index([createdAt])
+  @@index([userId, createdAt])
 }
 
 model ReferralCampaign {
