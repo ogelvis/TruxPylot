@@ -123,6 +123,8 @@ model User {
   phone String? @unique
   role Role
   status UserStatus @default(ACTIVE)
+  authProvider String @default("password")
+  googleSubject String? @unique
   suspendedUntil DateTime?
   suspensionReason String?
   createdAt DateTime @default(now())
@@ -328,6 +330,8 @@ model Customer {
   reviews Review[]
   serviceRequests ServiceRequest[]
   conversationsAsCustomer Conversation[] @relation("CustomerConversations")
+  jobPostings JobPosting[]
+  receivedJobInterests JobInterest[] @relation("JobGiverInterests")
 }
 
 model Professional {
@@ -364,6 +368,7 @@ model Professional {
   instantAdvertPurchases InstantAdvertPurchase[]
   portfolioItems PortfolioItem[]
   conversationsAsProfessional Conversation[] @relation("ProfessionalConversations")
+  jobInterests JobInterest[] @relation("ProfessionalJobInterests")
   ownedTeamMembers TeamMember[] @relation("BusinessTeam")
   teamMemberships TeamMember[] @relation("ProfessionalTeamMemberships")
 }
@@ -598,6 +603,42 @@ model Job {
   conversations Conversation[]
   booking Booking?
   @@index([status, createdAt])
+}
+
+
+model JobPosting {
+  id String @id @default(cuid())
+  customerId String
+  title String
+  location String
+  description String @db.Text
+  category String?
+  budget Int?
+  deadline DateTime?
+  status String @default("OPEN")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  interests JobInterest[]
+  @@index([customerId, status, createdAt])
+  @@index([status, createdAt])
+}
+
+model JobInterest {
+  id String @id @default(cuid())
+  jobPostingId String
+  professionalId String
+  jobGiverId String
+  message String @db.Text
+  status String @default("SENT")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  jobPosting JobPosting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  professional Professional @relation("ProfessionalJobInterests", fields: [professionalId], references: [id], onDelete: Cascade)
+  jobGiver Customer @relation("JobGiverInterests", fields: [jobGiverId], references: [id], onDelete: Cascade)
+  @@unique([jobPostingId, professionalId])
+  @@index([jobGiverId, createdAt])
+  @@index([professionalId, createdAt])
 }
 
 model Quote {
