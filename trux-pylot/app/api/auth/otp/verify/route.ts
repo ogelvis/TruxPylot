@@ -170,7 +170,7 @@ export async function POST(request: Request) {
   }
   const token = await createSession({ userId: user.id, role: user.role, email: user.email, deviceId: device.id, twoFactorVerified: false });
   await writeAuditLog({ userId: user.id, action: 'LOGIN', entity: 'Session', data: { role: user.role, newDevice: device.isNew } });
-  const response = NextResponse.json({ redirect: (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') ? '/dashboard/admin/security?required=1' : dashboardPath(user.role), newDevice: device.isNew });
+  const response = NextResponse.json({ redirect: dashboardPath(user.role), newDevice: device.isNew });
   response.cookies.set('tp_session', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 604800 });
   response.cookies.set('tp_device', deviceToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 31536000 });
   return response;
