@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import PwaRegister from '@/components/pwa-register';
 
 const baseUrl = 'https://truxpylot.com';
 export const metadata: Metadata = {
@@ -13,6 +14,13 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: 'TruxPylot | Find the Right Professional', description: 'Find the right professional for your next job.', images: ['/trux-pylot-logo.png'] },
   robots: { index: true, follow: true, googleBot: { index: true, follow: true, 'max-image-preview': 'large', 'max-snippet': -1, 'max-video-preview': -1 } },
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    title: 'TruxPylot',
+    statusBarStyle: 'default',
+  },
 };
 export const viewport: Viewport = { themeColor: '#073fc8' };
-export default function Layout({children}:{children:React.ReactNode}) { return <html lang="en"><body>{children}</body></html>; }
+export default function Layout({children}:{children:React.ReactNode}) {
+  return <html lang="en"><body><PwaRegister />{children}</body></html>;
+}
