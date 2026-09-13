@@ -59,6 +59,7 @@ enum UserStatus {
   ACTIVE
   SUSPENDED
   BLOCKED
+  DELETED
 }
 
 enum ReferralStatus {
@@ -123,6 +124,10 @@ model User {
   phone String? @unique
   role Role
   status UserStatus @default(ACTIVE)
+  deletedAt DateTime?
+  deletedEmail String?
+  deletedPhone String?
+  deletedGoogleSubject String?
   authProvider String @default("password")
   googleSubject String? @unique
   suspendedUntil DateTime?
