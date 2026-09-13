@@ -4,6 +4,7 @@ import { randomBytes } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { createSession, dashboardPath, createAuthChallenge } from '@/lib/auth';
 import { createDeviceToken, ensureDevice, deviceHash, recordLoginAttempt } from '@/lib/security';
+import { getSupabaseAuthUserById } from '@/lib/supabase-admin';
 
 const googleKeys=createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 function secret(){return new TextEncoder().encode(process.env.AUTH_SECRET || 'development-only-change-me');}
@@ -21,6 +22,32 @@ export async function GET(request:Request){
     const payload=verified.payload; const email=typeof payload.email==='string'?payload.email.trim().toLowerCase():''; const sub=typeof payload.sub==='string'?payload.sub:''; const name=typeof payload.name==='string'?payload.name:'Google user';
     if(!email||!sub||payload.email_verified!==true) return NextResponse.redirect(new URL('/login?google=email-not-verified',request.url));
     let user=await prisma.user.findFirst({where:{OR:[{googleSubject:sub},{email}]}});
+    if(user){
+      try {
+        const authState = await getSupabaseAuthUserById(user.id);
+        if (authState.missing) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: {
+              status: 'DELETED',
+              deletedAt: new Date(),
+              deletedEmail: user.email,
+              deletedPhone: user.phone,
+              deletedGoogleSubject: user.googleSubject,
+              email: `deleted-${user.id}@deleted.truxpylot.invalid`,
+              phone: null,
+              googleSubject: null,
+              suspendedUntil: null,
+              suspensionReason: 'Account deleted in Supabase Auth',
+            },
+          });
+          user = null;
+        }
+      } catch (error) {
+        console.error('[google/callback] Supabase account reconciliation failed:', error instanceof Error ? error.message : error);
+        return NextResponse.redirect(new URL('/login?google=failed',request.url));
+      }
+    }
     if(user){
       if(user.status!=='ACTIVE') return NextResponse.redirect(new URL('/login?blocked=1',request.url));
       if(!user.googleSubject) await prisma.user.update({where:{id:user.id},data:{googleSubject:sub,authProvider:'google'}});
