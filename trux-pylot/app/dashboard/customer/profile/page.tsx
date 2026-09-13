@@ -3,10 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
 import { CustomerProfileForm } from '@/components/customer-profile-form';
 import { AvatarUpload } from '@/components/avatar-upload';
+import { JobPostingForm } from '@/components/job-posting-form';
 
 export default async function CustomerProfile() {
   const session = await requireRole('CUSTOMER');
-  const customer = await prisma.customer.findUnique({ where: { userId: session.userId }, include: { user: true } });
+  const customer = await prisma.customer.findUnique({ where: { userId: session.userId }, include: { user: true, jobPostings: { where: { status: 'OPEN' }, orderBy: { createdAt: 'desc' } } } });
   if (!customer) return null;
 
   return (
@@ -28,6 +29,12 @@ export default async function CustomerProfile() {
               street={customer.street ?? ''}
             />
           </div>
+        </section>
+
+        <section className="panel job-giver-panel">
+          <div className="panel-head"><div><span className="identity-badge job-giver">{customer.accountType === 'BUSINESS' ? 'BUSINESS / JOB GIVER' : 'JOB GIVER'}</span><h2>Have a job?</h2><p>Post an opening so verified TruxPylot professionals can discover it and express interest.</p></div></div>
+          <JobPostingForm />
+          {customer.jobPostings.length > 0 && <div className="job-postings-list"><h3>Your open jobs</h3>{customer.jobPostings.map(job => <article className="mini-job" key={job.id}><div><b>{job.title}</b><span>{job.location}</span></div><a href={`/job-givers/${customer.id}`}>View public profile →</a></article>)}</div>}
         </section>
       </main>
     </AppShell>
