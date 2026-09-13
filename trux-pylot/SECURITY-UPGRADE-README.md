@@ -22,7 +22,6 @@ This build extends the existing TruxPylot application without replacing the work
 - Admin-controlled System Announcements for customers/professionals.
 - Customer/professional dashboard Important Updates section.
 - Daily motivational/thought box with short attributed quotes and original TruxPylot sayings.
-- TXP BOT exposed as the compact live dashboard assistant.
 - Privacy Policy acceptance is required before registration completes.
 - Privacy-policy version and acceptance timestamp are recorded.
 - Both existing MVault funding methods remain available: Paystack checkout and direct dedicated-account transfer.
