@@ -30,11 +30,36 @@ export function UserStatusActions({ userId, currentStatus }: { userId: string; c
     router.refresh();
   }
 
+  async function deleteAccount() {
+    const confirmed = window.confirm(
+      'Delete this account permanently? The Supabase Auth account will be deleted and the TruxPylot record will be retained as a deleted history record. The email can be registered again.'
+    );
+    if (!confirmed) return;
+    setBusy('DELETE');
+    setError('');
+    const r = await fetch(`/api/admin/users/${userId}/delete`, { method: 'DELETE' });
+    const d = await r.json().catch(() => ({ error: 'Something went wrong.' }));
+    setBusy(null);
+    if (!r.ok) {
+      setError(d.error || 'Could not delete this account.');
+      return;
+    }
+    router.push('/dashboard/admin/users');
+    router.refresh();
+  }
+
+  if (currentStatus === 'DELETED') {
+    return <div className="verification-actions"><p className="subcopy">This account is deleted. Its historical platform records are retained.</p></div>;
+  }
+
   if (currentStatus !== 'ACTIVE') {
     return (
       <div className="verification-actions">
         <button className="btn-approve" disabled={!!busy} onClick={() => act('REACTIVATE')}>
           {busy === 'REACTIVATE' ? 'Reactivating…' : 'Reactivate account'}
+        </button>
+        <button className="btn-reject" disabled={!!busy} onClick={deleteAccount}>
+          {busy === 'DELETE' ? 'Deleting…' : 'Delete account'}
         </button>
         {error && <p className="form-status err">{error}</p>}
       </div>
@@ -56,6 +81,9 @@ export function UserStatusActions({ userId, currentStatus }: { userId: string; c
         </button>
         <button className="btn-reject" disabled={!!busy} onClick={() => act('BLOCK')}>
           {busy === 'BLOCK' ? 'Blocking…' : 'Block permanently'}
+        </button>
+        <button className="btn-reject" disabled={!!busy} onClick={deleteAccount}>
+          {busy === 'DELETE' ? 'Deleting…' : 'Delete account'}
         </button>
       </div>
       {error && <p className="form-status err">{error}</p>}
