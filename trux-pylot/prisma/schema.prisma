@@ -229,7 +229,6 @@ model LoginAttempt {
   @@index([userId, createdAt])
   @@index([email, createdAt])
   @@index([success, createdAt])
-  @@index([role, status, createdAt])
   @@index([createdAt])
 }
 
@@ -385,8 +384,6 @@ model TeamMember {
   @@unique([businessId, email])
   @@unique([businessId, professionalId])
   @@index([businessId, status])
-  @@index([verificationStatus, createdAt])
-  @@index([state, city])
 }
 
 model Conversation {
