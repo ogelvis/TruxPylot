@@ -67,9 +67,12 @@ export async function verifyAuthChallenge(token: string): Promise<AuthChallenge 
 
 export async function requireAdminSession() {
   const session = await getSession();
-  if (!session || !isAdminRole(session.role) || !session.twoFactorVerified) return null;
-  const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { status: true, suspendedUntil: true, role: true } });
+  if (!session || !isAdminRole(session.role)) return null;
+  const user = await prisma.user.findUnique({ where: { id: session.userId }, select: { status: true, suspendedUntil: true, role: true, securityProfile: { select: { twoFactorEnabled: true } } } });
   if (!user || !isAdminRole(user.role) || user.status !== 'ACTIVE' || (user.suspendedUntil && user.suspendedUntil > new Date())) return null;
+  // 2FA is optional for administrators. When an admin has enabled it, the login flow
+  // creates a verified session before reaching protected control-center actions.
+  if (user.securityProfile?.twoFactorEnabled && !session.twoFactorVerified) return null;
   return session;
 }
 
