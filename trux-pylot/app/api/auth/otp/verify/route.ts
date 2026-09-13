@@ -43,6 +43,28 @@ export async function POST(request: Request) {
   const verifiedEmail = authUser.email ? normalizeEmail(authUser.email) : email;
   let user = await prisma.user.findUnique({ where: { email: verifiedEmail } });
 
+  // If Supabase created a new Auth identity for an email whose old Prisma
+  // record remained behind, retire the stale record before creating the new
+  // account. This is what makes direct deletion from Supabase Dashboard safe.
+  if (user && user.id !== authUser.id) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        status: 'DELETED',
+        deletedAt: new Date(),
+        deletedEmail: user.email,
+        deletedPhone: user.phone,
+        deletedGoogleSubject: user.googleSubject,
+        email: `deleted-${user.id}@deleted.truxpylot.invalid`,
+        phone: null,
+        googleSubject: null,
+        suspendedUntil: null,
+        suspensionReason: 'Previous Supabase Auth account was deleted',
+      },
+    });
+    user = null;
+  }
+
   if (!user) {
     // First-time verification — this completes registration using the
     // profile fields we stashed in the Supabase user's metadata when the
