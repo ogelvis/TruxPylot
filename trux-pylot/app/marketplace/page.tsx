@@ -26,7 +26,7 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
         <Link href="/"><img src="/trux-pylot-logo.png" alt="Trux Pylot" /></Link>
         <nav>
           <a href="/marketplace">Find a professional</a>
-          <a className="nav-cta" href="/register">Join as a professional</a>
+          <a href="/job-givers">Job opportunities</a><a className="nav-cta" href="/register">Join as a professional</a>
         </nav>
       </header>
 
@@ -64,7 +64,7 @@ export default async function Marketplace({ searchParams }: { searchParams: Prom
             <Link key={p.id} href={'/marketplace/' + p.id} className="professional-card">
               <div className="professional-card-head">
                 <b>{p.fullName}</b>
-                <span className="verified-badge">✓ Verified</span>
+                <span className="verified-badge">✓ Verified</span><span className="identity-badge professional">PROFESSIONAL</span>
                 {p.promotedListings.length > 0 && <span className="verified-badge">Promoted</span>}
               </div>
               {(() => {
