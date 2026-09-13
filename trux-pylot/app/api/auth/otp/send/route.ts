@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { rateLimit } from '@/lib/rate-limit';
 import { sendEmailOtp, normalizeEmail, describeOtpError } from '@/lib/otp';
 import { encryptSecret, recordLoginAttempt } from '@/lib/security';
+import { getSupabaseAuthUserById } from '@/lib/supabase-admin';
 
 export const runtime = 'nodejs';
 
@@ -111,7 +112,37 @@ export async function POST(request: Request) {
   }
 
   if (d.mode === 'register') {
-    if (existing) return NextResponse.json({ error: 'That email is already registered. Try signing in instead.' }, { status: 409 });
+    if (existing) {
+      // A user can be removed directly from Supabase Dashboard. In that case
+      // the old Prisma row would otherwise keep the email permanently locked.
+      // Reconcile only when Supabase explicitly says the linked auth user is
+      // missing; transient Supabase errors must never be treated as deletion.
+      try {
+        const authState = await getSupabaseAuthUserById(existing.id);
+        if (authState.missing) {
+          await prisma.user.update({
+            where: { id: existing.id },
+            data: {
+              status: 'DELETED',
+              deletedAt: new Date(),
+              deletedEmail: existing.email,
+              deletedPhone: existing.phone,
+              deletedGoogleSubject: existing.googleSubject,
+              email: `deleted-${existing.id}@deleted.truxpylot.invalid`,
+              phone: null,
+              googleSubject: null,
+              suspendedUntil: null,
+              suspensionReason: 'Account deleted in Supabase Auth',
+            },
+          });
+        } else {
+          return NextResponse.json({ error: 'That email is already registered. Try signing in instead.' }, { status: 409 });
+        }
+      } catch (err) {
+        console.error('[otp/send] Supabase account reconciliation failed:', err instanceof Error ? err.message : err);
+        return NextResponse.json({ error: 'We could not verify the status of this account right now. Please try again shortly.' }, { status: 503 });
+      }
+    }
     if (d.password !== d.confirmPassword) return NextResponse.json({ error: 'Passwords do not match.' }, { status: 400 });
     if (d.accountType === 'BUSINESS' && (!d.businessName?.trim() || !d.registrationNumber?.trim())) {
       return NextResponse.json({ error: 'Business name and registration number are required for a business account.' }, { status: 400 });
