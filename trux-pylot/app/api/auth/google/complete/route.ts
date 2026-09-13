@@ -1,0 +1,13 @@
+import { NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
+import { z } from 'zod';
+import { sendEmailOtp, normalizeEmail } from '@/lib/otp';
+
+const input=z.object({role:z.enum(['CUSTOMER','PROFESSIONAL']),accountType:z.enum(['INDIVIDUAL','BUSINESS']),businessName:z.string().max(160).optional(),registrationNumber:z.string().max(60).optional(),phone:z.string().min(7).max(20).optional(),country:z.string().max(80).optional(),state:z.string().max(80).optional(),city:z.string().max(80).optional(),area:z.string().max(120).optional(),street:z.string().max(200).optional(),profession:z.string().max(120).optional(),yearsExperience:z.coerce.number().int().min(0).max(60).optional(),privacyAccepted:z.literal(true),privacyPolicyVersion:z.string().max(40)});
+function secret(){return new TextEncoder().encode(process.env.AUTH_SECRET || 'development-only-change-me');}
+export async function GET(request:Request){ const token=request.headers.get('cookie')?.match(/(?:^|;\s*)tp_google_pending=([^;]+)/)?.[1]; if(!token)return NextResponse.json({error:'No pending Google sign-up.'},{status:404}); try{const {payload}=await jwtVerify(token,secret());return NextResponse.json({email:payload.email,name:payload.name});}catch{return NextResponse.json({error:'Google sign-up session expired.'},{status:400});}}
+
+export async function POST(request:Request){
+ const token=request.headers.get('cookie')?.match(/(?:^|;\s*)tp_google_pending=([^;]+)/)?.[1]; if(!token)return NextResponse.json({error:'Your Google sign-up session expired. Please start again.'},{status:400});
+ try{const {payload}=await jwtVerify(token,secret());const email=typeof payload.email==='string'?normalizeEmail(payload.email):'';const sub=typeof payload.sub==='string'?payload.sub:'';const name=typeof payload.name==='string'?payload.name:'';if(!email||!sub||!name)return NextResponse.json({error:'Google account details could not be confirmed.'},{status:400});const parsed=input.safeParse(await request.json().catch(()=>null));if(!parsed.success)return NextResponse.json({error:'Please complete the required account details.'},{status:400});if(parsed.data.accountType==='BUSINESS'&&(!parsed.data.businessName?.trim()||!parsed.data.registrationNumber?.trim()))return NextResponse.json({error:'Business name and registration number are required.'},{status:400});await sendEmailOtp(email,{shouldCreateUser:true,data:{...parsed.data,fullName:name,authProvider:'google',googleSubject:sub}});return NextResponse.json({ok:true,email});}catch(error){console.error('[google/complete]',error instanceof Error?error.message:error);return NextResponse.json({error:'Google sign-up could not be completed. Please try again.'},{status:400});}
+}

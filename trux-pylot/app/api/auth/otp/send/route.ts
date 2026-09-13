@@ -26,7 +26,8 @@ const registerFields = z.object({
   profession: z.string().max(120).optional(),
   yearsExperience: z.coerce.number().int().min(0).max(60).optional(),
   referralCode: z.string().max(40).optional(),
-  password: z.string().min(12).max(200).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/),
+  password: z.string().min(8).max(200).regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/),
+  confirmPassword: z.string().min(8).max(200),
   securityQuestion: z.string().min(5).max(200),
   securityAnswer: z.string().min(2).max(200),
   privacyAccepted: z.literal(true),
@@ -111,10 +112,11 @@ export async function POST(request: Request) {
 
   if (d.mode === 'register') {
     if (existing) return NextResponse.json({ error: 'That email is already registered. Try signing in instead.' }, { status: 409 });
+    if (d.password !== d.confirmPassword) return NextResponse.json({ error: 'Passwords do not match.' }, { status: 400 });
     if (d.accountType === 'BUSINESS' && (!d.businessName?.trim() || !d.registrationNumber?.trim())) {
       return NextResponse.json({ error: 'Business name and registration number are required for a business account.' }, { status: 400 });
     }
-    const { mode: _mode, email, password, securityAnswer, privacyAccepted: _privacyAccepted, ...profile } = d;
+    const { mode: _mode, email, password, confirmPassword: _confirmPassword, securityAnswer, privacyAccepted: _privacyAccepted, ...profile } = d;
     const secureProfile = { ...profile, passwordEncrypted: encryptSecret(password), securityAnswerEncrypted: encryptSecret(securityAnswer), privacyPolicyVersion: d.privacyPolicyVersion, privacyAcceptedAt: new Date().toISOString() };
     try {
       await sendEmailOtp(email, { shouldCreateUser: true, data: secureProfile });

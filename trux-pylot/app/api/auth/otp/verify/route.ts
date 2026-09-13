@@ -64,6 +64,8 @@ export async function POST(request: Request) {
           id: authUser.id,
           email: verifiedEmail,
           role,
+          authProvider: typeof meta.authProvider === 'string' ? meta.authProvider : 'password',
+          googleSubject: typeof meta.googleSubject === 'string' ? meta.googleSubject : undefined,
           privacyPolicyVersion: typeof meta.privacyPolicyVersion === 'string' ? meta.privacyPolicyVersion : null,
           privacyAcceptedAt: typeof meta.privacyAcceptedAt === 'string' ? new Date(meta.privacyAcceptedAt) : null,
           phone: (meta.phone as string | undefined) || undefined,
