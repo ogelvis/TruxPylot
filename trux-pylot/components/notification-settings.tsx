@@ -20,5 +20,5 @@ export function NotificationSettings(){
     if(!r?.ok){setPrefs(prefs);setMessage('Could not save that preference.');} else setMessage('Saved');
     setBusy(null); window.setTimeout(()=>setMessage(''),1200);
   }
-  return <section className="panel"><div className="panel-head"><div><h2>Notification preferences</h2><p>Choose which dashboard updates you want to receive.</p></div>{message&&<span className="status approved">{message}</span>}</div>{labels.map(([key,title,desc])=><div className="settings-toggle-row" key={key}><div><b>{title}</b><small>{desc}</small></div><button type="button" className={'settings-toggle '+(prefs[key]?'on':'')} aria-label={`${title}: ${prefs[key]?'on':'off'}`} onClick={()=>toggle(key)} disabled={busy===key}/></div>)}</section>;
+  return <section className="panel notification-settings-modern"><div className="panel-head"><div><h2>Notification preferences</h2><p>Choose which dashboard updates you want to receive.</p></div>{message&&<span className="status approved">{message}</span>}</div>{labels.map(([key,title,desc])=><div className="settings-toggle-row" key={key}><div><b>{title}</b><small>{desc}</small></div><button type="button" className={'settings-toggle '+(prefs[key]?'on':'')} aria-label={`${title}: ${prefs[key]?'on':'off'}`} onClick={()=>toggle(key)} disabled={busy===key}/></div>)}</section>;
 }

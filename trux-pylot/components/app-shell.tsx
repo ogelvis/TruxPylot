@@ -5,7 +5,6 @@ import { MobileTabBar } from '@/components/mobile-tab-bar';
 import { NotificationBell } from '@/components/notification-bell';
 import { SignOutLink } from '@/components/sign-out-link';
 import { SecurityReminder } from '@/components/security-reminder';
-import TruxPylotChat from '@/components/truxpylot-chat';
 
 const nav: Record<Role, { label: string; href: string; icon: string }[]> = {
   CUSTOMER: [
@@ -214,7 +213,6 @@ export function AppShell({
         {children}
 
         <SecurityReminder role={role} />
-        <TruxPylotChat />
 
         <MobileTabBar
           role={role}
