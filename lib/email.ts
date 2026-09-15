@@ -39,6 +39,55 @@ function getConfig() {
   return { apiKey, from };
 }
 
+function escapeHtml(value: unknown) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function brandedEmail(title: string, bodyHtml: string, options?: { eyebrow?: string; ctaText?: string; ctaLink?: string }) {
+  const eyebrow = options?.eyebrow || 'TRUXPYLOT';
+  const workerImage = `${APP_URL}/email-worker.png`;
+  const cta = options?.ctaLink && options?.ctaText
+    ? `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:26px auto 0;"><tr><td style="border-radius:10px;background:#2563eb;"><a href="${escapeHtml(options.ctaLink)}" style="display:inline-block;padding:13px 22px;color:#ffffff;text-decoration:none;font-size:14px;font-weight:700;">${escapeHtml(options.ctaText)} &rarr;</a></td></tr></table>`
+    : '';
+
+  return `<!doctype html>
+<html><body style="margin:0;padding:0;background:#eef2f7;font-family:Arial,Helvetica,sans-serif;color:#172033;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#eef2f7;">
+<tr><td align="center" style="padding:32px 14px;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;background:#ffffff;border-radius:22px;overflow:hidden;box-shadow:0 12px 40px rgba(15,23,42,.10);">
+<tr><td style="background:#111827;padding:28px 30px 0;">
+  <div style="font-size:25px;font-weight:800;letter-spacing:-.8px;color:#ffffff;">TRUX<span style="color:#3b82f6;">PYLOT</span></div>
+  <div style="margin-top:22px;display:inline-block;padding:7px 12px;border:1px solid #334155;border-radius:50px;color:#93c5fd;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;">${escapeHtml(eyebrow)}</div>
+  <h1 style="margin:15px 0 24px;font-size:29px;line-height:1.2;letter-spacing:-1px;color:#ffffff;">${escapeHtml(title)}</h1>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td style="height:1px;background:#334155;font-size:1px;line-height:1px;">&nbsp;</td></tr></table>
+</td></tr>
+<tr><td style="padding:0 30px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="right" style="height:145px;vertical-align:bottom;">
+    <img src="${workerImage}" width="150" alt="TruxPylot professional" style="display:block;width:150px;max-width:150px;height:auto;margin-left:auto;border:0;outline:none;text-decoration:none;" />
+  </td></tr></table>
+</td></tr>
+<tr><td style="padding:4px 30px 34px;text-align:left;">
+  ${bodyHtml}
+  ${cta}
+</td></tr>
+<tr><td style="border-top:1px solid #edf0f4;padding:22px 30px;background:#fafbfc;text-align:center;">
+  <p style="margin:0 0 8px;font-size:12px;line-height:1.6;color:#667085;">TruxPylot maintains strict platform policies to keep our marketplace trusted and safe.</p>
+  <p style="margin:0;font-size:11px;line-height:1.6;color:#98a2b3;">Do not submit false information, misuse the platform, attempt fraud, harass other users, or engage in activity that violates our policies. Such activity may lead to account suspension, blocking, or permanent removal from TruxPylot.</p>
+</td></tr>
+</table>
+<div style="padding:18px 10px 4px;text-align:center;">
+  <div style="font-size:14px;font-weight:800;color:#475467;letter-spacing:-.3px;">TRUX<span style="color:#2563eb;">PYLOT</span></div>
+  <p style="margin:6px 0 0;font-size:11px;color:#98a2b3;">Connect. Hire. Get things done.</p>
+</div>
+</td></tr></table>
+</body></html>`;
+}
+
 async function sendEmail(to: string, subject: string, html: string) {
   const { apiKey, from } = getConfig();
   const res = await fetch(RESEND_ENDPOINT, {
@@ -53,22 +102,26 @@ async function sendEmail(to: string, subject: string, html: string) {
     const body = await res.text().catch(() => '');
     throw new Error(`Resend API error (${res.status}): ${body.slice(0, 300)}`);
   }
-
 }
 
 export async function sendNotificationEmail(data: {
-    to: string;
-    subject: string;
-    title: string;
-    body: string;
-    link?: string;
-  }) {
-    await sendEmail(
-      data.to,
-      data.subject,
-      `<h2>${data.title}</h2><p>${data.body}</p>${data.link ? `<p><a href="${APP_URL}${data.link}">Open Trux Pylot →</a></p>` : ''}`
-    );
-  }
+  to: string;
+  subject: string;
+  title: string;
+  body: string;
+  link?: string;
+}) {
+  const link = data.link ? `${APP_URL}${data.link}` : undefined;
+  await sendEmail(
+    data.to,
+    data.subject,
+    brandedEmail(
+      data.title,
+      `<p style="margin:0;font-size:15px;line-height:1.75;color:#667085;">${escapeHtml(data.body)}</p>`,
+      link ? { eyebrow: 'ACCOUNT UPDATE', ctaText: 'Open TruxPylot', ctaLink: link } : { eyebrow: 'ACCOUNT UPDATE' }
+    )
+  );
+}
 
 export async function sendCsdContactEmail(data: {
   customerName: string;
@@ -102,9 +155,11 @@ export async function sendVerificationApprovedEmail(to: string, fullName: string
   await sendEmail(
     to,
     "You're verified on Trux Pylot ✓",
-    `<h2>Congratulations, ${fullName}!</h2>
-     <p>Your professional profile has been reviewed and approved. You now have a verified badge, and customers can find and request you in the marketplace.</p>
-     <p><a href="${APP_URL}/dashboard/professional">Go to your dashboard →</a></p>`
+    brandedEmail(
+      `You're verified, ${escapeHtml(fullName)}.`,
+      `<p style="margin:0 0 14px;font-size:15px;line-height:1.75;color:#667085;">Your professional profile has been reviewed and approved. Your verified status helps customers identify trusted professionals and gives you access to marketplace opportunities.</p><p style="margin:0;font-size:14px;line-height:1.7;color:#475467;"><strong>Keep your account in good standing:</strong> provide accurate information, follow platform rules, treat customers professionally, and avoid activity that could result in suspension or removal.</p>`,
+      { eyebrow: 'VERIFICATION APPROVED', ctaText: 'Open dashboard', ctaLink: `${APP_URL}/dashboard/professional` }
+    )
   );
 }
 
@@ -112,11 +167,11 @@ export async function sendVerificationRejectedEmail(to: string, fullName: string
   await sendEmail(
     to,
     'An update on your Trux Pylot verification',
-    `<h2>Hi ${fullName},</h2>
-     <p>We were not able to approve your verification submission this time.</p>
-     ${notes ? `<p><b>Reason:</b> ${notes}</p>` : ''}
-     <p>You can review and resubmit your documents from your dashboard.</p>
-     <p><a href="${APP_URL}/dashboard/professional/verification">Resubmit →</a></p>`
+    brandedEmail(
+      `An update on your verification`,
+      `<p style="margin:0 0 14px;font-size:15px;line-height:1.75;color:#667085;">Hi ${escapeHtml(fullName)}, we were not able to approve your verification submission this time.</p>${notes ? `<div style="padding:16px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;"><div style="font-size:11px;font-weight:800;letter-spacing:1px;color:#94a3b8;text-transform:uppercase;margin-bottom:7px;">Review note</div><div style="font-size:14px;line-height:1.65;color:#475467;">${escapeHtml(notes)}</div></div>` : ''}<p style="margin:18px 0 0;font-size:14px;line-height:1.7;color:#667085;">You can review the requirements and resubmit from your dashboard.</p>`,
+      { eyebrow: 'VERIFICATION UPDATE', ctaText: 'Review verification', ctaLink: `${APP_URL}/dashboard/professional/verification` }
+    )
   );
 }
 
@@ -124,10 +179,11 @@ export async function sendVerificationMoreInfoEmail(to: string, fullName: string
   await sendEmail(
     to,
     'We need more information — Trux Pylot verification',
-    `<h2>Hi ${fullName},</h2>
-     <p>We need a bit more information before we can approve your verification.</p>
-     ${notes ? `<p><b>What we need:</b> ${notes}</p>` : ''}
-     <p><a href="${APP_URL}/dashboard/professional/verification">Submit more information →</a></p>`
+    brandedEmail(
+      'We need a little more information',
+      `<p style="margin:0 0 14px;font-size:15px;line-height:1.75;color:#667085;">Hi ${escapeHtml(fullName)}, we need a bit more information before we can approve your verification.</p>${notes ? `<div style="padding:16px;background:#eff6ff;border:1px solid #dbeafe;border-radius:12px;"><div style="font-size:11px;font-weight:800;letter-spacing:1px;color:#2563eb;text-transform:uppercase;margin-bottom:7px;">What we need</div><div style="font-size:14px;line-height:1.65;color:#475467;">${escapeHtml(notes)}</div></div>` : ''}`,
+      { eyebrow: 'ACTION REQUIRED', ctaText: 'Update verification', ctaLink: `${APP_URL}/dashboard/professional/verification` }
+    )
   );
 }
 
