@@ -1,0 +1,116 @@
+/*
+  TruxPylot Button System
+  A single source of truth for button hierarchy (primary/secondary/
+  ghost/destructive), sized to comfortable touch targets. Existing
+  buttons (.primary, .nav-cta, etc. in globals.css/styles.css) are
+  untouched — this is additive for new/redesigned screens.
+*/
+
+.tp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  border: 0;
+  border-radius: var(--radius-md);
+  font-family: var(--font-family-base);
+  font-weight: var(--font-weight-bold);
+  font-size: var(--text-md);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease, transform 0.05s ease;
+  text-decoration: none;
+}
+
+.tp-btn:active {
+  transform: translateY(1px);
+}
+
+.tp-btn:disabled,
+.tp-btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.tp-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ---- Sizes (all meet/exceed the 44px minimum touch target) ---- */
+.tp-btn--sm {
+  height: var(--btn-height-sm);
+  padding: 0 var(--space-md);
+  font-size: var(--text-sm);
+}
+.tp-btn--md {
+  height: var(--btn-height-md);
+  padding: 0 var(--space-lg);
+}
+.tp-btn--lg {
+  height: var(--btn-height-lg);
+  padding: 0 var(--space-xl);
+  font-size: var(--text-lg);
+}
+
+.tp-btn--full {
+  width: 100%;
+}
+
+/* ---- Variants ---- */
+.tp-btn--primary {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+.tp-btn--primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.tp-btn--secondary {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  border: 1px solid var(--color-border);
+}
+.tp-btn--secondary:hover {
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary-light);
+}
+
+.tp-btn--ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+.tp-btn--ghost:hover {
+  background: var(--color-background);
+  color: var(--color-text);
+}
+
+.tp-btn--destructive {
+  background: var(--color-error-soft);
+  color: var(--color-error);
+}
+.tp-btn--destructive:hover {
+  background: var(--color-error);
+  color: #fff;
+}
+
+.tp-btn__spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: tp-spin 0.7s linear infinite;
+}
+
+@keyframes tp-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tp-btn__spinner {
+    animation-duration: 1.4s;
+  }
+}

@@ -1,0 +1,72 @@
+import Link from 'next/link';
+import type { Role } from '@prisma/client';
+
+const TABS: Record<Role, { label: string; href: string; icon: string }[]> = {
+  CUSTOMER: [
+    { label: 'Home', href: '/dashboard/customer', icon: '⌂' },
+    { label: 'Requests', href: '/dashboard/customer/jobs', icon: '▣' },
+    { label: 'Messages', href: '/dashboard/customer/messages', icon: '✉' },
+    { label: 'Find Pro', href: '/marketplace', icon: '◎' },
+    { label: 'Support', href: '/support', icon: '☎' },
+    { label: 'Profile', href: '/dashboard/customer/profile', icon: '◈' },
+  ],
+
+  PROFESSIONAL: [
+    { label: 'Home', href: '/dashboard/professional', icon: '⌂' },
+    { label: 'Jobs', href: '/dashboard/professional/jobs', icon: '▣' },
+    { label: 'Messages', href: '/dashboard/professional/messages', icon: '✉' },
+    { label: 'Earnings', href: '/dashboard/professional/earnings', icon: '◈' },
+    { label: 'Support', href: '/support', icon: '☎' },
+    { label: 'Profile', href: '/dashboard/professional/profile', icon: '◎' },
+  ],
+
+  ADMIN: [
+    { label: 'Home', href: '/dashboard/admin', icon: '⌂' },
+    { label: 'CSD', href: '/dashboard/admin/service-requests', icon: '☎' },
+    { label: 'Verify', href: '/dashboard/admin/verifications', icon: '✓' },
+    { label: 'Users', href: '/dashboard/admin/users', icon: '◎' },
+  ],
+
+  SUPER_ADMIN: [
+    { label: 'Admin', href: '/dashboard/admin', icon: '⌂' },
+    { label: 'Users', href: '/dashboard/admin/users', icon: '◎' },
+    { label: 'Audit', href: '/dashboard/admin/audit-log', icon: '▣' },
+  ],
+
+  EDITOR: [
+    { label: 'Home', href: '/operations', icon: '⌂' },
+    { label: 'Tasks', href: '/operations#tasks', icon: '▣' },
+    { label: 'Alerts', href: '/operations#notifications', icon: '●' },
+  ],
+
+  OPERATOR: [
+    { label: 'Home', href: '/operations', icon: '⌂' },
+    { label: 'Tasks', href: '/operations#tasks', icon: '▣' },
+    { label: 'Alerts', href: '/operations#notifications', icon: '●' },
+  ],
+};
+
+export function MobileTabBar({
+  role,
+  active,
+}: {
+  role: Role;
+  active?: string;
+}) {
+  const tabs = TABS[role] ?? [];
+
+  return (
+    <nav className="mobile-tab-bar">
+      {tabs.map((tab) => (
+        <Link
+          key={tab.href}
+          href={tab.href}
+          className={active === tab.href ? 'active' : ''}
+        >
+          <span>{tab.icon}</span>
+          {tab.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}

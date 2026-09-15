@@ -1,0 +1,104 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+export function DedicatedAccount() {
+  const [account, setAccount] = useState<{ accountNumber?: string; accountName?: string; bankName?: string; status?: string } | null>(null);
+  const [message, setMessage] = useState('Preparing your wallet bank account…');
+  const [copied, setCopied] = useState(false);
+  const [copiedDetails, setCopiedDetails] = useState(false);
+
+  async function load(refresh = false) {
+    setMessage(refresh ? 'Checking your transfer with Paystack…' : 'Preparing your wallet bank account…');
+    const response = await fetch(`/api/wallet/dedicated-account${refresh ? '?refresh=1&check=1' : ''}`, { cache: 'no-store' });
+    const body = await response.json().catch(() => ({}));
+
+    if (response.ok && body.accountNumber && body.accountName && body.bankName) {
+      setAccount(body);
+      setMessage('');
+      if (refresh) window.setTimeout(() => window.location.reload(), 2500);
+      return;
+    }
+
+    setAccount(null);
+    if (body.code === 'DVA_PHONE_REQUIRED' || body.status === 'AWAITING_PHONE') {
+      setMessage('Add your phone number to your professional profile first. Then return here and check again.');
+      return;
+    }
+    setMessage(
+      response.ok
+        ? refresh
+          ? 'Transfer check submitted. Paystack will notify TruxPylot when the transfer is confirmed; refreshing shortly.'
+          : `Your bank account is ${body.status === 'ERROR' ? 'temporarily unavailable' : 'still being prepared'}. Please try again shortly.`
+        : body.error ?? 'Bank transfer details are unavailable.'
+    );
+  }
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function copyAccount() {
+    if (!account?.accountNumber) return;
+    try {
+      await navigator.clipboard.writeText(account.accountNumber);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1200);
+    } catch {
+      setMessage('Copy failed. You can still manually copy the account number.');
+    }
+  }
+
+  async function copyDetails() {
+    if (!account?.accountNumber) return;
+    const text = `Bank: ${account.bankName ?? ''}\nAccount name: ${account.accountName ?? ''}\nAccount number: ${account.accountNumber}`;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedDetails(true);
+      setTimeout(() => setCopiedDetails(false), 1500);
+    } catch {
+      setMessage('Copy failed. You can still copy the details manually.');
+    }
+  }
+
+  if (!account) {
+    const phoneRequired = message.includes('Add your phone number');
+    return (
+      <div className="wallet-empty wallet-bank-empty">
+        <div>{message}</div>
+        {phoneRequired && (
+          <a className="wallet-cta secondary" href="/dashboard/professional/profile">
+            Add phone number to profile
+          </a>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="wallet-bank-shell">
+      <p className="wallet-bank-note">Transfer directly to this dedicated account from your bank app. You do not need to open Paystack checkout. Your MVault updates after Paystack confirms the transfer.</p>
+      <div className="wallet-bank-card">
+        <div>
+          <span className="wallet-bank-label">Bank</span>
+          <strong>{account.bankName}</strong>
+        </div>
+        <div>
+          <span className="wallet-bank-label">Account name</span>
+          <strong>{account.accountName}</strong>
+        </div>
+        <div className="wallet-account-number-wrap">
+          <span className="wallet-bank-label">Account number</span>
+          <strong>{account.accountNumber}</strong>
+        </div>
+        <div className="wallet-bank-copy-actions"><button type="button" className="wallet-copy-button" onClick={copyAccount}>{copied ? 'Copied' : 'Copy number'}</button><button type="button" className="wallet-copy-button wallet-copy-details" onClick={copyDetails}>{copiedDetails ? 'Copied' : 'Copy details'}</button></div>
+      </div>
+
+      <div className="wallet-bank-actions">
+        <button type="button" className="wallet-cta secondary" onClick={() => load(true)}>I've made a transfer — check status</button>
+      </div>
+
+      {message && <small className="wallet-meta-note">{message}</small>}
+    </div>
+  );
+}

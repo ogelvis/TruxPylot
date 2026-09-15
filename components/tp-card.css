@@ -1,0 +1,121 @@
+/*
+  TruxPylot Card System
+  A standard card shape (heading, supporting text, optional status,
+  one primary + one secondary action) plus a round icon-container
+  language, per the mobile redesign spec. Additive — existing card
+  markup elsewhere in the app is untouched.
+*/
+
+.tp-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--card-padding-mobile);
+  box-shadow: var(--shadow-xs);
+}
+
+@media (min-width: 768px) {
+  .tp-card {
+    padding: var(--card-padding-desktop);
+  }
+}
+
+.tp-card--interactive {
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.tp-card--interactive:hover {
+  box-shadow: var(--shadow-sm);
+  border-color: var(--color-primary-light);
+}
+
+.tp-card__row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.tp-card__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.tp-card__title {
+  font-size: var(--text-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text);
+  margin: 0 0 2px;
+}
+
+.tp-card__subtitle {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.tp-card__actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+/* ---- Round icon container language ----
+   One consistent shape for every navigation/action icon in the app.
+   Pass a --tp-icon-bg / --tp-icon-fg pair (or one of the tinted
+   modifier classes below) to color it per feature area. */
+.tp-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--radius-circle);
+  background: var(--tp-icon-bg, var(--color-primary-soft));
+  color: var(--tp-icon-fg, var(--color-primary));
+}
+.tp-icon--sm { width: var(--icon-container-sm); height: var(--icon-container-sm); }
+.tp-icon--md { width: var(--icon-container-md); height: var(--icon-container-md); }
+.tp-icon--lg { width: var(--icon-container-lg); height: var(--icon-container-lg); }
+
+.tp-icon--success { --tp-icon-bg: var(--color-success-soft); --tp-icon-fg: var(--color-success); }
+.tp-icon--warning { --tp-icon-bg: var(--color-warning-soft); --tp-icon-fg: var(--color-warning); }
+.tp-icon--error   { --tp-icon-bg: var(--color-error-soft);   --tp-icon-fg: var(--color-error); }
+.tp-icon--premium { --tp-icon-bg: var(--color-premium-soft); --tp-icon-fg: var(--color-premium); }
+
+/* ---- Status badge ---- */
+.tp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--space-xs);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-2xs);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  background: var(--color-background);
+  color: var(--color-text-muted);
+}
+.tp-badge--success { background: var(--color-success-soft); color: var(--color-success); }
+.tp-badge--warning { background: var(--color-warning-soft); color: var(--color-warning); }
+.tp-badge--error   { background: var(--color-error-soft);   color: var(--color-error); }
+.tp-badge--info    { background: var(--color-primary-soft); color: var(--color-primary); }
+
+/* ---- Empty state ---- */
+.tp-empty {
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+}
+.tp-empty__title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight-bold);
+  margin: var(--space-md) 0 var(--space-xs);
+}
+.tp-empty__text {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-lg);
+  max-width: 32ch;
+  margin-left: auto;
+  margin-right: auto;
+}

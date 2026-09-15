@@ -1,0 +1,111 @@
+/*
+  TruxPylot Design Tokens
+  ------------------------------------------------------------------
+  Consolidated from the values already in use across globals.css,
+  styles.css and homepage.css. Nothing here replaces the existing
+  --blue / --navy / --ink / --muted / --line / --soft / --green /
+  --orange / --brass tokens defined later in globals.css — those
+  keep working exactly as before. These are additive, semantic
+  tokens for new/redesigned mobile-first UI (cards, buttons, inputs,
+  icon containers) so future work has one consistent system instead
+  of ad-hoc hex values and radii.
+
+  Known inconsistency to reconcile over time (not fixed here to
+  avoid touching working styles): #155eef appears ~15x in the
+  codebase as an alternate "blue" alongside the real brand blue
+  #073fc8. New work should use var(--color-primary) / the aliases
+  below; existing #155eef usages can be migrated when those specific
+  components are touched.
+*/
+
+:root {
+  /* ---- Color: brand ---- */
+  --color-primary: #073fc8;        /* = --blue, the real brand blue (matches viewport themeColor) */
+  --color-primary-dark: #0b2155;   /* = --navy */
+  --color-primary-light: #86a9ff;  /* light accent / hover tint, already used throughout */
+  --color-primary-soft: #eaf2ff;   /* soft background tint for primary elements */
+
+  /* ---- Color: surfaces & text ---- */
+  --color-surface: #ffffff;
+  --color-background: #f7f9fd;     /* matches body background already in use */
+  --color-text: #151a24;           /* = --ink */
+  --color-text-muted: #6d7890;     /* = --muted */
+  --color-border: #e4eaf5;         /* = --line */
+
+  /* ---- Color: status ---- */
+  --color-success: #168553;        /* = --green */
+  --color-success-soft: #e4f6ec;
+  --color-warning: #ed991e;        /* = --orange */
+  --color-warning-soft: #fff3d6;
+  --color-error: #c22828;          /* was used raw ~6x with no token; now formalized */
+  --color-error-soft: #fdeaea;
+  --color-info: var(--color-primary);
+
+  /* ---- Color: premium/tier (brass) ---- */
+  --color-premium: #9c6b12;        /* = --brass */
+  --color-premium-soft: #faf1de;   /* = --brass-soft */
+  --color-premium-border: #ecd9ac; /* = --brass-line */
+
+  /* ---- Spacing scale (4px base grid) ---- */
+  --space-3xs: 2px;
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 20px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+  --space-3xl: 40px;
+  --space-4xl: 56px;
+
+  /* ---- Radius scale ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;   /* primary mobile cards */
+  --radius-2xl: 24px;  /* hero/feature cards */
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* ---- Elevation (shadows), tinted to the brand blue like the
+     existing shadows already do (#0b46c8-family), just consistent
+     now instead of a different alpha/color per component ---- */
+  --shadow-xs: 0 2px 6px rgba(11, 70, 200, 0.06);
+  --shadow-sm: 0 6px 16px rgba(11, 70, 200, 0.08);
+  --shadow-md: 0 12px 28px rgba(11, 70, 200, 0.12);
+  --shadow-lg: 0 20px 45px rgba(11, 70, 200, 0.16);
+  --shadow-modal: 0 30px 80px rgba(7, 27, 73, 0.28);
+
+  /* ---- Typography (keeps existing Arial/Helvetica system font,
+     no new font introduced) ---- */
+  --font-family-base: Arial, Helvetica, sans-serif;
+  --text-2xs: 11px;
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 15px;
+  --text-lg: 17px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 28px;
+  --text-4xl: 34px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 800;
+
+  /* ---- Touch targets & control sizing (mobile-first) ---- */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+  --btn-height-sm: 36px;
+  --btn-height-md: 44px;
+  --btn-height-lg: 52px;
+  --input-height: 48px;
+  --icon-container-sm: 32px;
+  --icon-container-md: 40px;
+  --icon-container-lg: 48px;
+
+  /* ---- Card ---- */
+  --card-padding-mobile: 16px;
+  --card-padding-desktop: 20px;
+}

@@ -1,0 +1,16 @@
+ALTER TYPE "WithdrawalStatus" ADD VALUE IF NOT EXISTS 'FAILED';
+CREATE TYPE "WithdrawalSource" AS ENUM ('WALLET','REFERRAL');
+ALTER TABLE "Withdrawal" ADD COLUMN "source" "WithdrawalSource" NOT NULL DEFAULT 'WALLET';
+ALTER TABLE "Withdrawal" ADD COLUMN "rejectionReason" TEXT;
+ALTER TABLE "Withdrawal" ADD COLUMN "providerReference" TEXT;
+ALTER TABLE "Withdrawal" ADD COLUMN "providerTransferId" TEXT;
+ALTER TABLE "Withdrawal" ADD COLUMN "providerTransferCode" TEXT;
+ALTER TABLE "Withdrawal" ADD COLUMN "providerStatus" TEXT;
+ALTER TABLE "Withdrawal" ADD COLUMN "providerError" TEXT;
+ALTER TABLE "Withdrawal" ADD COLUMN "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+CREATE UNIQUE INDEX "Withdrawal_providerReference_key" ON "Withdrawal"("providerReference");
+CREATE UNIQUE INDEX "Withdrawal_providerTransferId_key" ON "Withdrawal"("providerTransferId");
+CREATE INDEX "Withdrawal_source_status_createdAt_idx" ON "Withdrawal"("source","status","createdAt");
+ALTER TABLE "PayoutAccount" ADD COLUMN "paystackRecipientCode" TEXT;
+ALTER TABLE "PayoutAccount" ADD COLUMN "verifiedAt" TIMESTAMP(3);
+CREATE UNIQUE INDEX "PayoutAccount_paystackRecipientCode_key" ON "PayoutAccount"("paystackRecipientCode");
