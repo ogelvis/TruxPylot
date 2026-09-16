@@ -1,5 +1,6 @@
 import 'server-only';
 import { prisma } from '@/lib/prisma';
+import { applyDedicatedAccountTransfer } from '@/lib/wallet';
 
 const endpoint = 'https://api.paystack.co';
 
@@ -94,6 +95,59 @@ export async function markDedicatedAccountProvisioningFailure(customerCode: stri
     where: { paystackCustomerCode: customerCode },
     data: { status: 'ERROR', lastSyncError: reason.slice(0, 500), lastSyncedAt: new Date() },
   });
+}
+
+
+/**
+ * Reconcile recent successful Paystack transactions for a DVA customer.
+ *
+ * Paystack's DVA flow is webhook-first, but a transaction can already exist in
+ * Paystack while the webhook is delayed. In that case we can safely discover
+ * the transaction through the Transaction API and pass the exact Paystack
+ * transaction object through the same idempotent wallet-credit path used by
+ * the webhook.
+ */
+export async function reconcileRecentDedicatedTransfers(accountId: string) {
+  const account = await prisma.dedicatedAccount.findUnique({ where: { id: accountId } });
+  if (!account?.paystackCustomerCode || !account.accountNumber) {
+    return { found: 0, credited: 0 };
+  }
+
+  try {
+    const customer = await paystack(`/customer/${encodeURIComponent(account.paystackCustomerCode)}`);
+    const customerId = Number(customer?.id);
+    if (!Number.isSafeInteger(customerId) || customerId <= 0) {
+      return { found: 0, credited: 0 };
+    }
+
+    const from = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const transactions = await paystack(
+      `/transaction?customer=${customerId}&status=success&perPage=50&from=${encodeURIComponent(from)}`,
+    );
+
+    const items = Array.isArray(transactions) ? transactions : [];
+    let found = 0;
+    let credited = 0;
+
+    for (const transaction of items) {
+      const receiverAccount = transaction?.authorization?.receiver_bank_account_number;
+      const isDedicatedNuban = transaction?.authorization?.channel === 'dedicated_nuban';
+      const isThisAccount = String(receiverAccount ?? '') === account.accountNumber;
+      if (!isDedicatedNuban && !isThisAccount) continue;
+
+      found += 1;
+      const result = await applyDedicatedAccountTransfer({ event: 'charge.success', data: transaction });
+      if (result.matched) credited += 1;
+    }
+
+    return { found, credited };
+  } catch (error) {
+    console.warn('[DVA RECONCILE] Paystack transaction lookup failed', {
+      accountId,
+      error: error instanceof Error ? error.message : 'unknown',
+    });
+    return { found: 0, credited: 0 };
+  }
 }
 
 export async function getOrCreateDedicatedAccount(userId: string, refresh = false, requery = false) {
@@ -306,6 +360,11 @@ export async function getOrCreateDedicatedAccount(userId: string, refresh = fals
       await paystack(`/dedicated_account/requery?account_number=${encodeURIComponent(account.accountNumber)}&provider_slug=${encodeURIComponent(account.bankSlug)}&date=${date}`);
     } catch (error) {
       console.warn('[DVA REQUERY] failed', { accountId: account.id, error: error instanceof Error ? error.message : 'unknown' });
+    }
+
+    const reconciliation = await reconcileRecentDedicatedTransfers(account.id);
+    if (reconciliation.credited > 0) {
+      account = await prisma.dedicatedAccount.findUnique({ where: { id: account.id } }) ?? account;
     }
   }
 
