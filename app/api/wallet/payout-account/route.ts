@@ -22,6 +22,9 @@ export async function POST(request: Request) {
   const parsed = input.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: 'Select a valid Nigerian bank and enter a 10-digit account number.' }, { status: 400 });
 
+  // Paystack recipient codes are reusable provider references; the same bank account can
+  // legitimately resolve to the same recipient code for more than one TruxPylot user.
+  // Do not treat the provider code as globally unique in our database.
   const account = await prisma.payoutAccount.upsert({
     where: { userId: session.userId },
     create: { userId: session.userId, ...parsed.data, verified: false, verifiedAt: null, paystackRecipientCode: null },
