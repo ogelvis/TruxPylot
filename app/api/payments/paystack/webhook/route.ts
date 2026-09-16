@@ -131,6 +131,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ received: true, reviewRequired: true });
   }
 
+  // DVA transfers are identified by Paystack's dedicated_nuban channel or the
+  // receiver bank account field. Handle them before generic job payments so a
+  // bank-transfer wallet credit can never be swallowed by another resolver.
+  const receiverAccount = data?.authorization?.receiver_bank_account_number;
+  const isDvaTransfer = data?.authorization?.channel === 'dedicated_nuban' || /^\d{10}$/.test(String(receiverAccount ?? ''));
+  if (isDvaTransfer) {
+    const result = await applyDedicatedAccountTransfer(event);
+    console.info('[DVA TRANSFER] processed', { reference, providerEventId, matched: result.matched, duplicate: result.duplicate });
+    return NextResponse.json({ received: true });
+  }
+
   // Existing job payments must retain their current behavior.
   const paymentResult = await applySuccessfulPayment(reference, amount, providerEventId);
   if (paymentResult.ok) {
@@ -139,15 +150,6 @@ export async function POST(request: Request) {
   if (paymentResult.reason === 'amount_mismatch') {
     console.error('[PAYMENT] amount mismatch', { reference, amount, providerEventId });
     return NextResponse.json({ received: true, reviewRequired: true });
-  }
-
-  // DVA transfers are identified by Paystack's dedicated_nuban channel or the
-  // receiver bank account field. They do not have a WalletFunding reference.
-  const receiverAccount = data?.authorization?.receiver_bank_account_number;
-  const isDvaTransfer = data?.authorization?.channel === 'dedicated_nuban' || /^\d{10}$/.test(String(receiverAccount ?? ''));
-  if (isDvaTransfer) {
-    const result = await applyDedicatedAccountTransfer(event);
-    console.info('[DVA TRANSFER] processed', { reference, providerEventId, matched: result.matched, duplicate: result.duplicate });
   }
 
   return NextResponse.json({ received: true });
