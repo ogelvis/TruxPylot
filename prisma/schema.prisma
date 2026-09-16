@@ -992,7 +992,7 @@ model PayoutAccount {
   accountName String
   accountNumber String
   bankCode String?
-  paystackRecipientCode String? @unique
+  paystackRecipientCode String?
   verified Boolean @default(false)
   verifiedAt DateTime?
   createdAt DateTime @default(now())
