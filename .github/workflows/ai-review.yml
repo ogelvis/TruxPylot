@@ -170,3 +170,4 @@ ${diff}
 
           gh pr comment ${{ github.event.pull_request.number }} \
             --body-file review-comment.md
+# AI review workflow test
