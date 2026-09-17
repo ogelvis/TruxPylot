@@ -33,9 +33,8 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
       orderBy: { reviewedAt: 'desc' },
     }),
   ]);
-  if (!professional || professional.verificationStatus !== 'APPROVED') notFound();
-
   const session = await getSession();
+  if (!professional || professional.verificationStatus !== 'APPROVED') notFound();
   const tsid = 'TSID-' + professional.id.slice(-8).toUpperCase();
   const approvedBatch = approvedRequest?.reviewedAt ? monthYearFmt.format(approvedRequest.reviewedAt) : null;
   const completionRate = jobCount > 0 ? Math.round((professional.completedJobs / jobCount) * 100) : null;
@@ -66,7 +65,6 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
 
       <section className="landing" style={{ paddingTop: 30 }}>
         <Link href="/marketplace" className="back-link">← Back to marketplace</Link>
-
         <div className="pro-hero">
           <div className="pro-hero-top">
             <span className="pro-hero-avatar">

@@ -1,16 +1,61 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getSession } from '@/lib/auth';
-import { getProfessionalWallet, MIN_WITHDRAWAL_KOBO } from '@/lib/wallet';
+import { getProfessionalWallet, MIN_WITHDRAWAL_KOBO, applyWalletFunding } from '@/lib/wallet';
 import { prisma } from '@/lib/prisma';
+import { getOrCreateDedicatedAccount, reconcileRecentDedicatedTransfers } from '@/lib/dedicated-account';
 
 const withdrawal = z.object({ amount: z.number().int().min(MIN_WITHDRAWAL_KOBO) });
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getSession();
   if (!session || session.role !== 'PROFESSIONAL') return NextResponse.json({ error: 'Professional sign-in required.' }, { status: 401 });
   const wallet = await getProfessionalWallet(session.userId);
   if (!wallet) return NextResponse.json({ error: 'Professional profile not found.' }, { status: 404 });
+
+  // Reconcile recent checkout fundings directly with Paystack as a fallback
+  // when the webhook is delayed. Webhook processing remains the primary path.
+  const sync = new URL(request.url).searchParams.get('sync') === '1';
+  if (sync && process.env.PAYSTACK_SECRET_KEY) {
+    const pendingFundings = await prisma.walletFunding.findMany({
+      where: { walletId: wallet.id, status: 'PENDING' },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+    for (const funding of pendingFundings) {
+      try {
+        const response = await fetch(`https://api.paystack.co/transaction/verify/${encodeURIComponent(funding.reference)}`, {
+          headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
+          cache: 'no-store',
+        });
+        const body = await response.json().catch(() => null);
+        if (response.ok && body?.data?.status === 'success') {
+          await applyWalletFunding(funding.reference, Number(body.data.amount), String(body.data.id));
+        }
+      } catch (error) {
+        console.warn('[WALLET SYNC] Paystack verification failed', { reference: funding.reference, error: error instanceof Error ? error.message : 'unknown' });
+      }
+    }
+
+    // Also reconcile recent DVA transfers directly from Paystack. This is a
+    // webhook fallback: if Paystack has already created the transfer but the
+    // webhook is delayed, the transaction can still be credited safely.
+    try {
+      const dedicatedAccount = await prisma.dedicatedAccount.findUnique({ where: { walletId: wallet.id } });
+      if (dedicatedAccount) {
+        await reconcileRecentDedicatedTransfers(dedicatedAccount.id);
+      } else {
+        // Provision/sync the DVA if this wallet has never loaded its bank
+        // transfer account. This is deliberately non-requerying; DVA requery
+        // is rate-limited by Paystack and is still triggered by the explicit
+        // transfer-check action when needed.
+        await getOrCreateDedicatedAccount(session.userId, true, false);
+      }
+    } catch (error) {
+      console.warn('[WALLET SYNC] DVA reconciliation failed', { error: error instanceof Error ? error.message : 'unknown' });
+    }
+  }
+  const freshWallet = sync ? await getProfessionalWallet(session.userId) : wallet;
   const [withdrawals, payoutAccount, earned] = await Promise.all([
     prisma.withdrawal.findMany({ where: { userId: session.userId, source: 'WALLET' }, orderBy: { createdAt: 'desc' }, take: 100 }),
     prisma.payoutAccount.findUnique({ where: { userId: session.userId } }),
@@ -20,7 +65,7 @@ export async function GET() {
     }),
   ]);
   const withdrawn = withdrawals.filter(item => item.status !== 'REJECTED').reduce((sum, item) => sum + item.amount, 0);
-  return NextResponse.json({ ...wallet, totalEarned: earned._sum.amount ?? 0, totalWithdrawn: withdrawn, withdrawals, payoutAccount, minWithdrawal: MIN_WITHDRAWAL_KOBO }, { headers: { 'Cache-Control': 'private, no-store' } });
+  return NextResponse.json({ ...freshWallet, totalEarned: earned._sum.amount ?? 0, totalWithdrawn: withdrawn, withdrawals, payoutAccount, minWithdrawal: MIN_WITHDRAWAL_KOBO }, { headers: { 'Cache-Control': 'private, no-store' } });
 }
 
 export async function POST(request: Request) {

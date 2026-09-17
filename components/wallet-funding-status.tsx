@@ -1,11 +1,10 @@
 'use client';
 
 import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 
 function WalletFundingStatusContent() {
   const params = useSearchParams();
-  const router = useRouter();
   const reference = params.get('reference') ?? params.get('txref');
   const [message, setMessage] = useState('');
 
@@ -26,17 +25,19 @@ function WalletFundingStatusContent() {
         if (cancelled) return;
 
         if (response.ok && body.status === 'SUCCESS') {
-          setMessage('Payment confirmed. MVault balance refreshed.');
-          router.refresh();
+          setMessage('Payment confirmed. Refreshing your MVault balance…');
+          window.setTimeout(() => {
+            if (!cancelled) window.location.replace('/dashboard/professional/wallet');
+          }, 250);
           return;
         }
 
-        setMessage('Payment received. Your MVault is being updated.');
-        if (attempts < 6) window.setTimeout(verify, 2500);
+        setMessage('Payment received. Confirming your MVault update…');
+        if (attempts < 20) window.setTimeout(verify, 1500);
       } catch {
-        if (!cancelled && attempts < 6) {
+        if (!cancelled && attempts < 20) {
           setMessage('Payment received. Checking your MVault update…');
-          window.setTimeout(verify, 2500);
+          window.setTimeout(verify, 1500);
         }
       }
     }
@@ -45,7 +46,7 @@ function WalletFundingStatusContent() {
     return () => {
       cancelled = true;
     };
-  }, [reference, router]);
+  }, [reference]);
 
   if (!message) return null;
   return <p className="wallet-funding-status" role="status">{message}</p>;

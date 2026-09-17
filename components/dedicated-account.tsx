@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-export function DedicatedAccount() {
+export function DedicatedAccount({ initialBalance = 0 }: { initialBalance?: number }) {
   const [account, setAccount] = useState<{ accountNumber?: string; accountName?: string; bankName?: string; status?: string } | null>(null);
   const [message, setMessage] = useState('Preparing your wallet bank account…');
   const [copied, setCopied] = useState(false);
@@ -16,7 +16,27 @@ export function DedicatedAccount() {
     if (response.ok && body.accountNumber && body.accountName && body.bankName) {
       setAccount(body);
       setMessage('');
-      if (refresh) window.setTimeout(() => window.location.reload(), 2500);
+      if (refresh) {
+        const startedAt = Date.now();
+        let syncAttempts = 0;
+        const watch = async () => {
+          if (Date.now() - startedAt > 90000) return;
+          syncAttempts += 1;
+          try {
+            // The first few checks reconcile Paystack directly. This covers a
+            // delayed webhook after Paystack has already recorded the transfer.
+            const shouldSync = syncAttempts <= 4;
+            const walletResponse = await fetch(`/api/wallet${shouldSync ? '?sync=1' : ''}`, { cache: 'no-store' });
+            const walletBody = await walletResponse.json().catch(() => ({}));
+            if (walletResponse.ok && Number(walletBody.availableBalance ?? initialBalance) > initialBalance) {
+              window.location.replace('/dashboard/professional/wallet');
+              return;
+            }
+          } catch {}
+          window.setTimeout(watch, syncAttempts <= 4 ? 5000 : 10000);
+        };
+        window.setTimeout(watch, 5000);
+      }
       return;
     }
 

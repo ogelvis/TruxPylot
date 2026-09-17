@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       email: session.email,
       amount: parsed.data.amount,
       reference,
-      callback_url: `${appUrl.replace(/\/$/, '')}/dashboard/professional/wallet`,
+      callback_url: `${appUrl.replace(/\/$/, '')}/dashboard/professional/wallet?reference=${encodeURIComponent(reference)}`,
     }),
   });
   const body = await response.json().catch(() => null);
