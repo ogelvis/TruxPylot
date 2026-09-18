@@ -111,7 +111,8 @@ jobs:
                 headers: {
                   "Content-Type": "application/json",
                   "x-api-key": process.env.ANTHROPIC_API_KEY,
-                  "anthropic-version": "2023-06-01"
+                  "anthropic-version": "2023-06-01",
+                  "anthropic-workspace-id": "wrkspc_012P7Srtm5nmYxABTbEnxixY"
                 },
                 body: JSON.stringify({
                   model: "claude-sonnet-5",
@@ -140,7 +141,7 @@ jobs:
               data.content
                 ?.filter((item) => item.type === "text")
                 ?.map((item) => item.text)
-                ?.join("\n") ||
+                ?.join("\\n") ||
               "Claude returned no review.";
 
             fs.writeFileSync("ai-review.md", review);
