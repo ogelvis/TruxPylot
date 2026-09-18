@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
 import { DailyThought } from '@/components/daily-thought';
 import { SystemUpdates } from '@/components/system-updates';
+import { getCustomerActions } from '@/lib/next-actions';
 
 export default async function CustomerDashboard() {
   const session = await requireRole('CUSTOMER');
@@ -19,6 +20,22 @@ export default async function CustomerDashboard() {
   const pendingCount = jobs.filter(j => ['REQUESTED', 'QUOTED'].includes(j.status)).length;
   const completedCount = jobs.filter(j => j.status === 'SETTLED').length;
   const totalSpent = jobs.reduce((sum, j) => sum + (j.payment?.status === 'SUCCESS' ? j.payment.amount : 0), 0);
+
+  const [jobsAwaitingQuoteReview, jobsAwaitingPayment, jobsAwaitingConfirmationOrReview, unreadMessages, totalJobs] = customer ? await Promise.all([
+    prisma.job.count({ where: { customerId: customer.id, status: 'QUOTED' } }),
+    prisma.job.count({ where: { customerId: customer.id, status: { in: ['ACCEPTED', 'PAYMENT_PENDING'] } } }),
+    prisma.job.count({ where: { customerId: customer.id, status: 'COMPLETED', review: null } }),
+    prisma.message.count({ where: { conversation: { customerId: customer.id }, senderId: { not: session.userId }, readAt: null } }),
+    prisma.job.count({ where: { customerId: customer.id } }),
+  ]) : [0, 0, 0, 0, 0];
+
+  const recommendations = getCustomerActions({
+    jobsAwaitingQuoteReview,
+    jobsAwaitingPayment,
+    jobsAwaitingConfirmationOrReview,
+    unreadMessages,
+    hasAnyJobs: totalJobs > 0,
+  });
 
   return (
     <AppShell role="CUSTOMER" name={customer?.fullName ?? 'Customer'} avatarUrl={customer?.avatarUrl} active="/dashboard/customer">
@@ -39,6 +56,13 @@ export default async function CustomerDashboard() {
           <div className="metric"><span>Completed jobs</span><b>{completedCount}</b><small>All time</small></div>
           <div className="metric"><span>Total spent</span><b>₦{(totalSpent / 100).toLocaleString()}</b><small>Across all jobs</small></div>
         </section>
+
+        {recommendations.length > 0 && (
+          <section className="panel recommendations">
+            <div className="panel-head"><h2>Recommended next steps</h2></div>
+            <ul>{recommendations.map(action => <li key={action.id} className={`urgency-${action.urgency}`}><Link href={action.href}>{action.label}</Link></li>)}</ul>
+          </section>
+        )}
 
         <section className="panel" id="jobs">
           <div className="panel-head"><h2>Recent service requests</h2><Link href="/dashboard/customer/jobs">View all →</Link></div>

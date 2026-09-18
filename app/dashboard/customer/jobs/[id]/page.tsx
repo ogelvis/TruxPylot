@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
 import { ProposalActions } from '@/components/proposal-actions';
 import { BookingForm } from '@/components/booking-form';
+import { CustomerJobActions } from '@/components/customer-job-actions';
+import { ReviewForm } from '@/components/review-form';
 
 export default async function CustomerJobDetail({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRole('CUSTOMER');
@@ -19,6 +21,9 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
   });
   if (!job) notFound();
 
+  const acceptedQuote = job.quotes.find(quote => quote.status === 'ACCEPTED');
+  const latestQuote = acceptedQuote ?? job.quotes.slice().sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+
   return (
     <AppShell role="CUSTOMER" name={customer.fullName} avatarUrl={customer.avatarUrl} active="/dashboard/customer/jobs">
       <main className="dash-page">
@@ -30,6 +35,15 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
           </div>
           <span className={`status ${job.status.toLowerCase()}`}>{job.status.replaceAll('_', ' ')}</span>
         </div>
+
+        {job.status !== 'QUOTED' && (
+          <CustomerJobActions
+            jobId={job.id}
+            status={job.status}
+            latestQuoteId={latestQuote?.id}
+            latestQuoteAmount={latestQuote?.amount}
+          />
+        )}
 
         <section className="panel">
           <div className="panel-head"><h2>What you asked for</h2></div>
@@ -106,7 +120,7 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
           </section>
         ) : null}
 
-        {job.review && (
+        {job.review ? (
           <section className="panel">
             <div className="panel-head"><h2>Your review</h2></div>
             <div className="job-detail-body">
@@ -114,7 +128,9 @@ export default async function CustomerJobDetail({ params }: { params: Promise<{ 
               <p>{job.review.review ?? 'No comment left'}</p>
             </div>
           </section>
-        )}
+        ) : job.status === 'SETTLED' ? (
+          <ReviewForm jobId={job.id} />
+        ) : null}
       </main>
     </AppShell>
   );

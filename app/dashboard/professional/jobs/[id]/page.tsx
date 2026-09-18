@@ -4,6 +4,7 @@ import { requireRole } from '@/lib/guard';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/app-shell';
 import { ProposalForm } from '@/components/proposal-form';
+import { ProfessionalJobActions } from '@/components/professional-job-actions';
 
 export default async function JobDetail({ params }: { params: Promise<{ id: string }> }) {
   const session = await requireRole('PROFESSIONAL');
@@ -29,6 +30,10 @@ export default async function JobDetail({ params }: { params: Promise<{ id: stri
           </div>
           <span className={`status ${job.status.toLowerCase()}`}>{job.status.replaceAll('_', ' ')}</span>
         </div>
+
+        {(job.status === 'PAID' || job.status === 'IN_PROGRESS') && (
+          <ProfessionalJobActions jobId={job.id} status={job.status} />
+        )}
 
         <section className="panel">
           <div className="panel-head"><h2>Job description</h2></div>
