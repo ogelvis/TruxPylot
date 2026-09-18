@@ -45,63 +45,63 @@ jobs:
           }
 
           const prompt = `
-You are a senior software engineer reviewing a pull request for the TruxPylot application.
+          You are a senior software engineer reviewing a pull request for the TruxPylot application.
 
-Review ONLY the code contained in this pull request diff.
+          Review ONLY the code contained in this pull request diff.
 
-Focus on:
+          Focus on:
 
-1. Bugs and logic errors
-2. Security vulnerabilities
-3. Authentication and authorization problems
-4. Database and Prisma problems
-5. Payment and financial risks
-6. API and server-side problems
-7. Input validation problems
-8. Error handling
-9. Performance problems
-10. Breaking changes
-11. Production deployment failures
+          1. Bugs and logic errors
+          2. Security vulnerabilities
+          3. Authentication and authorization problems
+          4. Database and Prisma problems
+          5. Payment and financial risks
+          6. API and server-side problems
+          7. Input validation problems
+          8. Error handling
+          9. Performance problems
+          10. Breaking changes
+          11. Production deployment failures
 
-Important:
+          Important:
 
-- Do not rewrite working code unnecessarily.
-- Do not suggest changes merely because you prefer another coding style.
-- Give specific explanations.
-- Prioritize real problems over stylistic preferences.
-- Do not make assumptions about code that is not included in the diff.
-- Pay special attention to anything that could break existing TruxPylot functionality.
+          - Do not rewrite working code unnecessarily.
+          - Do not suggest changes merely because you prefer another coding style.
+          - Give specific explanations.
+          - Prioritize real problems over stylistic preferences.
+          - Do not make assumptions about code that is not included in the diff.
+          - Pay special attention to anything that could break existing TruxPylot functionality.
 
-Return the review using exactly this structure:
+          Return the review using exactly this structure:
 
-## Summary
+          ## Summary
 
-Short summary of the changes.
+          Short summary of the changes.
 
-## Critical Issues
+          ## Critical Issues
 
-Only serious problems that should be fixed.
+          Only serious problems that should be fixed.
 
-## Important Issues
+          ## Important Issues
 
-Problems that should be addressed but are not critical.
+          Problems that should be addressed but are not critical.
 
-## Suggestions
+          ## Suggestions
 
-Optional improvements.
+          Optional improvements.
 
-## Security
+          ## Security
 
-Security-related findings.
+          Security-related findings.
 
-## Verdict
+          ## Verdict
 
-State whether the PR appears safe to merge based only on the code reviewed.
+          State whether the PR appears safe to merge based only on the code reviewed.
 
-Here is the pull request diff:
+          Here is the pull request diff:
 
-${diff}
-`;
+          ${diff}
+          `;
 
           async function main() {
             const response = await fetch(
@@ -111,7 +111,8 @@ ${diff}
                 headers: {
                   "Content-Type": "application/json",
                   "x-api-key": process.env.ANTHROPIC_API_KEY,
-                  "anthropic-version": "2023-06-01"
+                  "anthropic-version": "2023-06-01",
+                  "anthropic-workspace-id": "wrkspc_012P7Srtm5nmYxABTbEnxixY"
                 },
                 body: JSON.stringify({
                   model: "claude-sonnet-5",
@@ -140,7 +141,7 @@ ${diff}
               data.content
                 ?.filter((item) => item.type === "text")
                 ?.map((item) => item.text)
-                ?.join("\n") ||
+                ?.join("\\n") ||
               "Claude returned no review.";
 
             fs.writeFileSync("ai-review.md", review);
@@ -159,7 +160,7 @@ ${diff}
           GH_TOKEN: ${{ github.token }}
         run: |
           {
-            echo "## 🤖 TruxPylot Claude AI Code Review"
+            echo "## TruxPylot Claude AI Code Review"
             echo
             cat ai-review.md
             echo
