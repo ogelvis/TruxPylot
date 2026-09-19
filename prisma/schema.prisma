@@ -433,14 +433,40 @@ model PortfolioItem {
   id             String       @id @default(cuid())
   professionalId String
   title          String
-  description    String?
+  description    String?      @db.Text
   imageUrl       String?      @db.Text
+  images         String[]     @default([])
   approved       Boolean      @default(false)
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   professional   Professional @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  likes          PortfolioLike[]
+  comments       PortfolioComment[]
 
   @@index([professionalId, approved])
+}
+
+model PortfolioLike {
+  id              String        @id @default(cuid())
+  portfolioItemId String
+  userId          String
+  createdAt       DateTime      @default(now())
+  portfolioItem   PortfolioItem @relation(fields: [portfolioItemId], references: [id], onDelete: Cascade)
+
+  @@unique([portfolioItemId, userId])
+  @@index([portfolioItemId])
+}
+
+model PortfolioComment {
+  id              String        @id @default(cuid())
+  portfolioItemId String
+  userId          String
+  authorName      String
+  body            String        @db.Text
+  createdAt       DateTime      @default(now())
+  portfolioItem   PortfolioItem @relation(fields: [portfolioItemId], references: [id], onDelete: Cascade)
+
+  @@index([portfolioItemId, createdAt])
 }
 
 model PremiumPurchase {
