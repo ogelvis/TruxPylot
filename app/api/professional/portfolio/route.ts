@@ -53,9 +53,9 @@ export async function POST(request: Request) {
       description: caption || null,
       imageUrl: urls[0],
       images: urls,
-      approved: true,
+      approved: false,
     },
   });
 
-  return NextResponse.json({ ok: true, post });
+  return NextResponse.json({ ok: true, post, pendingReview: true });
 }
