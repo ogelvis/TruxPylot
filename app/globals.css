@@ -142,6 +142,18 @@
 .review-row{grid-template-columns:1.4fr .8fr 1.2fr}
 .review-stars{color:#ed991e;letter-spacing:2px;font-size:13px}
 .hint-text{color:var(--muted);font-size:12px;margin-top:14px}
+.support-contact-grid{grid-template-columns:repeat(3,1fr)}
+.support-contact-card{display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 16px;text-align:center}
+.support-contact-icon{display:grid;place-items:center;width:44px;height:44px;margin-bottom:4px;border-radius:50%}
+.support-contact-icon--blue{background:var(--soft);color:var(--blue)}
+.support-contact-icon--green{background:#e8f8ee;color:#168553}
+.support-contact-value{color:var(--muted);font-size:13px;word-break:break-word}
+@media(max-width:600px){
+  .support-page{padding:40px 18px 56px}
+  .support-contact-grid{grid-template-columns:1fr;gap:12px}
+  .support-contact-card{flex-direction:row;justify-content:flex-start;text-align:left;padding:16px 18px}
+  .support-contact-icon{margin-bottom:0}
+}
 
 /* ---- Premium public professional profile page ---- */
 .pro-hero{background:linear-gradient(135deg,#06226a,#0a47cf);border-radius:24px;padding:44px 40px;color:#fff;position:relative;overflow:hidden;margin-bottom:24px}

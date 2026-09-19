@@ -76,7 +76,10 @@ if (!session && explore !== '1') {
         .tp-nav{background:rgba(248,251,255,.78);border-bottom:1px solid rgba(180,199,227,.5);box-shadow:0 8px 30px rgba(27,62,113,.06)}
         .tp-nav-inner{height:82px}.tp-logo{display:flex;align-items:center;gap:10px}.tp-logo:after{content:'THE TRUST LAYER';font-size:8px;letter-spacing:1.5px;color:#6680a8;border-left:1px solid #d4dfed;padding-left:10px}
         .tp-links{gap:20px}.tp-links a{padding:30px 0}.tp-links a:hover{transform:translateY(-2px)}
-        .tp-signup{border-radius:999px!important;padding:12px 20px!important;box-shadow:0 10px 22px rgba(21,94,239,.22)}.tp-signout{border:1px solid #cbd9ec!important;border-radius:10px!important;padding:9px 14px!important;background:#fff!important;color:#173b70!important;cursor:pointer;text-decoration:none!important;box-shadow:none!important}.tp-signout a{display:block;color:inherit;text-decoration:none}.tp-signout:hover{color:#155eef!important;border-color:#9db9e8!important;background:#f6f9ff!important;transform:translateY(-1px)}
+        .tp-signup{border-radius:999px!important;padding:12px 20px!important;box-shadow:0 10px 22px rgba(21,94,239,.22)}
+        .tp-signout{display:inline-flex!important;align-self:center;align-items:center;justify-content:center;height:auto;line-height:1;border:1px solid #c3d6f5!important;border-radius:8px!important;padding:8px 13px!important;background:#eef4ff!important;color:#173b70!important;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none!important;box-shadow:none!important}
+        .tp-signout a{display:block;color:inherit;text-decoration:none;font-size:12px;font-weight:700}
+        .tp-signout:hover{color:#fff!important;border-color:#155eef!important;background:#155eef!important;transform:translateY(-1px)}
         .tp-hero{position:relative;padding:104px 0 0;background:#f8fbff}
         .tp-hero:before{display:none}
         .tp-hero-grid,.tp-stats{position:relative;z-index:1}.tp-kicker{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border:1px solid #bdd4fa;border-radius:999px;background:#eaf2ff;letter-spacing:1.3px}
@@ -109,6 +112,15 @@ if (!session && explore !== '1') {
         .tp-sound-out{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:7px 11px;border:1px solid #b9cbe7;border-radius:999px;background:#fff;color:#31517e;font-size:11px;font-weight:700;box-shadow:none}
         .tp-sound-out svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tp-sound-out.active{border-color:#155eef;background:#eaf2ff;color:#155eef}
         .tp-hero{background:#f8fbff}.tp-hero:before{display:none}.tp-hero-art{background:linear-gradient(145deg,#eaf4ff 0%,#cfe5ff 52%,#9fc8fb 100%)}.tp-hero-art:after{display:none}.tp-trust-section{background:#eef5ff}.tp-solution-box{background:#0b2b70}.tp-final-cta{background:#155eef}.tp-growth-section{background:#eef5ff}
+        .tp-faq-list{max-width:760px;margin-top:38px;border-top:1px solid var(--tp-line)}
+        .tp-faq-item{padding:22px 0;border-bottom:1px solid var(--tp-line)}
+        .tp-faq-item summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;list-style:none;font-weight:800;font-size:16px;color:var(--tp-ink)}
+        .tp-faq-item summary::-webkit-details-marker{display:none}
+        .tp-faq-item:hover summary{color:var(--tp-blue)}
+        .tp-faq-caret{flex-shrink:0;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#eaf2ff;color:var(--tp-blue);font-size:15px;font-weight:700;transition:transform .25s ease,background .25s ease}
+        .tp-faq-item[open] .tp-faq-caret{transform:rotate(45deg);background:var(--tp-blue);color:#fff}
+        .tp-faq-item p{margin:14px 0 0;color:var(--tp-muted);font-size:14px;line-height:1.65;max-width:640px}
+        @media(max-width:560px){.tp-faq-item{padding:18px 0}.tp-faq-item summary{font-size:14px;gap:10px}.tp-faq-caret{width:22px;height:22px;font-size:13px}}
       ` }} />
       <header className="tp-nav">
         <div className="tp-container tp-nav-inner">
@@ -207,6 +219,24 @@ if (!session && explore !== '1') {
               Be one of our first verified professionals — <Link href="/register">join Trux Pylot</Link> and get discovered here.
             </p>
           )}
+        </div>
+      </section>
+
+      <section className="tp-section tp-container tp-faq" id="faq">
+        <div className="tp-section-heading reveal"><p className="tp-kicker">GOT QUESTIONS?</p><h2>Frequently asked questions.</h2></div>
+        <div className="tp-faq-list">
+          {[
+            ['Is Trux Pylot free to use?', 'Yes — browsing the marketplace and requesting a professional is free. Professionals only pay for optional visibility features like Top 10 placement.'],
+            ['How are professionals verified?', 'Every professional submits identity and business documents, which our team reviews before they can appear as verified on the marketplace.'],
+            ['How does payment work?', 'You pay securely through Trux Pylot once you accept a quote. Funds are only released to the professional after you confirm the job is complete.'],
+            ['What if something goes wrong with a job?', 'Reach our Customer Service team any time from the Support page — every job is tracked, so we can step in and help resolve it.'],
+            ['Can I become a professional on Trux Pylot?', 'Yes — register as a professional, complete verification, and you can start receiving job requests from customers near you.'],
+          ].map(([question, answer], index) => (
+            <details className="tp-faq-item reveal" key={question} style={{ transitionDelay: `${index * 45}ms` }}>
+              <summary>{question}<span className="tp-faq-caret">＋</span></summary>
+              <p>{answer}</p>
+            </details>
+          ))}
         </div>
       </section>
 

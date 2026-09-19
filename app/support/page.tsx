@@ -1,5 +1,12 @@
 import Link from 'next/link';
 
+function SupportIcon({ type }: { type: 'mail' | 'chat' | 'phone' }) {
+  const common = { width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  if (type === 'mail') return <svg {...common}><rect x="3" y="5" width="18" height="14" rx="2.5" /><path d="m4 7 8 6 8-6" /></svg>;
+  if (type === 'chat') return <svg {...common}><path d="M21 11.5a8.38 8.38 0 0 1-8.9 8.36 8.5 8.5 0 0 1-3.8-.9L3 20l1.06-4.13A8.5 8.5 0 1 1 21 11.5Z" /></svg>;
+  return <svg {...common}><path d="M15.5 17.5c-4.7 0-9-4.3-9-9 0-1.4.6-2.7 1.6-3.7l1.1-1.1a1 1 0 0 1 1.5.1l2 2.6a1 1 0 0 1-.1 1.3L11 9.4c.6 1.5 1.7 2.6 3.2 3.2l1.7-1.6a1 1 0 0 1 1.3-.1l2.6 2a1 1 0 0 1 .1 1.5l-1.1 1.1c-1 1-2.3 1.6-3.7 1.6Z" /></svg>;
+}
+
 export default function Support() {
   return (
     <main>
@@ -11,7 +18,7 @@ export default function Support() {
         </nav>
       </header>
 
-      <section className="landing" style={{ maxWidth: 720 }}>
+      <section className="landing support-page" style={{ maxWidth: 720 }}>
         <p className="eyebrow">SUPPORT</p>
         <h1 style={{ fontSize: 38 }}>Talk to a Truxpylot agent</h1>
         <p style={{ marginBottom: 30 }}>Have a question about a request, a payment, or your account? Our team is here to help.</p>
@@ -28,21 +35,21 @@ export default function Support() {
           </div>
         </section>
 
-        <div className="detail-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)' }}>
-          <a href="mailto:info@truxpylot.com" className="panel" style={{ padding: 22, display: 'block', textAlign: 'center' }}>
-            <div style={{ fontSize: 26, marginBottom: 8 }}>✉️</div>
-            <b style={{ display: 'block', marginBottom: 4 }}>Email us</b>
-            <span style={{ color: 'var(--muted)', fontSize: 13 }}>info@truxpylot.com</span>
+        <div className="detail-grid support-contact-grid">
+          <a href="mailto:info@truxpylot.com" className="panel support-contact-card">
+            <span className="support-contact-icon support-contact-icon--blue"><SupportIcon type="mail" /></span>
+            <b>Email us</b>
+            <span className="support-contact-value">info@truxpylot.com</span>
           </a>
-          <a href="https://wa.me/2348054306905" target="_blank" rel="noreferrer" className="panel" style={{ padding: 22, display: 'block', textAlign: 'center' }}>
-            <div style={{ fontSize: 26, marginBottom: 8 }}>💬</div>
-            <b style={{ display: 'block', marginBottom: 4 }}>WhatsApp us</b>
-            <span style={{ color: 'var(--muted)', fontSize: 13 }}>+234 805 430 6905</span>
+          <a href="https://wa.me/2348054306905" target="_blank" rel="noreferrer" className="panel support-contact-card">
+            <span className="support-contact-icon support-contact-icon--green"><SupportIcon type="chat" /></span>
+            <b>WhatsApp us</b>
+            <span className="support-contact-value">+234 805 430 6905</span>
           </a>
-          <a href="tel:+2348054306905" className="panel" style={{ padding: 22, display: 'block', textAlign: 'center' }}>
-            <div style={{ fontSize: 26, marginBottom: 8 }}>📞</div>
-            <b style={{ display: 'block', marginBottom: 4 }}>Call us</b>
-            <span style={{ color: 'var(--muted)', fontSize: 13 }}>+234 805 430 6905</span>
+          <a href="tel:+2348054306905" className="panel support-contact-card">
+            <span className="support-contact-icon support-contact-icon--blue"><SupportIcon type="phone" /></span>
+            <b>Call us</b>
+            <span className="support-contact-value">+234 805 430 6905</span>
           </a>
         </div>
 
