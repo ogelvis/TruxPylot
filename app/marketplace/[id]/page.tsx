@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { RequestServiceForm } from '@/components/request-service-form';
 import { ReportProfessionalForm } from '@/components/report-professional-form';
+import { PortfolioPost } from '@/components/portfolio-post';
 import { getTruxPylotScore } from '@/lib/truxpylot-score';
 
 export const dynamic = 'force-dynamic';
@@ -23,7 +24,11 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
         user: { select: { phone: true } },
         jobs: { select: { status: true } },
         serviceRequests: { select: { status: true, requiresProfessionalResponse: true, responseExcluded: true, responseAvailableAt: true, professionalRespondedAt: true } },
-        portfolioItems: { where: { approved: true }, orderBy: { createdAt: 'desc' } },
+        portfolioItems: {
+          where: { approved: true },
+          orderBy: { createdAt: 'desc' },
+          include: { likes: { select: { userId: true } }, comments: { orderBy: { createdAt: 'asc' } } },
+        },
       },
     }),
     prisma.review.count({ where: { professionalId: id } }),
@@ -97,7 +102,7 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
           <div className="pro-stat"><b>{professional.yearsExperience ?? '—'}</b><span>Years of experience</span></div>
         </div>
 
-        <div className="detail-grid" style={{ gridTemplateColumns: '2fr 1fr', alignItems: 'start' }}>
+        <div className="detail-grid pro-profile-grid" style={{ alignItems: 'start' }}>
           <div>
             {professional.bio && (
               <section className="panel">
@@ -123,12 +128,21 @@ export default async function ProfessionalProfile({ params }: { params: Promise<
 
             {professional.portfolioItems.length > 0 && (
               <section className="panel">
-                <div className="panel-head"><h2>Portfolio</h2><span className="profile-section-meta">{professional.portfolioItems.length} approved project{professional.portfolioItems.length === 1 ? '' : 's'}</span></div>
-                <div className="portfolio-grid">
-                  {professional.portfolioItems.map(item => <article className="portfolio-card" key={item.id}>
-                    {item.imageUrl && <img src={item.imageUrl} alt="" />}
-                    <div><h3>{item.title}</h3>{item.description && <p>{item.description}</p>}</div>
-                  </article>)}
+                <div className="panel-head"><h2>Portfolio</h2><span className="profile-section-meta">{professional.portfolioItems.length} project{professional.portfolioItems.length === 1 ? '' : 's'}</span></div>
+                <div className="job-detail-body social-post-grid">
+                  {professional.portfolioItems.map(item => (
+                    <PortfolioPost
+                      key={item.id}
+                      id={item.id}
+                      images={item.images.length ? item.images : (item.imageUrl ? [item.imageUrl] : [])}
+                      caption={item.description}
+                      dateLabel={monthYearFmt.format(item.createdAt)}
+                      initialLikeCount={item.likes.length}
+                      initialLiked={session ? item.likes.some(l => l.userId === session.userId) : false}
+                      initialComments={item.comments.map(c => ({ id: c.id, authorName: c.authorName, body: c.body, createdAt: c.createdAt.toISOString() }))}
+                      canInteract={Boolean(session)}
+                    />
+                  ))}
                 </div>
               </section>
             )}
