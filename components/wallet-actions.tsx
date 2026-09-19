@@ -7,6 +7,8 @@ type Bank = { id:number; name:string; code:string };
 type WalletActionSection = 'all' | 'fund' | 'payout' | 'withdraw';
 type WalletActionsProps = { availableBalance:number; payoutAccount:PayoutAccount|null; withdrawOnly?:boolean; section?:WalletActionSection };
 
+function idempotencyKey(){try{if(typeof crypto!=='undefined'&&typeof crypto.randomUUID==='function')return crypto.randomUUID();if(typeof crypto!=='undefined'&&typeof crypto.getRandomValues==='function'){const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&0x0f)|0x40;bytes[8]=(bytes[8]&0x3f)|0x80;const hex=Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;}}catch{}return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;}
+
 export function WalletActions({ availableBalance, payoutAccount, withdrawOnly=false, section }:WalletActionsProps){
   const mode:WalletActionSection = section ?? (withdrawOnly ? 'withdraw' : 'all');
   const [amount,setAmount]=useState('5000');
@@ -35,7 +37,7 @@ export function WalletActions({ availableBalance, payoutAccount, withdrawOnly=fa
     return()=>window.clearTimeout(timer);
   },[payout.bankCode,payout.accountNumber,payoutAccount?.bankCode,payoutAccount?.accountNumber]);
   function withdraw(){const amountInKobo=Math.round(Number(withdrawAmount)*100);setWithdrawError('');if(!Number.isFinite(amountInKobo)||amountInKobo<20000){setWithdrawError('Minimum withdrawal is ₦200.');return;}if(amountInKobo>availableBalance){setWithdrawError('Insufficient wallet balance.');return;}if(!payoutAccount||!payoutAccount.verified){setWithdrawError('Verify your payout bank account before withdrawing.');return;}setConfirmOpen(true);}
-  async function confirmWithdrawal(){const amountInKobo=Math.round(Number(withdrawAmount)*100);if(!payoutAccount?.verified){setWithdrawError('Verify your payout bank account before withdrawing.');setConfirmOpen(false);return;}if(submitting)return;setSubmitting(true);const r=await fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':crypto.randomUUID()},body:JSON.stringify({amount:amountInKobo})});const b=await r.json();setMessage(r.ok?'Withdrawal submitted. It is now being processed securely.':b.error??'Unable to request withdrawal.');setSubmitting(false);if(r.ok){setConfirmOpen(false);window.setTimeout(()=>window.location.reload(),700);}}
+  async function confirmWithdrawal(){const amountInKobo=Math.round(Number(withdrawAmount)*100);if(!payoutAccount?.verified){setWithdrawError('Verify your payout bank account before withdrawing.');setConfirmOpen(false);return;}if(submitting)return;setSubmitting(true);try{const r=await fetch('/api/wallet',{method:'POST',headers:{'Content-Type':'application/json','Idempotency-Key':idempotencyKey()},body:JSON.stringify({amount:amountInKobo})});const b=await r.json().catch(()=>({error:'Unexpected response from the server.'}));setMessage(r.ok?'Withdrawal submitted. It is now being processed securely.':b.error??'Unable to request withdrawal.');if(r.ok){setConfirmOpen(false);window.setTimeout(()=>window.location.reload(),700);}}catch{setMessage('Could not reach the server. Check your connection and try again.');}finally{setSubmitting(false);}}
 
   const showFund = mode==='all' || mode==='fund';
   const showPayout = mode==='all' || mode==='payout';
