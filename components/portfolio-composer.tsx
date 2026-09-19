@@ -14,6 +14,7 @@ export function PortfolioComposer() {
   const [caption, setCaption] = useState('');
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(e.target.files ?? []);
@@ -39,6 +40,7 @@ export function PortfolioComposer() {
       return;
     }
     setError('');
+    setNotice('');
     setPosting(true);
     const body = new FormData();
     body.append('caption', caption);
@@ -53,6 +55,7 @@ export function PortfolioComposer() {
       setFiles([]);
       setPreviews([]);
       setCaption('');
+      setNotice('Submitted! Your post will appear on your public profile once our team reviews it.');
       router.refresh();
     } catch {
       setError('Could not reach the server. Check your connection and try again.');
@@ -94,6 +97,7 @@ export function PortfolioComposer() {
         </div>
       </div>
       {error && <p role="alert" className="portfolio-composer-error">{error}</p>}
+      {notice && <p className="portfolio-composer-notice">{notice}</p>}
     </div>
   );
 }

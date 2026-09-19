@@ -15,6 +15,7 @@ export function PortfolioPost({
   initialComments,
   canInteract,
   deletable,
+  approved = true,
 }: {
   id: string;
   images: string[];
@@ -25,6 +26,7 @@ export function PortfolioPost({
   initialComments: Comment[];
   canInteract: boolean;
   deletable?: boolean;
+  approved?: boolean;
 }) {
   const router = useRouter();
   const [liked, setLiked] = useState(initialLiked);
@@ -112,6 +114,7 @@ export function PortfolioPost({
           {deletable && (
             <button type="button" className="social-post-delete" onClick={deletePost} disabled={busy} aria-label="Delete post">🗑</button>
           )}
+          {!approved && <span className="social-post-pending">Pending review</span>}
         </div>
       )}
       <div className="social-post-body">

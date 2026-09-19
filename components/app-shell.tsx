@@ -36,6 +36,7 @@ const nav: Record<Role, { label: string; href: string; icon: string }[]> = {
     { label: 'Overview', href: '/dashboard/admin', icon: '⌂' },
     { label: 'Service requests (CSD)', href: '/dashboard/admin/service-requests', icon: '☎' },
     { label: 'Verifications', href: '/dashboard/admin/verifications', icon: '✓' },
+    { label: 'Portfolio review', href: '/dashboard/admin/portfolio', icon: '🖼' },
     { label: 'Referrals', href: '/dashboard/admin/referrals', icon: '↗' },
     { label: 'Users', href: '/dashboard/admin/users', icon: '◎' },
     { label: 'PYLOTVAULT Finance', href: '/dashboard/admin/wallet', icon: '₦' },
