@@ -112,3 +112,39 @@ export async function getVerificationDocumentUrl(path: string): Promise<string> 
   if (error || !data) throw error ?? new Error('Could not generate a document link.');
   return data.signedUrl;
 }
+
+const PORTFOLIO_BUCKET = 'portfolio';
+const MAX_PORTFOLIO_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB
+const MAX_PORTFOLIO_IMAGES_PER_POST = 5;
+
+/** Uploads up to 5 images for a professional's portfolio post to the public
+ *  `portfolio` bucket under `{professionalId}/{timestamp}-{index}.{ext}` and
+ *  returns their public URLs, in the same order as the input files. Throws a
+ *  message-safe-to-show-the-user Error on validation/upload failure. */
+export async function uploadPortfolioImages(professionalId: string, files: File[]): Promise<string[]> {
+  if (files.length === 0) throw new Error('Add at least one image.');
+  if (files.length > MAX_PORTFOLIO_IMAGES_PER_POST) throw new Error(`You can upload up to ${MAX_PORTFOLIO_IMAGES_PER_POST} images per post.`);
+  const supabase = getServiceClient();
+  const urls: string[] = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const ext = ALLOWED_TYPES[file.type];
+    if (!ext) throw new Error('Please upload only JPG, PNG, or WEBP images.');
+    if (file.size > MAX_PORTFOLIO_IMAGE_BYTES) throw new Error('Each image must be smaller than 8MB.');
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const signature = buffer.subarray(0, 12);
+    const validSignature = file.type === 'image/jpeg' ? signature[0] === 0xff && signature[1] === 0xd8 && signature[2] === 0xff : file.type === 'image/png' ? signature.toString('hex') === '89504e470d0a1a0a' : signature.toString('ascii', 0, 4) === 'RIFF' && signature.toString('ascii', 8, 12) === 'WEBP';
+    if (!validSignature) throw new Error('One of the files does not match the selected image type.');
+    const scan = scanUploadBuffer(buffer, file.type);
+    if (!scan.safe) throw new Error(scan.reason);
+    const path = `${professionalId}/${Date.now()}-${i}.${ext}`;
+    const { error } = await supabase.storage.from(PORTFOLIO_BUCKET).upload(path, buffer, {
+      contentType: file.type,
+      upsert: false,
+    });
+    if (error) throw error;
+    const { data } = supabase.storage.from(PORTFOLIO_BUCKET).getPublicUrl(path);
+    urls.push(data.publicUrl);
+  }
+  return urls;
+}
