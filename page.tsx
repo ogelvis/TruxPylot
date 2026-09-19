@@ -4,6 +4,9 @@ import { ScrollReveal } from '@/components/scroll-reveal';
 import { Counter } from '@/components/counter';
 import { ProPhoto } from '@/components/pro-photo';
 import { getSession, dashboardPath } from '@/lib/auth';
+import { SignOutLink } from '@/components/sign-out-link';
+import { SoundOut } from '@/components/sound-out';
+import { WelcomeGate } from '@/components/welcome-gate';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +27,20 @@ function Mark({ type }: { type: 'check' | 'shield' | 'search' | 'clock' | 'star'
   return <svg {...common}><path d="m12 3 2.7 5.6 6.3.9-4.5 4.4 1.1 6.2-5.6-3-5.6 3 1.1-6.2L3 9.5l6.3-.9L12 3Z" /></svg>;
 }
 
-export default async function Home() {
-  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, session] = await Promise.all([
+export default async function Home({ searchParams }: { searchParams?: Promise<{ explore?: string | string[] }> }) {
+  const session = await getSession();
+  const params = searchParams ? await searchParams : {};
+  const explore = Array.isArray(params.explore) ? params.explore[0] : params.explore;
+
+if (!session && explore !== '1') {
+  return (
+    <WelcomeGate authenticated={false}>
+      {null}
+    </WelcomeGate>
+  );
+}
+
+  const [categories, verifiedCount, completedJobsCount, customerCount, featuredPros, activeAdverts] = await Promise.all([
     prisma.serviceCategory.findMany({ where: { active: true }, take: 12, orderBy: { name: 'asc' } }),
     prisma.professional.count({ where: { verificationStatus: 'APPROVED' } }),
     prisma.job.count({ where: { status: 'SETTLED' } }),
@@ -35,40 +50,77 @@ export default async function Home() {
       orderBy: { rating: 'desc' },
       take: 4,
     }),
-    getSession(),
+    prisma.instantAdvertPurchase.findMany({
+      where: { status: 'SUCCESS', startsAt: { lte: new Date() }, expiresAt: { gt: new Date() }, professional: { verificationStatus: 'APPROVED' } },
+      include: { professional: true },
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+    }),
   ]);
 
   return (
     <main className="tp-home">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({
+        '@context':'https://schema.org', '@type':'WebSite', name:'TruxPylot', url:'https://truxpylot.com',
+        description:'Find trusted professionals for services and everyday jobs.',
+        potentialAction:{'@type':'SearchAction',target:'https://truxpylot.com/marketplace?query={search_term_string}','query-input':'required name=search_term_string'}
+      })}} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify({
+        '@context':'https://schema.org','@type':'Organization',name:'TruxPylot',url:'https://truxpylot.com',logo:'https://truxpylot.com/trux-pylot-logo.png',sameAs:[]
+      })}} />
       <ScrollReveal />
       <style dangerouslySetInnerHTML={{ __html: `
         .tp-home{--tp-ink:#10233f;--tp-blue:#155eef;--tp-navy:#071b49;--tp-muted:#667895;--tp-line:#dce5f2;background:#f8fbff}
-        .tp-home{font-family:Inter,ui-sans-serif,system-ui,sans-serif}
+        .tp-home{font-family:Arial,Helvetica,sans-serif}
         .tp-home a{transition:color .25s ease,transform .25s ease,box-shadow .25s ease,border-color .25s ease,background .25s ease}
         .tp-nav{background:rgba(248,251,255,.78);border-bottom:1px solid rgba(180,199,227,.5);box-shadow:0 8px 30px rgba(27,62,113,.06)}
         .tp-nav-inner{height:82px}.tp-logo{display:flex;align-items:center;gap:10px}.tp-logo:after{content:'THE TRUST LAYER';font-size:8px;letter-spacing:1.5px;color:#6680a8;border-left:1px solid #d4dfed;padding-left:10px}
         .tp-links{gap:20px}.tp-links a{padding:30px 0}.tp-links a:hover{transform:translateY(-2px)}
         .tp-signup{border-radius:999px!important;padding:12px 20px!important;box-shadow:0 10px 22px rgba(21,94,239,.22)}
-        .tp-hero{position:relative;padding:104px 0 0;background:radial-gradient(circle at 75% 12%,rgba(79,147,255,.18),transparent 31%),linear-gradient(145deg,#f8fbff 0%,#eef5ff 100%)}
-        .tp-hero:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.35;background-image:linear-gradient(rgba(21,94,239,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(21,94,239,.06) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,#000,transparent 75%)}
+        .tp-signout{display:inline-flex!important;align-self:center;align-items:center;justify-content:center;height:auto;line-height:1;border:1px solid #c3d6f5!important;border-radius:8px!important;padding:8px 13px!important;background:#eef4ff!important;color:#173b70!important;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none!important;box-shadow:none!important}
+        .tp-signout a{display:block;color:inherit;text-decoration:none;font-size:12px;font-weight:700}
+        .tp-signout:hover{color:#fff!important;border-color:#155eef!important;background:#155eef!important;transform:translateY(-1px)}
+        .tp-hero{position:relative;padding:104px 0 0;background:#f8fbff}
+        .tp-hero:before{display:none}
         .tp-hero-grid,.tp-stats{position:relative;z-index:1}.tp-kicker{display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border:1px solid #bdd4fa;border-radius:999px;background:#eaf2ff;letter-spacing:1.3px}
         .tp-kicker:before{content:'';width:6px;height:6px;border-radius:50%;background:#35d07f;box-shadow:0 0 0 4px #35d07f20;animation:tp-pulse 2s infinite}
         .tp-hero h1{max-width:700px;font-size:clamp(43px,6vw,76px);letter-spacing:-4px;line-height:.99}
         .tp-lede{font-size:17px;max-width:590px}.tp-actions{gap:14px}.tp-button{border-radius:999px;padding:16px 22px;box-shadow:0 14px 30px rgba(21,94,239,.28)}.tp-button:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 18px 34px rgba(21,94,239,.34)}
         .tp-text-button{padding:15px 17px;border:1px solid #cbd9ec;border-radius:999px;background:#fff}.tp-text-button:hover{border-color:#155eef;transform:translateY(-3px)}
         .tp-hero-proof{display:flex;align-items:center;gap:10px;margin-top:25px;color:#31517e;font-size:12px}.tp-hero-proof>span{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;color:#155eef;background:#dbeaff}.tp-hero-proof svg{width:17px}.tp-hero-proof strong{font-size:12px;color:#183967}.tp-hero-proof small{color:#7890b0}
-        .tp-hero-art{height:470px;border:1px solid rgba(135,181,255,.3);border-radius:34px;background:linear-gradient(145deg,#123d94,#071b49 70%);box-shadow:0 30px 70px rgba(9,35,93,.25);animation:tp-float 6s ease-in-out infinite}
-        .tp-hero-art:after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 50% 45%,rgba(91,160,255,.22),transparent 30%),linear-gradient(120deg,transparent 35%,rgba(255,255,255,.08),transparent 58%);animation:tp-shine 8s linear infinite}
+        .tp-hero-art{height:470px;position:relative;overflow:hidden;border:1px solid rgba(135,181,255,.35);border-radius:34px;background:linear-gradient(145deg,#eaf4ff 0%,#cfe5ff 52%,#9fc8fb 100%);box-shadow:0 30px 70px rgba(9,35,93,.18);animation:tp-float 6s ease-in-out infinite}
+        .tp-hero-art:before{content:'';position:absolute;inset:auto -12% -42% -12%;height:72%;border-radius:50% 50% 0 0;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.6));box-shadow:0 -30px 80px rgba(255,255,255,.25)}
+        .tp-hero-worker{position:absolute;z-index:2;left:50%;bottom:-12px;width:min(88%,430px);height:auto;transform:translateX(-50%);filter:drop-shadow(0 24px 28px rgba(7,31,73,.22));transition:transform .45s ease}
+        .tp-hero-art:hover .tp-hero-worker{transform:translateX(-50%) translateY(-7px) scale(1.015)}
+        .tp-hero-badge{position:absolute;z-index:3;left:24px;top:24px;display:flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid rgba(21,94,239,.18);border-radius:999px;background:rgba(255,255,255,.9);backdrop-filter:blur(12px);color:#153b77;font-size:11px;font-weight:800;box-shadow:0 10px 24px rgba(21,62,120,.1)}
+        .tp-hero-badge .tp-live-dot{margin-right:0}
+        .tp-hero-trust-card{position:absolute;z-index:3;right:20px;top:86px;display:flex;align-items:center;gap:9px;padding:11px 13px;border:1px solid rgba(21,94,239,.16);border-radius:14px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);box-shadow:0 15px 30px rgba(21,62,120,.13);color:#173b70;font-size:11px;font-weight:800}
+        .tp-hero-trust-card svg{width:20px;height:20px;color:#155eef}
+        .tp-hero-caption{position:absolute;z-index:3;left:24px;bottom:22px;padding:10px 13px;border-radius:12px;background:rgba(7,27,73,.9);color:#fff;box-shadow:0 12px 28px rgba(7,27,73,.2);font-size:11px;line-height:1.35}
+        .tp-hero-caption strong{display:block;font-size:12px}
+        .tp-hero-caption small{color:#bcd0f0}
         .tp-art-center{z-index:1;top:143px}.tp-art-center svg{background:rgba(109,169,255,.12);box-shadow:0 0 35px rgba(93,161,255,.35);animation:tp-pulse 3s infinite}.tp-art-orbit{z-index:1;animation:tp-spin 18s linear infinite}.orbit-two{animation-direction:reverse;animation-duration:27s}
         .tp-art-tag,.tp-art-label{z-index:2;backdrop-filter:blur(12px)}.tp-art-tag{border:1px solid #dbe8ff;transition:transform .3s ease}.tp-art-tag:hover{transform:translateY(-7px) rotate(-2deg)}.tag-top{animation:tp-float 5s 1s ease-in-out infinite}.tag-bottom{animation:tp-float 5s 2s ease-in-out infinite}
         .tp-stats{margin-top:78px;border:1px solid rgba(180,199,227,.8);border-radius:20px;padding:27px 0;box-shadow:0 20px 45px rgba(27,62,113,.1)}.tp-stats strong{color:#155eef;font-size:31px}
         .tp-section{padding-top:140px}.tp-section-heading h2,.tp-trust-intro h2,.tp-final-cta h2{letter-spacing:-2.8px}.tp-service-list{gap:12px}.tp-service{min-height:76px;border:1px solid #dce5f2;border-radius:16px;background:rgba(255,255,255,.68);padding:18px 20px;box-shadow:0 8px 20px rgba(27,62,113,.04)}.tp-service:hover{border-color:#76a8f7;background:#fff;color:#155eef;transform:translateY(-5px);box-shadow:0 14px 25px rgba(21,94,239,.12)}
-        .tp-trust-section{background:linear-gradient(135deg,#e9f2ff,#f6f9ff)}.tp-problem-box,.tp-solution-box{border-radius:20px;box-shadow:0 15px 35px rgba(27,62,113,.07);transition:transform .3s ease,box-shadow .3s ease}.tp-problem-box:hover,.tp-solution-box:hover{transform:translateY(-6px);box-shadow:0 22px 40px rgba(27,62,113,.13)}.tp-solution-box{background:linear-gradient(145deg,#123d94,#071b49)}
+        .tp-trust-section{background:#eef5ff}.tp-problem-box,.tp-solution-box{border-radius:20px;box-shadow:0 15px 35px rgba(27,62,113,.07);transition:transform .3s ease,box-shadow .3s ease}.tp-problem-box:hover,.tp-solution-box:hover{transform:translateY(-6px);box-shadow:0 22px 40px rgba(27,62,113,.13)}.tp-solution-box{background:#0b2b70}
         .tp-step{position:relative;padding-top:30px}.tp-step>span{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#e9f2ff;box-shadow:inset 0 0 0 1px #bfd5f7}.tp-step h3{margin-top:27px}.tp-pros{background:#f2f6fc}.tp-pro-card{overflow:hidden;border-radius:20px;border:1px solid #dce5f2;box-shadow:0 10px 25px rgba(27,62,113,.05);transition:transform .3s ease,box-shadow .3s ease}.tp-pro-card:hover{transform:translateY(-9px);box-shadow:0 22px 40px rgba(27,62,113,.14)}.tp-pro-card .tp-pro-photo{transition:transform .5s ease}.tp-pro-card:hover .tp-pro-photo{transform:scale(1.04)}
-        .tp-final-cta{position:relative;overflow:hidden;background:linear-gradient(120deg,#155eef,#09235d)}.tp-final-cta:before{content:'';position:absolute;width:480px;height:480px;right:-120px;top:-260px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 55px #ffffff09,0 0 0 110px #ffffff06}.tp-final-cta>*{position:relative;z-index:1}
+        .tp-final-cta{position:relative;overflow:hidden;background:#155eef}.tp-final-cta:before{content:'';position:absolute;width:480px;height:480px;right:-120px;top:-260px;border:1px solid #ffffff30;border-radius:50%;box-shadow:0 0 0 55px #ffffff09,0 0 0 110px #ffffff06}.tp-final-cta>*{position:relative;z-index:1}
         .tp-footer{background:#061737}.tp-footer-bottom{border-top:1px solid #ffffff18;padding-top:20px}
-        @keyframes tp-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}@keyframes tp-pulse{0%,100%{opacity:1}50%{opacity:.65}}@keyframes tp-spin{to{transform:translateX(-50%) rotate(360deg)}}@keyframes tp-shine{0%{transform:translateX(-100%)}45%,100%{transform:translateX(100%)}}@media(max-width:820px){.tp-logo:after{display:none}.tp-links{gap:10px;font-size:11px}.tp-links a:nth-child(-n+3){display:none}.tp-hero{padding-top:70px}.tp-hero-grid{grid-template-columns:1fr;gap:45px}.tp-hero-art{height:390px}.tp-stats{margin-top:45px}.tp-service-list,.tp-trust-grid,.tp-pro-grid{grid-template-columns:1fr 1fr}.tp-trust-intro{grid-column:1/-1}.tp-footer-grid{grid-template-columns:1fr 1fr}}@media(max-width:540px){.tp-container{width:min(100% - 28px,1160px)}.tp-nav-inner{height:70px}.tp-links a:nth-last-child(2){display:none}.tp-hero h1{letter-spacing:-2.5px}.tp-actions{align-items:stretch;flex-direction:column}.tp-button,.tp-text-button{justify-content:center}.tp-hero-art{height:350px}.orbit-two{width:480px;height:480px}.tp-stats{grid-template-columns:1fr;padding:0}.tp-stats div{padding:16px;border-right:0;border-bottom:1px solid var(--tp-line)}.tp-section{padding-top:95px;padding-bottom:85px}.tp-service-list,.tp-trust-grid,.tp-pro-grid,.tp-footer-grid{grid-template-columns:1fr}.tp-step{padding-left:0!important;padding-bottom:25px;border-right:0;border-bottom:1px solid var(--tp-line)}.tp-step:last-child{border-bottom:0}.tp-footer-grid{gap:28px}}
+        @keyframes tp-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}@keyframes tp-pulse{0%,100%{opacity:1}50%{opacity:.65}}@keyframes tp-spin{to{transform:translateX(-50%) rotate(360deg)}}@keyframes tp-shine{0%{transform:translateX(-100%)}45%,100%{transform:translateX(100%)}}@media(max-width:820px){.tp-logo:after{display:none}.tp-links{gap:10px;font-size:11px}.tp-links a:nth-child(-n+3){display:none}.tp-hero{padding-top:70px}.tp-hero-grid{grid-template-columns:1fr;gap:45px}.tp-hero-art{height:390px}.tp-stats{margin-top:45px}.tp-service-list,.tp-trust-grid,.tp-pro-grid{grid-template-columns:1fr 1fr}.tp-trust-intro{grid-column:1/-1}.tp-footer-grid{grid-template-columns:1fr 1fr}}@media(max-width:540px){.tp-container{width:min(100% - 28px,1160px)}.tp-nav-inner{height:70px}.tp-links a:nth-last-child(2){display:none}.tp-hero h1{letter-spacing:-2.5px}.tp-actions{align-items:stretch;flex-direction:column}.tp-button,.tp-text-button{justify-content:center}.tp-hero-art{height:350px}.tp-hero-worker{width:102%;bottom:-18px}.tp-hero-trust-card{right:14px;top:72px;font-size:10px;padding:9px 10px}.tp-hero-badge{left:14px;top:14px;font-size:10px}.tp-hero-caption{left:14px;bottom:14px;right:14px}.orbit-two{width:480px;height:480px}.tp-stats{grid-template-columns:1fr;padding:0}.tp-stats div{padding:16px;border-right:0;border-bottom:1px solid var(--tp-line)}.tp-section{padding-top:95px;padding-bottom:85px}.tp-service-list,.tp-trust-grid,.tp-pro-grid,.tp-footer-grid{grid-template-columns:1fr}.tp-step{padding-left:0!important;padding-bottom:25px;border-right:0;border-bottom:1px solid var(--tp-line)}.tp-step:last-child{border-bottom:0}.tp-footer-grid{gap:28px}}
         @media(prefers-reduced-motion:reduce){.tp-home *,.tp-home *:before,.tp-home *:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+        .tp-sound-out{display:inline-flex;align-items:center;gap:7px;margin-top:14px;padding:7px 11px;border:1px solid #b9cbe7;border-radius:999px;background:#fff;color:#31517e;font-size:11px;font-weight:700;box-shadow:none}
+        .tp-sound-out svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.tp-sound-out.active{border-color:#155eef;background:#eaf2ff;color:#155eef}
+        .tp-hero{background:#f8fbff}.tp-hero:before{display:none}.tp-hero-art{background:linear-gradient(145deg,#eaf4ff 0%,#cfe5ff 52%,#9fc8fb 100%)}.tp-hero-art:after{display:none}.tp-trust-section{background:#eef5ff}.tp-solution-box{background:#0b2b70}.tp-final-cta{background:#155eef}.tp-growth-section{background:#eef5ff}
+        .tp-faq-list{max-width:760px;margin-top:38px;border-top:1px solid var(--tp-line)}
+        .tp-faq-item{padding:22px 0;border-bottom:1px solid var(--tp-line)}
+        .tp-faq-item summary{display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:pointer;list-style:none;font-weight:800;font-size:16px;color:var(--tp-ink)}
+        .tp-faq-item summary::-webkit-details-marker{display:none}
+        .tp-faq-item:hover summary{color:var(--tp-blue)}
+        .tp-faq-caret{flex-shrink:0;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:#eaf2ff;color:var(--tp-blue);font-size:15px;font-weight:700;transition:transform .25s ease,background .25s ease}
+        .tp-faq-item[open] .tp-faq-caret{transform:rotate(45deg);background:var(--tp-blue);color:#fff}
+        .tp-faq-item p{margin:14px 0 0;color:var(--tp-muted);font-size:14px;line-height:1.65;max-width:640px}
+        @media(max-width:560px){.tp-faq-item{padding:18px 0}.tp-faq-item summary{font-size:14px;gap:10px}.tp-faq-caret{width:22px;height:22px;font-size:13px}}
       ` }} />
       <header className="tp-nav">
         <div className="tp-container tp-nav-inner">
@@ -80,11 +132,14 @@ export default async function Home() {
             <Link href="/register">Become a professional</Link>
             <Link href="/support">Contact</Link>
             {session ? (
-              <Link href={dashboardPath(session.role)} className="tp-signup">Open dashboard</Link>
+              <>
+                <Link href={dashboardPath(session.role)} className="tp-login">Dashboard</Link>
+                <span className="tp-signup tp-signout"><SignOutLink /></span>
+              </>
             ) : (
               <>
-                <Link href="/login" className="tp-login">Log in</Link>
-                <Link href="/register" className="tp-signup">Sign up</Link>
+                <Link href="/login" className="tp-login">Sign in</Link>
+                <Link href="/register" className="tp-signup">Get started</Link>
               </>
             )}
           </nav>
@@ -95,21 +150,21 @@ export default async function Home() {
         <div className="tp-container tp-hero-grid">
           <div className="reveal">
             <p className="tp-kicker">THE TRUSTED PROFESSIONAL NETWORK</p>
-            <h1>The right person for the job is closer than you think.</h1>
-            <p className="tp-lede">From a leaking tap to a full estate maintenance team, find verified people who show up and stand behind their work.</p>
+            <h1>One App. A gigantic ecosystem.</h1>
+            <p className="tp-lede">Find the right professional, compare trusted work signals, connect with confidence, and get the job done.</p>
             <div className="tp-hero-proof"><span><Mark type="shield" /></span><strong>Built for confidence</strong><small>Verified pros · secure bookings · real accountability</small></div>
             <div className="tp-actions">
               <Link href="/marketplace" className="tp-button">Find a professional <span>↗</span></Link>
               <Link href="/register" className="tp-text-button">Join the network</Link>
             </div>
+            <SoundOut text="TruxPylot. One App. A gigantic ecosystem. Find the right professional, compare trusted work signals, connect with confidence, and get the job done." />
             <p className="tp-assurance"><span><Mark type="check" /></span> Identity-checked professionals across Nigeria</p>
           </div>
-          <div className="tp-hero-art reveal" style={{ transitionDelay: '120ms' }} aria-label="Trux Pylot trust and availability overview">
-            <div className="tp-art-label"><span className="tp-live-dot" /> Available now</div>
-            <div className="tp-art-orbit orbit-one" /><div className="tp-art-orbit orbit-two" />
-            <div className="tp-art-center"><Mark type="shield" /><strong>TRUST<br />THE WORK</strong><small>Verified by Trux Pylot</small></div>
-            <div className="tp-art-tag tag-top"><b>4.9</b><span><Mark type="star" /></span><small>customer rating</small></div>
-            <div className="tp-art-tag tag-bottom"><Mark type="clock" /><span><b>Tracked jobs</b><small>from request to done</small></span></div>
+          <div className="tp-hero-art reveal" style={{ transitionDelay: '120ms' }} aria-label="Verified Trux Pylot professional">
+            <div className="tp-hero-badge"><span className="tp-live-dot" /> Verified professionals</div>
+            <div className="tp-hero-trust-card"><Mark type="shield" /><span>Identity checked</span></div>
+            <img className="tp-hero-worker" src="/verified-worker-404.png" alt="Trux Pylot verified professional" />
+            <div className="tp-hero-caption"><strong>Trusted people. Real services.</strong><small>Professionals ready to get the job done.</small></div>
           </div>
         </div>
         <div className="tp-container tp-stats reveal">
@@ -131,6 +186,8 @@ export default async function Home() {
           {!categories.length && <p className="tp-muted">Service categories are being set up. Check back soon.</p>}
         </div>
       </section>
+
+      {activeAdverts.length > 0 && <section className="tp-sponsored-section"><div className="tp-container"><div className="tp-section-heading reveal"><p className="tp-kicker">SPONSORED ON TRUX PYLOT</p><h2>Businesses ready to be discovered.</h2><p>These professionals are using Instant Advert to put their services in front of more customers.</p></div><div className="tp-sponsored-grid">{activeAdverts.map((ad,index)=><Link href={`/marketplace/${ad.professional.id}`} key={ad.id} className="tp-sponsored-card reveal" style={{transitionDelay:`${index*70}ms`}}><span className="tp-sponsored-badge">SPONSORED</span><div className="tp-sponsored-avatar">{ad.professional.avatarUrl ? <img src={ad.professional.avatarUrl} alt={ad.professional.fullName}/> : <span>{ad.professional.fullName.split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</span>}</div><div><h3>{ad.professional.businessName || ad.professional.fullName}</h3><p>{ad.professional.profession || 'Verified professional'}</p><small>View profile →</small></div></Link>)}</div></div></section>}
 
       <section className="tp-trust-section">
         <div className="tp-container tp-trust-grid">
@@ -162,6 +219,24 @@ export default async function Home() {
               Be one of our first verified professionals — <Link href="/register">join Trux Pylot</Link> and get discovered here.
             </p>
           )}
+        </div>
+      </section>
+
+      <section className="tp-section tp-container tp-faq" id="faq">
+        <div className="tp-section-heading reveal"><p className="tp-kicker">GOT QUESTIONS?</p><h2>Frequently asked questions.</h2></div>
+        <div className="tp-faq-list">
+          {[
+            ['Is Trux Pylot free to use?', 'Yes — browsing the marketplace and requesting a professional is free. Professionals only pay for optional visibility features like Top 10 placement.'],
+            ['How are professionals verified?', 'Every professional submits identity and business documents, which our team reviews before they can appear as verified on the marketplace.'],
+            ['How does payment work?', 'You pay securely through Trux Pylot once you accept a quote. Funds are only released to the professional after you confirm the job is complete.'],
+            ['What if something goes wrong with a job?', 'Reach our Customer Service team any time from the Support page — every job is tracked, so we can step in and help resolve it.'],
+            ['Can I become a professional on Trux Pylot?', 'Yes — register as a professional, complete verification, and you can start receiving job requests from customers near you.'],
+          ].map(([question, answer], index) => (
+            <details className="tp-faq-item reveal" key={question} style={{ transitionDelay: `${index * 45}ms` }}>
+              <summary>{question}<span className="tp-faq-caret">＋</span></summary>
+              <p>{answer}</p>
+            </details>
+          ))}
         </div>
       </section>
 

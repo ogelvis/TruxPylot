@@ -1,56 +1,19 @@
 import Link from 'next/link';
-
-export default function PrivacyPolicy() {
-  return (
-    <main>
-      <header className="site-nav">
-        <Link href="/"><img src="/trux-pylot-logo.png" alt="Trux Pylot" /></Link>
-        <nav>
-          <a href="/marketplace">Find a professional</a>
-          <a className="nav-cta" href="/register">Join as a professional</a>
-        </nav>
-      </header>
-
-      <section className="landing" style={{ maxWidth: 780 }}>
-        <p className="eyebrow">LEGAL</p>
-        <h1 style={{ fontSize: 38 }}>Privacy Policy</h1>
-        <p style={{ marginBottom: 30 }}>Last updated: {new Intl.DateTimeFormat('en-NG', { dateStyle: 'long' }).format(new Date())}</p>
-
-        <section className="panel">
-          <div className="job-detail-body" style={{ display: 'grid', gap: 18 }}>
-            <div>
-              <h2 style={{ fontSize: 16, fontFamily: 'Arial, Helvetica, sans-serif', marginBottom: 6 }}>1. Information we collect</h2>
-              <p>When you register, we collect your name, email address, phone number, and location details you provide. If you register as a professional, we also collect your profession, experience, service categories, and — for verification — identity or trade documents you submit. If you register a business account, we collect your business name and registration (CAC) number. Payments are processed through Paystack; we do not store your card, bank, or payment credentials ourselves.</p>
-            </div>
-            <div>
-              <h2 style={{ fontSize: 16, fontFamily: 'Arial, Helvetica, sans-serif', marginBottom: 6 }}>2. How we use your information</h2>
-              <p>We use your information to operate your account, connect customers with professionals, process payments, verify professional credentials, communicate with you about your requests, and improve the platform.</p>
-            </div>
-            <div>
-              <h2 style={{ fontSize: 16, fontFamily: 'Arial, Helvetica, sans-serif', marginBottom: 6 }}>3. Who can see your information</h2>
-              <p>Your profile information visible on a public professional listing does not include your phone number, email address, or home address. Contact details are only shared internally with Truxpylot Customer Service to coordinate a request, and are shared with a matched professional only once Truxpylot has confirmed and connected both parties.</p>
-            </div>
-            <div>
-              <h2 style={{ fontSize: 16, fontFamily: 'Arial, Helvetica, sans-serif', marginBottom: 6 }}>4. Verification documents</h2>
-              <p>Documents submitted for professional verification are stored privately and are only accessible to authorized Truxpylot reviewers for the purpose of confirming your identity and credentials.</p>
-            </div>
-            <div>
-              <h2 style={{ fontSize: 16, fontFamily: 'Arial, Helvetica, sans-serif', marginBottom: 6 }}>5. Data retention</h2>
-              <p>We retain account information for as long as your account is active, and as needed to comply with legal and financial record-keeping obligations.</p>
-            </div>
-            <div>
-              <h2 style={{ fontSize: 16, fontFamily: 'Arial, Helvetica, sans-serif', marginBottom: 6 }}>6. Your choices</h2>
-              <p>You can update your profile information, phone number, and location at any time from your dashboard. To request deletion of your account or data, contact us using the details below.</p>
-            </div>
-            <div>
-              <h2 style={{ fontSize: 16, fontFamily: 'Arial, Helvetica, sans-serif', marginBottom: 6 }}>7. Contact us</h2>
-              <p>Questions about this policy or your data can be sent to <a href="mailto:info@truxpylot.com">info@truxpylot.com</a>, or visit our <Link href="/support">support page</Link>.</p>
-            </div>
-          </div>
-        </section>
-
-        <p className="hint-text">This policy describes how Truxpylot's platform currently handles information based on its actual features. It is not a substitute for legal advice — consult a qualified professional to ensure full regulatory compliance for your jurisdiction.</p>
-      </section>
-    </main>
-  );
-}
+export default function PrivacyPolicy(){return <main><header className="site-nav"><Link href="/"><img src="/trux-pylot-logo.png" alt="Trux Pylot"/></Link><nav><a href="/marketplace">Find a professional</a><a className="nav-cta" href="/register">Join as a professional</a></nav></header><section className="landing" style={{maxWidth:820}}><p className="eyebrow">LEGAL / PRIVACY</p><h1 style={{fontSize:38}}>TruxPylot Privacy Policy</h1><p style={{marginBottom:30}}>Effective date: 1 September 2026</p><section className="panel"><div className="job-detail-body" style={{display:'grid',gap:20}}>
+<div><h2>1. Who we are</h2><p>TruxPylot is a professional discovery and service marketplace operated by Novini Tech Concept. This policy explains how we collect, use, protect and disclose information when you use TruxPylot.</p></div>
+<div><h2>2. Information we collect</h2><p>Depending on how you use TruxPylot, we may collect account and contact information, profile information, professional services and experience, location information you choose to provide, job and service-request information, reviews, messages, payment and transaction references, referral activity, security and authentication events, device/session information, and professional verification documents.</p></div>
+<div><h2>3. Why we collect information</h2><p>We use information to create and secure accounts, connect customers with professionals, operate job and service-request workflows, verify professional credentials, process and reconcile payments, operate MVault, prevent fraud and abuse, provide customer support, send service and security notifications, improve platform reliability, and comply with applicable legal obligations.</p></div>
+<div><h2>4. Account and security information</h2><p>Security information such as passwords, authentication secrets, recovery data and security answers is protected using appropriate technical safeguards. Security events may be recorded to detect unauthorized access, investigate abuse, protect users and secure the platform. We do not intentionally expose security answers or authentication secrets to ordinary staff.</p></div>
+<div><h2>5. Public professional information</h2><p>Professional profiles may contain information intended for marketplace discovery, such as professional name, business identity, services, experience, location at an appropriate level, rating, TruxPylot Score, professional level, availability and approved work samples. Private contact and verification information is not intentionally displayed as public profile information unless the relevant workflow requires authorized sharing.</p></div>
+<div><h2>6. Verification documents</h2><p>Professional verification documents are stored in restricted storage and are accessible only to authorized reviewers and systems that require access for verification, security or lawful operational purposes. Documents are not intended to be public profile content.</p></div>
+<div><h2>7. Service providers</h2><p>We do not sell your personal information for advertising purposes. We may use trusted technology and infrastructure providers to operate essential services such as hosting, authentication, email delivery, payments, storage, security, fraud prevention and analytics. These providers receive information only as reasonably necessary for the services they perform and are expected to apply appropriate safeguards.</p></div>
+<div><h2>8. When information may be disclosed</h2><p>We may disclose information where necessary to provide a service you requested, protect users and the platform, investigate fraud or abuse, process a transaction, respond to lawful requests, comply with applicable law or legal process, or protect rights, safety and security. We do not intentionally share personal information with unrelated third-party applications for their own independent marketing purposes.</p></div>
+<div><h2>9. Payments</h2><p>Payment processing is handled through payment providers such as Paystack. TruxPylot does not intentionally store your full card credentials. Transaction references and payment status may be retained so we can provide receipts, reconcile transactions, operate MVault and maintain financial records.</p></div>
+<div><h2>10. Cookies, devices and security logs</h2><p>TruxPylot may use essential cookies or similar mechanisms for authentication, recognized-device security, session management and platform functionality. We may retain security logs such as login attempts, timestamps, device information and IP addresses where appropriate for security, fraud prevention and auditing.</p></div>
+<div><h2>11. Data retention</h2><p>We retain information for as long as reasonably necessary to provide the service, maintain security, resolve disputes, prevent fraud, maintain financial records, satisfy legal obligations and enforce our agreements. Retention periods may differ depending on the type and purpose of the information.</p></div>
+<div><h2>12. Your choices and rights</h2><p>Subject to applicable law, you may request access to, correction of, or deletion of personal information, ask questions about processing, or raise a privacy concern. Some information may need to be retained where required for legal, security, fraud-prevention or financial-record purposes.</p></div>
+<div><h2>13. Children</h2><p>TruxPylot is not intended for children who are below the minimum age permitted to use the service under applicable law. We do not knowingly collect personal information from children in violation of applicable requirements.</p></div>
+<div><h2>14. Security</h2><p>We use technical and organizational measures intended to protect information against unauthorized access, misuse, loss, alteration and disclosure. No internet service can guarantee absolute security, so please use a strong password, enable 2-step verification and never share authentication codes.</p></div>
+<div><h2>15. Policy updates</h2><p>We may update this policy as TruxPylot evolves. Where a material change requires renewed consent under applicable law, the platform should provide an appropriate notice and request acceptance again.</p></div>
+<div><h2>16. Contact</h2><p>For privacy questions or requests, contact <a href="mailto:info@truxpylot.com">info@truxpylot.com</a> or visit our <Link href="/support">support page</Link>.</p></div>
+</div></section><p className="hint-text">This policy is written to reflect the platform's current features and is not a substitute for jurisdiction-specific legal advice. TruxPylot should obtain professional privacy counsel before launch to confirm obligations under applicable Nigerian and international privacy laws.</p></section></main>}
